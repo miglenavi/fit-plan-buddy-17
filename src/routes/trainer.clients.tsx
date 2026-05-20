@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { inviteClient } from "@/lib/clients.functions";
 import { RoleGuard } from "@/components/RoleGuard";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +19,9 @@ export const Route = createFileRoute("/trainer/clients")({
 function Clients() {
   const [clients, setClients] = useState<any[]>([]);
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+  const invite = useServerFn(inviteClient);
 
   const load = async () => {
     const { data } = await supabase
@@ -29,30 +33,38 @@ function Clients() {
 
   useEffect(() => { load(); }, []);
 
-  const addClient = async (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.rpc("link_client_by_email", { _email: email });
-    setBusy(false);
-    if (error) toast.error(error.message);
-    else { toast.success("Client added"); setEmail(""); load(); }
+    try {
+      await invite({ data: { email, fullName } });
+      toast.success(`Invitation sent to ${email}`);
+      setEmail("");
+      setFullName("");
+      load();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to send invite");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-        <p className="text-muted-foreground mt-1">Add and manage the people you train.</p>
+        <p className="text-muted-foreground mt-1">Invite clients by email — they'll get a link to set up their account.</p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Add a client</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Invite a client</CardTitle></CardHeader>
         <CardContent>
-          <form onSubmit={addClient} className="flex gap-2 flex-col sm:flex-row">
+          <form onSubmit={handleInvite} className="flex gap-2 flex-col sm:flex-row">
+            <Input placeholder="Full name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
             <Input placeholder="client@email.com" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Button disabled={busy}>{busy ? "..." : "Add"}</Button>
+            <Button disabled={busy}>{busy ? "..." : "Send invite"}</Button>
           </form>
-          <p className="text-xs text-muted-foreground mt-2">The client must already have a ValhallaFit account.</p>
+          <p className="text-xs text-muted-foreground mt-2">They'll receive an email to set their password. Once they sign in, they appear here automatically.</p>
         </CardContent>
       </Card>
 
