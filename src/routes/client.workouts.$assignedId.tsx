@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ChevronUp, ArrowLeft, Play } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, ArrowLeft, Play, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/client/workouts/$assignedId")({
   ssr: false,
@@ -29,7 +29,9 @@ function DoWorkout() {
   const [assigned, setAssigned] = useState<any>(null);
   const [planItems, setPlanItems] = useState<any[]>([]);
   const [logs, setLogs] = useState<Record<string, any>>({});
+  const [prev, setPrev] = useState<Record<string, { actual_sets: number | null; actual_reps: number | null; actual_weight: number | null; target_reps: number | null; target_weight: number | null }>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [nudged, setNudged] = useState<Set<string>>(new Set());
 
   const load = async () => {
     const { data: a } = await supabase.from("assigned_workouts")
@@ -42,14 +44,46 @@ function DoWorkout() {
       .eq("workout_plan_id", a.workout_plan_id).order("order_index");
     setPlanItems(items ?? []);
     const { data: existing } = await supabase.from("exercise_logs").select("*").eq("assigned_workout_id", assignedId);
+
+    // Fetch this client's most recent completed log per exercise (excluding current workout)
+    const exIds = (items ?? []).map((it: any) => it.exercise_id);
+    const prevMap: Record<string, any> = {};
+    if (exIds.length) {
+      const { data: hist } = await supabase
+        .from("exercise_logs")
+        .select("exercise_id, actual_sets, actual_reps, actual_weight, updated_at, assigned_workouts!inner(client_id, id)")
+        .eq("completed", true)
+        .eq("assigned_workouts.client_id", a.client_id)
+        .neq("assigned_workout_id", assignedId)
+        .in("exercise_id", exIds)
+        .order("updated_at", { ascending: false });
+      for (const row of hist ?? []) {
+        if (!prevMap[row.exercise_id]) {
+          const planRow = (items ?? []).find((it: any) => it.exercise_id === row.exercise_id);
+          prevMap[row.exercise_id] = {
+            actual_sets: row.actual_sets,
+            actual_reps: row.actual_reps,
+            actual_weight: row.actual_weight,
+            target_reps: planRow?.target_reps ?? null,
+            target_weight: planRow?.target_weight ?? null,
+          };
+        }
+      }
+    }
+    setPrev(prevMap);
+
     const map: Record<string, any> = {};
     (items ?? []).forEach((it: any) => {
       const log = existing?.find((l) => l.exercise_id === it.exercise_id);
+      const p = prevMap[it.exercise_id];
+      // Display target = max(plan, last actual)
+      const dispReps = Math.max(it.target_reps ?? 0, p?.actual_reps ?? 0) || it.target_reps;
+      const dispWeight = Math.max(Number(it.target_weight ?? 0), Number(p?.actual_weight ?? 0));
       map[it.exercise_id] = log ?? {
         exercise_id: it.exercise_id,
         actual_sets: it.target_sets,
-        actual_reps: it.target_reps,
-        actual_weight: it.target_weight ?? "",
+        actual_reps: dispReps,
+        actual_weight: dispWeight > 0 ? dispWeight : (it.target_weight ?? ""),
         notes: "",
         completed: false,
       };
@@ -76,6 +110,23 @@ function DoWorkout() {
       completed: !!l.completed,
     }, { onConflict: "assigned_workout_id,exercise_id" });
     if (error) toast.error(error.message);
+
+    // Nudge: if marked done, matched but didn't beat last performance
+    if (l.completed && !nudged.has(exId)) {
+      const p = prev[exId];
+      if (p) {
+        const reps = Number(l.actual_reps) || 0;
+        const wt = Number(l.actual_weight) || 0;
+        const pReps = Number(p.actual_reps) || 0;
+        const pWt = Number(p.actual_weight) || 0;
+        const matched = reps >= pReps && wt >= pWt;
+        const beat = reps > pReps || wt > pWt;
+        if (matched && !beat) {
+          toast("Nice work — next session, try one more rep or a bit more weight.");
+          setNudged((s) => new Set(s).add(exId));
+        }
+      }
+    }
   };
 
   const finish = async () => {
@@ -113,6 +164,12 @@ function DoWorkout() {
           const ex = it.exercises ?? {};
           const isOpen = expandedId === it.exercise_id;
           const yt = ytId(ex.video_url);
+          const p = prev[it.exercise_id];
+          // Display target = max(plan, last actual)
+          const dispReps = Math.max(it.target_reps ?? 0, p?.actual_reps ?? 0) || it.target_reps;
+          const dispWeight = Math.max(Number(it.target_weight ?? 0), Number(p?.actual_weight ?? 0));
+          const showWeight = dispWeight > 0 ? dispWeight : it.target_weight;
+          const bumped = p && ((p.actual_reps ?? 0) > (it.target_reps ?? 0) || Number(p.actual_weight ?? 0) > Number(it.target_weight ?? 0));
           return (
             <Card key={it.id} className={log.completed ? "border-primary/60 bg-primary/5" : ""}>
               <CardContent className="p-0">
@@ -127,7 +184,8 @@ function DoWorkout() {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{ex.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {it.target_sets} × {it.target_reps}{it.target_weight ? ` @ ${it.target_weight}kg` : ""}
+                      {it.target_sets} × {dispReps}{showWeight ? ` @ ${showWeight}kg` : ""}
+                      {bumped ? " ↑" : ""}
                       {ex.muscle_group ? ` · ${ex.muscle_group}` : ""}
                     </div>
                   </div>
@@ -171,6 +229,25 @@ function DoWorkout() {
                         {it.notes}
                       </div>
                     )}
+
+                    {p && (() => {
+                      const planReps = it.target_reps ?? 0;
+                      const lastReps = p.actual_reps ?? 0;
+                      const lastWt = p.actual_weight ?? 0;
+                      const hit = lastReps >= planReps;
+                      const lastStr = `${p.actual_sets ?? "?"} × ${lastReps}${lastWt ? ` @ ${lastWt}kg` : ""}`;
+                      return (
+                        <div className={`flex items-start gap-2 text-xs rounded-md px-3 py-2 ${hit ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700 dark:text-amber-400"}`}>
+                          <TrendingUp className="size-3.5 mt-0.5 shrink-0" />
+                          <div>
+                            Last time: <span className="font-semibold">{lastStr}</span>
+                            {hit
+                              ? ". Try to add reps or weight today."
+                              : ` (target was ${planReps}). Aim to finish all reps today.`}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div>
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Your log</Label>

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Plus, CheckCircle2, TrendingUp } from "lucide-react";
+import { Trash2, Plus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
@@ -25,7 +25,6 @@ function PlanDetail() {
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState<string>("");
-  const [suggestion, setSuggestion] = useState<{ last: string; suggested: string } | null>(null);
 
   // New-exercise dialog
   const [newExOpen, setNewExOpen] = useState(false);
@@ -43,36 +42,6 @@ function PlanDetail() {
   };
   useEffect(() => { load(); }, [planId]);
 
-  // When trainer selects an exercise, look up last completed log to suggest progression
-  useEffect(() => {
-    if (!exId) { setSuggestion(null); return; }
-    (async () => {
-      // also see if exercise is already in this plan with target values
-      const planRow = items.find((it) => it.exercise_id === exId);
-      const { data: log } = await supabase.from("exercise_logs")
-        .select("actual_sets, actual_reps, actual_weight, updated_at")
-        .eq("exercise_id", exId).eq("completed", true)
-        .order("updated_at", { ascending: false }).limit(1).maybeSingle();
-
-      const baseSets = log?.actual_sets ?? planRow?.target_sets ?? 3;
-      const baseReps = log?.actual_reps ?? planRow?.target_reps ?? 10;
-      const baseWeight = log?.actual_weight ?? planRow?.target_weight ?? null;
-
-      let sugReps = baseReps;
-      let sugWeight: number | null = baseWeight != null ? Number(baseWeight) : null;
-      // bump weight by 2.5kg if there's weight, else bump reps by 1
-      if (sugWeight != null && sugWeight > 0) sugWeight = sugWeight + 2.5;
-      else sugReps = baseReps + 1;
-
-      setSets(baseSets);
-      setReps(sugReps);
-      setWeight(sugWeight != null ? String(sugWeight) : "");
-      setSuggestion(log || planRow ? {
-        last: `${baseSets}×${baseReps}${baseWeight != null ? ` @ ${baseWeight}kg` : ""}`,
-        suggested: `${baseSets}×${sugReps}${sugWeight != null ? ` @ ${sugWeight}kg` : ""}`,
-      } : null);
-    })();
-  }, [exId, items]);
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +54,7 @@ function PlanDetail() {
       order_index: items.length,
     });
     if (error) toast.error(error.message);
-    else { setExId(""); setWeight(""); setSuggestion(null); toast.success("Added"); load(); }
+    else { setExId(""); setWeight(""); toast.success("Added"); load(); }
   };
 
   const remove = async (id: string) => {
@@ -154,12 +123,6 @@ function PlanDetail() {
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps</Label><Input type="number" min="1" value={reps} onChange={(e) => setReps(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
-            {suggestion && (
-              <div className="sm:col-span-5 flex items-center gap-2 text-xs text-primary bg-primary/10 rounded px-3 py-2">
-                <TrendingUp className="size-3.5" />
-                Last: <span className="font-semibold">{suggestion.last}</span> → suggested progression: <span className="font-semibold">{suggestion.suggested}</span>
-              </div>
-            )}
             <Button type="submit" className="sm:col-span-5" disabled={!exId}><Plus className="size-4 mr-1" /> Add to plan</Button>
           </form>
         </CardContent>
