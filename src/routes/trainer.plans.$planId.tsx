@@ -42,36 +42,6 @@ function PlanDetail() {
   };
   useEffect(() => { load(); }, [planId]);
 
-  // When trainer selects an exercise, look up last completed log to suggest progression
-  useEffect(() => {
-    if (!exId) { setSuggestion(null); return; }
-    (async () => {
-      // also see if exercise is already in this plan with target values
-      const planRow = items.find((it) => it.exercise_id === exId);
-      const { data: log } = await supabase.from("exercise_logs")
-        .select("actual_sets, actual_reps, actual_weight, updated_at")
-        .eq("exercise_id", exId).eq("completed", true)
-        .order("updated_at", { ascending: false }).limit(1).maybeSingle();
-
-      const baseSets = log?.actual_sets ?? planRow?.target_sets ?? 3;
-      const baseReps = log?.actual_reps ?? planRow?.target_reps ?? 10;
-      const baseWeight = log?.actual_weight ?? planRow?.target_weight ?? null;
-
-      let sugReps = baseReps;
-      let sugWeight: number | null = baseWeight != null ? Number(baseWeight) : null;
-      // bump weight by 2.5kg if there's weight, else bump reps by 1
-      if (sugWeight != null && sugWeight > 0) sugWeight = sugWeight + 2.5;
-      else sugReps = baseReps + 1;
-
-      setSets(baseSets);
-      setReps(sugReps);
-      setWeight(sugWeight != null ? String(sugWeight) : "");
-      setSuggestion(log || planRow ? {
-        last: `${baseSets}×${baseReps}${baseWeight != null ? ` @ ${baseWeight}kg` : ""}`,
-        suggested: `${baseSets}×${sugReps}${sugWeight != null ? ` @ ${sugWeight}kg` : ""}`,
-      } : null);
-    })();
-  }, [exId, items]);
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
