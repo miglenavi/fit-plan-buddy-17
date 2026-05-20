@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PendingRouteImport } from './routes/pending'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainerIndexRouteImport } from './routes/trainer.index'
@@ -18,10 +19,17 @@ import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
 import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
 import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
+import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as TrainerPlansPlanIdRouteImport } from './routes/trainer.plans.$planId'
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
 import { Route as ClientWorkoutsAssignedIdRouteImport } from './routes/client.workouts.$assignedId'
 
+const PendingRoute = PendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -67,6 +75,16 @@ const ClientHistoryRoute = ClientHistoryRouteImport.update({
   path: '/client/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminTrainersRoute = AdminTrainersRouteImport.update({
+  id: '/admin/trainers',
+  path: '/admin/trainers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/admin/applications',
+  path: '/admin/applications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrainerPlansPlanIdRoute = TrainerPlansPlanIdRouteImport.update({
   id: '/$planId',
   path: '/$planId',
@@ -87,6 +105,9 @@ const ClientWorkoutsAssignedIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/pending': typeof PendingRoute
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRoute
@@ -101,6 +122,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/pending': typeof PendingRoute
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRoute
@@ -116,6 +140,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/pending': typeof PendingRoute
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRoute
@@ -132,6 +159,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/pending'
+    | '/admin/applications'
+    | '/admin/trainers'
     | '/client/history'
     | '/trainer/clients'
     | '/trainer/exercises'
@@ -146,6 +176,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/pending'
+    | '/admin/applications'
+    | '/admin/trainers'
     | '/client/history'
     | '/trainer/clients'
     | '/trainer/exercises'
@@ -160,6 +193,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/pending'
+    | '/admin/applications'
+    | '/admin/trainers'
     | '/client/history'
     | '/trainer/clients'
     | '/trainer/exercises'
@@ -175,6 +211,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  PendingRoute: typeof PendingRoute
+  AdminApplicationsRoute: typeof AdminApplicationsRoute
+  AdminTrainersRoute: typeof AdminTrainersRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
   TrainerClientsRoute: typeof TrainerClientsRouteWithChildren
   TrainerExercisesRoute: typeof TrainerExercisesRoute
@@ -187,6 +226,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pending': {
+      id: '/pending'
+      path: '/pending'
+      fullPath: '/pending'
+      preLoaderRoute: typeof PendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -250,6 +296,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/trainers': {
+      id: '/admin/trainers'
+      path: '/admin/trainers'
+      fullPath: '/admin/trainers'
+      preLoaderRoute: typeof AdminTrainersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/admin/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trainer/plans/$planId': {
       id: '/trainer/plans/$planId'
       path: '/$planId'
@@ -301,6 +361,9 @@ const TrainerPlansRouteWithChildren = TrainerPlansRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  PendingRoute: PendingRoute,
+  AdminApplicationsRoute: AdminApplicationsRoute,
+  AdminTrainersRoute: AdminTrainersRoute,
   ClientHistoryRoute: ClientHistoryRoute,
   TrainerClientsRoute: TrainerClientsRouteWithChildren,
   TrainerExercisesRoute: TrainerExercisesRoute,
