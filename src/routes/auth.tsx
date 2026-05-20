@@ -128,6 +128,22 @@ function AuthPage() {
                     <Input id="lp" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Log in"}</Button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!email) return toast.error("Enter your email first");
+                      setBusy(true);
+                      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: `${window.location.origin}/auth`,
+                      });
+                      setBusy(false);
+                      if (error) toast.error(error.message);
+                      else toast.success("Password reset email sent. Check your inbox.");
+                    }}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
                 </form>
               </TabsContent>
               <TabsContent value="apply">
