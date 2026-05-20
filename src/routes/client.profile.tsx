@@ -26,6 +26,7 @@ function Profile() {
   const [name, setName] = useState(fullName ?? "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const clearFlag = useServerFn(clearMustChangePassword);
 
   useEffect(() => { setName(fullName ?? ""); }, [fullName]);
 
@@ -44,8 +45,10 @@ function Profile() {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    try { await clearFlag({}); } catch { /* ignore */ }
+    await supabase.auth.refreshSession();
     setBusy(false);
-    if (error) return toast.error(error.message);
     setPassword("");
     toast.success("Password updated");
   };
