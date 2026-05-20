@@ -145,7 +145,7 @@ export type Database = {
           image_url: string | null
           muscle_group: string | null
           name: string
-          trainer_id: string
+          trainer_id: string | null
           video_url: string | null
         }
         Insert: {
@@ -155,7 +155,7 @@ export type Database = {
           image_url?: string | null
           muscle_group?: string | null
           name: string
-          trainer_id: string
+          trainer_id?: string | null
           video_url?: string | null
         }
         Update: {
@@ -165,7 +165,7 @@ export type Database = {
           image_url?: string | null
           muscle_group?: string | null
           name?: string
-          trainer_id?: string
+          trainer_id?: string | null
           video_url?: string | null
         }
         Relationships: []
