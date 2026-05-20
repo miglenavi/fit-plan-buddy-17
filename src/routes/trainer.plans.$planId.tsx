@@ -1,12 +1,14 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Trash2, Plus, UserPlus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
@@ -19,18 +21,33 @@ function PlanDetail() {
   const [plan, setPlan] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [exId, setExId] = useState("");
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState<string>("");
 
+  // New-exercise dialog
+  const [newExOpen, setNewExOpen] = useState(false);
+  const [nxName, setNxName] = useState("");
+  const [nxMuscle, setNxMuscle] = useState("");
+  const [nxDesc, setNxDesc] = useState("");
+
+  // Assign-to-client form
+  const [clientId, setClientId] = useState("");
+  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().slice(0, 10));
+  const [assigning, setAssigning] = useState(false);
+
   const load = async () => {
-    const [{ data: p }, { data: it }, { data: ex }] = await Promise.all([
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u.user?.id;
+    const [{ data: p }, { data: it }, { data: ex }, { data: tc }] = await Promise.all([
       supabase.from("workout_plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("workout_plan_exercises").select("*, exercises(name, muscle_group)").eq("workout_plan_id", planId).order("order_index"),
       supabase.from("exercises").select("*").order("name"),
+      supabase.from("trainer_clients").select("client_id, profiles:client_id(full_name)").eq("trainer_id", uid ?? ""),
     ]);
-    setPlan(p); setItems(it ?? []); setExercises(ex ?? []);
+    setPlan(p); setItems(it ?? []); setExercises(ex ?? []); setClients(tc ?? []);
   };
   useEffect(() => { load(); }, [planId]);
 
@@ -45,7 +62,7 @@ function PlanDetail() {
       order_index: items.length,
     });
     if (error) toast.error(error.message);
-    else { setExId(""); setWeight(""); load(); }
+    else { setExId(""); setWeight(""); toast.success("Added"); load(); }
   };
 
   const remove = async (id: string) => {
@@ -53,28 +70,86 @@ function PlanDetail() {
     load();
   };
 
+  const createExercise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { data: u } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from("exercises").insert({
+      trainer_id: u.user!.id,
+      name: nxName,
+      muscle_group: nxMuscle || null,
+      description: nxDesc || null,
+    }).select("id").single();
+    if (error) return toast.error(error.message);
+    toast.success("Exercise created");
+    setNxName(""); setNxMuscle(""); setNxDesc(""); setNewExOpen(false);
+    await load();
+    if (data?.id) setExId(data.id);
+  };
+
+  const assignToClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clientId || !scheduledDate) return;
+    setAssigning(true);
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from("assigned_workouts").insert({
+      trainer_id: u.user!.id,
+      client_id: clientId,
+      workout_plan_id: planId,
+      scheduled_date: scheduledDate,
+      status: "pending",
+    });
+    setAssigning(false);
+    if (error) return toast.error(error.message);
+    toast.success("Workout assigned");
+    setClientId("");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{plan?.name}</h1>
-        {plan?.description && <p className="text-muted-foreground mt-1">{plan.description}</p>}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{plan?.name}</h1>
+          {plan?.description && <p className="text-muted-foreground mt-1">{plan.description}</p>}
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+            <CheckCircle2 className="size-3.5" /> Changes save automatically
+          </p>
+        </div>
+        <Button asChild variant="outline"><Link to="/trainer/plans">Back to plans</Link></Button>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Add exercise to plan</CardTitle></CardHeader>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle>Add exercise to plan</CardTitle>
+            <Dialog open={newExOpen} onOpenChange={setNewExOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline"><Plus className="size-4 mr-1" /> New exercise</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Create exercise</DialogTitle></DialogHeader>
+                <form onSubmit={createExercise} className="space-y-4">
+                  <div className="space-y-2"><Label>Name</Label><Input required value={nxName} onChange={(e) => setNxName(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>Muscle group</Label><Input value={nxMuscle} onChange={(e) => setNxMuscle(e.target.value)} placeholder="Chest, Back, Legs..." /></div>
+                  <div className="space-y-2"><Label>Description</Label><Textarea value={nxDesc} onChange={(e) => setNxDesc(e.target.value)} /></div>
+                  <Button type="submit" className="w-full">Save</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
         <CardContent>
           <form onSubmit={add} className="grid sm:grid-cols-5 gap-3 items-end">
             <div className="space-y-2 sm:col-span-2">
               <Label>Exercise</Label>
               <Select value={exId} onValueChange={setExId} required>
                 <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
-                <SelectContent>{exercises.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{exercises.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}{e.muscle_group ? ` — ${e.muscle_group}` : ""}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps</Label><Input type="number" min="1" value={reps} onChange={(e) => setReps(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
-            <Button type="submit" className="sm:col-span-5" disabled={!exId}><Plus className="size-4 mr-1" /> Add</Button>
+            <Button type="submit" className="sm:col-span-5" disabled={!exId}><Plus className="size-4 mr-1" /> Add to plan</Button>
           </form>
         </CardContent>
       </Card>
@@ -101,6 +176,43 @@ function PlanDetail() {
                 </li>
               ))}
             </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Assign to a client</CardTitle></CardHeader>
+        <CardContent>
+          {clients.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              No clients yet. <Link to="/trainer/clients" className="underline">Add a client</Link> first.
+            </p>
+          ) : (
+            <form onSubmit={assignToClient} className="grid sm:grid-cols-3 gap-3 items-end">
+              <div className="space-y-2 sm:col-span-1">
+                <Label>Client</Label>
+                <Select value={clientId} onValueChange={setClientId} required>
+                  <SelectTrigger><SelectValue placeholder="Choose client..." /></SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c: any) => (
+                      <SelectItem key={c.client_id} value={c.client_id}>
+                        {c.profiles?.full_name ?? c.client_id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Scheduled date</Label>
+                <Input type="date" required value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+              </div>
+              <Button type="submit" disabled={assigning || !clientId || items.length === 0}>
+                {assigning ? "Assigning..." : "Assign workout"}
+              </Button>
+              {items.length === 0 && (
+                <p className="sm:col-span-3 text-xs text-muted-foreground">Add at least one exercise before assigning.</p>
+              )}
+            </form>
           )}
         </CardContent>
       </Card>
