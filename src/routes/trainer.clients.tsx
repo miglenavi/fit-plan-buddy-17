@@ -52,7 +52,7 @@ function Clients() {
             <Input placeholder="client@email.com" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             <Button disabled={busy}>{busy ? "..." : "Add"}</Button>
           </form>
-          <p className="text-xs text-muted-foreground mt-2">The client must already have a FitCoach account.</p>
+          <p className="text-xs text-muted-foreground mt-2">The client must already have a ValhallaFit account.</p>
         </CardContent>
       </Card>
 

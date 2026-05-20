@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Users, ClipboardList, Calendar, History, LogOut, Home } from "lucide-react";
+import { Swords, Users, ClipboardList, Calendar, History, LogOut, Home, Dumbbell } from "lucide-react";
 import type { ReactNode } from "react";
 
 const trainerNav = [
@@ -28,10 +28,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="md:w-64 bg-sidebar text-sidebar-foreground md:min-h-screen flex md:flex-col">
         <div className="p-6 flex items-center gap-2 border-b border-sidebar-border flex-1 md:flex-none">
           <div className="size-9 rounded-xl bg-primary flex items-center justify-center">
-            <Dumbbell className="size-5 text-primary-foreground" />
+            <Swords className="size-5 text-primary-foreground" />
           </div>
           <div>
-            <div className="font-bold text-lg">FitCoach</div>
+            <div className="font-bold text-lg">ValhallaFit</div>
             <div className="text-xs opacity-70 capitalize">{role ?? "..."}</div>
           </div>
         </div>

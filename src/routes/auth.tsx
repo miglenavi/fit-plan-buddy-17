@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Dumbbell } from "lucide-react";
+import { Swords } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -17,6 +16,14 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { user, role, loading } = useAuth();
   const nav = useNavigate();
+
+  const [trainerExists, setTrainerExists] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    supabase.rpc("trainer_exists").then(({ data }) => {
+      setTrainerExists(Boolean(data));
+    });
+  }, []);
 
   useEffect(() => {
     if (!loading && user && role) {
@@ -28,7 +35,6 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [signupRole, setSignupRole] = useState<"trainer" | "client">("client");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +45,7 @@ function AuthPage() {
     else toast.success("Welcome back!");
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleTrainerSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.auth.signUp({
@@ -47,33 +53,38 @@ function AuthPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: fullName, role: signupRole },
+        data: { full_name: fullName, role: "trainer" },
       },
     });
     setBusy(false);
     if (error) toast.error(error.message);
-    else toast.success("Account created!");
+    else {
+      toast.success("Trainer account created!");
+      setTrainerExists(true);
+    }
   };
+
+  const showSignup = trainerExists === false;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-accent/30">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="size-12 rounded-2xl bg-primary flex items-center justify-center">
-            <Dumbbell className="size-6 text-primary-foreground" />
+            <Swords className="size-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">FitCoach</h1>
-            <p className="text-sm text-muted-foreground">Train smarter, together.</p>
+            <h1 className="text-2xl font-bold">ValhallaFit</h1>
+            <p className="text-sm text-muted-foreground">Train like a Viking.</p>
           </div>
         </div>
 
         <Card>
-          <Tabs defaultValue="login">
+          <Tabs defaultValue={showSignup ? "signup" : "login"}>
             <CardHeader>
-              <TabsList className="grid grid-cols-2 w-full">
+              <TabsList className={`grid w-full ${showSignup ? "grid-cols-2" : "grid-cols-1"}`}>
                 <TabsTrigger value="login">Log in</TabsTrigger>
-                <TabsTrigger value="signup">Sign up</TabsTrigger>
+                {showSignup && <TabsTrigger value="signup">Claim trainer</TabsTrigger>}
               </TabsList>
             </CardHeader>
             <CardContent>
@@ -90,39 +101,32 @@ function AuthPage() {
                   <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Log in"}</Button>
                 </form>
               </TabsContent>
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sn">Full name</Label>
-                    <Input id="sn" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="se">Email</Label>
-                    <Input id="se" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sp">Password</Label>
-                    <Input id="sp" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>I am a</Label>
-                    <RadioGroup value={signupRole} onValueChange={(v) => setSignupRole(v as "trainer" | "client")} className="grid grid-cols-2 gap-2">
-                      <Label htmlFor="r-c" className="flex items-center gap-2 border rounded-lg p-3 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-accent">
-                        <RadioGroupItem id="r-c" value="client" /> Client
-                      </Label>
-                      <Label htmlFor="r-t" className="flex items-center gap-2 border rounded-lg p-3 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-accent">
-                        <RadioGroupItem id="r-t" value="trainer" /> Trainer
-                      </Label>
-                    </RadioGroup>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Create account"}</Button>
-                </form>
-              </TabsContent>
+              {showSignup && (
+                <TabsContent value="signup">
+                  <form onSubmit={handleTrainerSignup} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="sn">Full name</Label>
+                      <Input id="sn" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="se">Email</Label>
+                      <Input id="se" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sp">Password</Label>
+                      <Input id="sp" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Create trainer account"}</Button>
+                  </form>
+                </TabsContent>
+              )}
             </CardContent>
           </Tabs>
         </Card>
         <p className="text-xs text-center text-muted-foreground mt-4">
-          Trainers create plans and assign workouts. Clients log results.
+          {showSignup
+            ? "One trainer runs the gym. Clients are added by the trainer."
+            : "Clients: log in with the credentials your trainer gave you."}
         </p>
       </div>
     </div>

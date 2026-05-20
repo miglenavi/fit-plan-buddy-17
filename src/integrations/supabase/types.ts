@@ -297,6 +297,7 @@ export type Database = {
         Returns: boolean
       }
       link_client_by_email: { Args: { _email: string }; Returns: string }
+      trainer_exists: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "trainer" | "client"
