@@ -123,12 +123,6 @@ function PlanDetail() {
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps</Label><Input type="number" min="1" value={reps} onChange={(e) => setReps(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
-            {suggestion && (
-              <div className="sm:col-span-5 flex items-center gap-2 text-xs text-primary bg-primary/10 rounded px-3 py-2">
-                <TrendingUp className="size-3.5" />
-                Last: <span className="font-semibold">{suggestion.last}</span> → suggested progression: <span className="font-semibold">{suggestion.suggested}</span>
-              </div>
-            )}
             <Button type="submit" className="sm:col-span-5" disabled={!exId}><Plus className="size-4 mr-1" /> Add to plan</Button>
           </form>
         </CardContent>
