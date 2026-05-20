@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Plus, UserPlus, CheckCircle2 } from "lucide-react";
+import { Trash2, Plus, CheckCircle2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
@@ -18,15 +18,14 @@ export const Route = createFileRoute("/trainer/plans/$planId")({
 
 function PlanDetail() {
   const { planId } = useParams({ from: "/trainer/plans/$planId" });
-  const navigate = useNavigate();
   const [plan, setPlan] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
   const [exId, setExId] = useState("");
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState<string>("");
+  const [suggestion, setSuggestion] = useState<{ last: string; suggested: string } | null>(null);
 
   // New-exercise dialog
   const [newExOpen, setNewExOpen] = useState(false);
@@ -34,30 +33,46 @@ function PlanDetail() {
   const [nxMuscle, setNxMuscle] = useState("");
   const [nxDesc, setNxDesc] = useState("");
 
-  // Assign-to-client form
-  const [clientId, setClientId] = useState("");
-  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().slice(0, 10));
-  const [assigning, setAssigning] = useState(false);
-
   const load = async () => {
-    const { data: u } = await supabase.auth.getUser();
-    const uid = u.user?.id;
-    const [{ data: p }, { data: it }, { data: ex }, { data: tc }] = await Promise.all([
+    const [{ data: p }, { data: it }, { data: ex }] = await Promise.all([
       supabase.from("workout_plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("workout_plan_exercises").select("*, exercises(name, muscle_group)").eq("workout_plan_id", planId).order("order_index"),
       supabase.from("exercises").select("*").order("name"),
-      supabase.from("trainer_clients").select("client_id").eq("trainer_id", uid ?? ""),
     ]);
-    let withNames: any[] = tc ?? [];
-    if (withNames.length) {
-      const ids = withNames.map((r) => r.client_id);
-      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
-      const map = new Map((profs ?? []).map((p: any) => [p.id, p.full_name]));
-      withNames = withNames.map((r) => ({ ...r, full_name: map.get(r.client_id) ?? r.client_id }));
-    }
-    setPlan(p); setItems(it ?? []); setExercises(ex ?? []); setClients(withNames);
+    setPlan(p); setItems(it ?? []); setExercises(ex ?? []);
   };
   useEffect(() => { load(); }, [planId]);
+
+  // When trainer selects an exercise, look up last completed log to suggest progression
+  useEffect(() => {
+    if (!exId) { setSuggestion(null); return; }
+    (async () => {
+      // also see if exercise is already in this plan with target values
+      const planRow = items.find((it) => it.exercise_id === exId);
+      const { data: log } = await supabase.from("exercise_logs")
+        .select("actual_sets, actual_reps, actual_weight, updated_at")
+        .eq("exercise_id", exId).eq("completed", true)
+        .order("updated_at", { ascending: false }).limit(1).maybeSingle();
+
+      const baseSets = log?.actual_sets ?? planRow?.target_sets ?? 3;
+      const baseReps = log?.actual_reps ?? planRow?.target_reps ?? 10;
+      const baseWeight = log?.actual_weight ?? planRow?.target_weight ?? null;
+
+      let sugReps = baseReps;
+      let sugWeight: number | null = baseWeight != null ? Number(baseWeight) : null;
+      // bump weight by 2.5kg if there's weight, else bump reps by 1
+      if (sugWeight != null && sugWeight > 0) sugWeight = sugWeight + 2.5;
+      else sugReps = baseReps + 1;
+
+      setSets(baseSets);
+      setReps(sugReps);
+      setWeight(sugWeight != null ? String(sugWeight) : "");
+      setSuggestion(log || planRow ? {
+        last: `${baseSets}×${baseReps}${baseWeight != null ? ` @ ${baseWeight}kg` : ""}`,
+        suggested: `${baseSets}×${sugReps}${sugWeight != null ? ` @ ${sugWeight}kg` : ""}`,
+      } : null);
+    })();
+  }, [exId, items]);
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +85,7 @@ function PlanDetail() {
       order_index: items.length,
     });
     if (error) toast.error(error.message);
-    else { setExId(""); setWeight(""); toast.success("Added"); load(); }
+    else { setExId(""); setWeight(""); setSuggestion(null); toast.success("Added"); load(); }
   };
 
   const remove = async (id: string) => {
@@ -94,27 +109,6 @@ function PlanDetail() {
     if (data?.id) setExId(data.id);
   };
 
-  const assignToClient = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!clientId || !scheduledDate) return;
-    setAssigning(true);
-    const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("assigned_workouts").insert({
-      trainer_id: u.user!.id,
-      client_id: clientId,
-      workout_plan_id: planId,
-      scheduled_date: scheduledDate,
-      status: "pending",
-    });
-    setAssigning(false);
-    if (error) return toast.error(error.message);
-    const clientName = clients.find((c) => c.client_id === clientId)?.full_name ?? "client";
-    toast.success(`Workout assigned to ${clientName} on ${scheduledDate}`);
-    setClientId("");
-    setScheduledDate(new Date().toISOString().slice(0, 10));
-    navigate({ to: "/trainer/plans" });
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
@@ -122,7 +116,7 @@ function PlanDetail() {
           <h1 className="text-3xl font-bold tracking-tight">{plan?.name}</h1>
           {plan?.description && <p className="text-muted-foreground mt-1">{plan.description}</p>}
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <CheckCircle2 className="size-3.5" /> Changes save automatically
+            <CheckCircle2 className="size-3.5" /> Changes save automatically · Assign via client page
           </p>
         </div>
         <Button asChild variant="outline"><Link to="/trainer/plans">Back to plans</Link></Button>
@@ -160,6 +154,12 @@ function PlanDetail() {
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps</Label><Input type="number" min="1" value={reps} onChange={(e) => setReps(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
+            {suggestion && (
+              <div className="sm:col-span-5 flex items-center gap-2 text-xs text-primary bg-primary/10 rounded px-3 py-2">
+                <TrendingUp className="size-3.5" />
+                Last: <span className="font-semibold">{suggestion.last}</span> → suggested progression: <span className="font-semibold">{suggestion.suggested}</span>
+              </div>
+            )}
             <Button type="submit" className="sm:col-span-5" disabled={!exId}><Plus className="size-4 mr-1" /> Add to plan</Button>
           </form>
         </CardContent>
@@ -187,43 +187,6 @@ function PlanDetail() {
                 </li>
               ))}
             </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Assign to a client</CardTitle></CardHeader>
-        <CardContent>
-          {clients.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No clients yet. <Link to="/trainer/clients" className="underline">Add a client</Link> first.
-            </p>
-          ) : (
-            <form onSubmit={assignToClient} className="grid sm:grid-cols-3 gap-3 items-end">
-              <div className="space-y-2 sm:col-span-1">
-                <Label>Client</Label>
-                <Select value={clientId} onValueChange={setClientId} required>
-                  <SelectTrigger><SelectValue placeholder="Choose client..." /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c: any) => (
-                      <SelectItem key={c.client_id} value={c.client_id}>
-                        {c.full_name ?? c.client_id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Scheduled date</Label>
-                <Input type="date" required value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
-              </div>
-              <Button type="submit" disabled={assigning || !clientId || items.length === 0}>
-                {assigning ? "Assigning..." : "Assign workout"}
-              </Button>
-              {items.length === 0 && (
-                <p className="sm:col-span-3 text-xs text-muted-foreground">Add at least one exercise before assigning.</p>
-              )}
-            </form>
           )}
         </CardContent>
       </Card>
