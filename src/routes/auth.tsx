@@ -153,6 +153,7 @@ function AuthPage() {
               </TabsContent>
             </CardContent>
           </Tabs>
+          )}
         </Card>
         <p className="text-xs text-center text-muted-foreground mt-4">
           Clients: log in with the credentials your trainer gave you. Trainers: apply and wait for super‑admin approval.
