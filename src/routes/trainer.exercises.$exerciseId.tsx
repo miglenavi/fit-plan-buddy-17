@@ -86,7 +86,8 @@ function ExerciseDetail() {
   };
 
   const clearMedia = async (field: "image_url" | "video_url") => {
-    const { error } = await supabase.from("exercises").update({ [field]: null }).eq("id", exerciseId);
+    const patch = field === "image_url" ? { image_url: null } : { video_url: null };
+    const { error } = await supabase.from("exercises").update(patch).eq("id", exerciseId);
     if (error) toast.error(error.message);
     else { toast.success("Removed"); if (field === "video_url") setVideoUrl(""); load(); }
   };
