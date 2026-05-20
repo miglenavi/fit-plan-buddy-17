@@ -25,7 +25,6 @@ function PlanDetail() {
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState<string>("");
-  const [suggestion, setSuggestion] = useState<{ last: string; suggested: string } | null>(null);
 
   // New-exercise dialog
   const [newExOpen, setNewExOpen] = useState(false);
