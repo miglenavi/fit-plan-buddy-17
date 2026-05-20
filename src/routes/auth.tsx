@@ -97,7 +97,7 @@ function AuthPage() {
         </div>
 
         <Card>
-          {isInvite ? (
+          {showSetPassword ? (
             <>
               <CardHeader>
                 <h2 className="text-lg font-semibold">Set your password</h2>
