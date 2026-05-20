@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { clearMustChangePassword } from "@/lib/clients.functions";
 import { RoleGuard } from "@/components/RoleGuard";
 import { ClientShell } from "@/components/ClientShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,7 @@ function Profile() {
   const [name, setName] = useState(fullName ?? "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const clearFlag = useServerFn(clearMustChangePassword);
 
   useEffect(() => { setName(fullName ?? ""); }, [fullName]);
 
@@ -42,8 +45,10 @@ function Profile() {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    try { await clearFlag({}); } catch { /* ignore */ }
+    await supabase.auth.refreshSession();
     setBusy(false);
-    if (error) return toast.error(error.message);
     setPassword("");
     toast.success("Password updated");
   };
