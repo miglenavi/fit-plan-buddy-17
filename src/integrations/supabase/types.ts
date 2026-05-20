@@ -20,9 +20,11 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
-          scheduled_date: string
+          program_id: string | null
+          scheduled_date: string | null
           status: string
           trainer_id: string
+          week_start_date: string | null
           workout_plan_id: string
         }
         Insert: {
@@ -30,9 +32,11 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
-          scheduled_date: string
+          program_id?: string | null
+          scheduled_date?: string | null
           status?: string
           trainer_id: string
+          week_start_date?: string | null
           workout_plan_id: string
         }
         Update: {
@@ -40,9 +44,11 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
-          scheduled_date?: string
+          program_id?: string | null
+          scheduled_date?: string | null
           status?: string
           trainer_id?: string
+          week_start_date?: string | null
           workout_plan_id?: string
         }
         Relationships: [
@@ -54,6 +60,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "assigned_workouts_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "client_programs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "assigned_workouts_workout_plan_id_fkey"
             columns: ["workout_plan_id"]
             isOneToOne: false
@@ -61,6 +74,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_programs: {
+        Row: {
+          client_id: string
+          created_at: string
+          end_date: string
+          id: string
+          start_date: string
+          status: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          start_date: string
+          status?: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       client_temp_passwords: {
         Row: {
@@ -190,6 +236,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      program_workouts: {
+        Row: {
+          created_at: string
+          id: string
+          program_id: string
+          slot: number
+          workout_plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          program_id: string
+          slot?: number
+          workout_plan_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          program_id?: string
+          slot?: number
+          workout_plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_workouts_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "client_programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trainer_applications: {
         Row: {
