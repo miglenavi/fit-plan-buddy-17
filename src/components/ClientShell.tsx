@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { Swords, LogOut, History, Home } from "lucide-react";
+import { Swords, LogOut, History, Home, User } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function ClientShell({ children, title }: { children: ReactNode; title?: string }) {
@@ -32,6 +32,13 @@ export function ClientShell({ children, title }: { children: ReactNode; title?: 
               aria-label="History"
             >
               <History className="size-5" />
+            </Link>
+            <Link
+              to="/client/profile"
+              className={`p-2 rounded-md ${path.startsWith("/client/profile") ? "text-primary" : "text-muted-foreground"}`}
+              aria-label="Profile"
+            >
+              <User className="size-5" />
             </Link>
             <button
               onClick={async () => { await signOut(); nav({ to: "/auth" }); }}

@@ -18,6 +18,7 @@ import { Route as TrainerScheduleRouteImport } from './routes/trainer.schedule'
 import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
 import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
 import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
+import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
@@ -71,6 +72,11 @@ const TrainerExercisesRoute = TrainerExercisesRouteImport.update({
 const TrainerClientsRoute = TrainerClientsRouteImport.update({
   id: '/trainer/clients',
   path: '/trainer/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientProfileRoute = ClientProfileRouteImport.update({
+  id: '/client/profile',
+  path: '/client/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientHistoryRoute = ClientHistoryRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
+  '/client/profile': typeof ClientProfileRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
+  '/client/profile': typeof ClientProfileRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/schedule': typeof TrainerScheduleRoute
   '/client': typeof ClientIndexRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
+  '/client/profile': typeof ClientProfileRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/trainers'
     | '/client/history'
+    | '/client/profile'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/trainers'
     | '/client/history'
+    | '/client/profile'
     | '/trainer/clients'
     | '/trainer/schedule'
     | '/client'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/trainers'
     | '/client/history'
+    | '/client/profile'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
+  ClientProfileRoute: typeof ClientProfileRoute
   TrainerClientsRoute: typeof TrainerClientsRouteWithChildren
   TrainerExercisesRoute: typeof TrainerExercisesRouteWithChildren
   TrainerPlansRoute: typeof TrainerPlansRouteWithChildren
@@ -320,6 +333,13 @@ declare module '@tanstack/react-router' {
       path: '/trainer/clients'
       fullPath: '/trainer/clients'
       preLoaderRoute: typeof TrainerClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/profile': {
+      id: '/client/profile'
+      path: '/client/profile'
+      fullPath: '/client/profile'
+      preLoaderRoute: typeof ClientProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/client/history': {
@@ -434,6 +454,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminTrainersRoute: AdminTrainersRoute,
   ClientHistoryRoute: ClientHistoryRoute,
+  ClientProfileRoute: ClientProfileRoute,
   TrainerClientsRoute: TrainerClientsRouteWithChildren,
   TrainerExercisesRoute: TrainerExercisesRouteWithChildren,
   TrainerPlansRoute: TrainerPlansRouteWithChildren,
