@@ -118,25 +118,31 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
           muscle_group: string | null
           name: string
           trainer_id: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           muscle_group?: string | null
           name: string
           trainer_id: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           muscle_group?: string | null
           name?: string
           trainer_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
