@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Users, ClipboardList, Calendar, History, LogOut, Home } from "lucide-react";
+import { Swords, Users, ClipboardList, Calendar, History, LogOut, Home } from "lucide-react";
 import type { ReactNode } from "react";
 
 const trainerNav = [
