@@ -81,7 +81,8 @@ function DoWorkout() {
   const finish = async () => {
     for (const exId of Object.keys(logs)) await saveLog(exId);
     const { error } = await supabase.from("assigned_workouts").update({
-      status: "completed", completed_at: new Date().toISOString(),
+      status: "completed",
+      completed_at: new Date().toISOString(),
     }).eq("id", assignedId);
     if (error) toast.error(error.message);
     else { toast.success("Workout completed! 🎉"); nav({ to: "/client" }); }
