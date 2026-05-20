@@ -203,7 +203,7 @@ function PlanDetail() {
                   <SelectContent>
                     {clients.map((c: any) => (
                       <SelectItem key={c.client_id} value={c.client_id}>
-                        {c.profiles?.full_name ?? c.client_id}
+                        {c.full_name ?? c.client_id}
                       </SelectItem>
                     ))}
                   </SelectContent>
