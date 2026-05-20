@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/trainer/schedule")({
+  ssr: false,
   component: () => <RoleGuard role="trainer"><AppShell><Schedule /></AppShell></RoleGuard>,
 });
 

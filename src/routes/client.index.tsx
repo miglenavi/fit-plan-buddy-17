@@ -9,6 +9,7 @@ import { CheckCircle2, ArrowRight, Calendar } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/client/")({
+  ssr: false,
   component: () => <RoleGuard role="client"><AppShell><ClientToday /></AppShell></RoleGuard>,
 });
 

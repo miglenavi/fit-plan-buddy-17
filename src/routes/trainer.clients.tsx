@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { UserPlus, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients")({
+  ssr: false,
   component: () => <RoleGuard role="trainer"><AppShell><Clients /></AppShell></RoleGuard>,
 });
 
