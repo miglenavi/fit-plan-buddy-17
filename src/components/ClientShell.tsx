@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { Swords, LogOut, History, Home } from "lucide-react";
+import { Swords, LogOut, History, Home, User } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function ClientShell({ children, title }: { children: ReactNode; title?: string }) {
