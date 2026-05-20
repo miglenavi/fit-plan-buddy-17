@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { clearMustChangePassword } from "@/lib/clients.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,16 +25,19 @@ const initialIsInvite =
 function AuthPage() {
   const { user, role, loading } = useAuth();
   const nav = useNavigate();
+  const clearFlag = useServerFn(clearMustChangePassword);
 
+  const mustChange = !!user?.user_metadata?.must_change_password;
   const [isInvite, setIsInvite] = useState(initialIsInvite);
+  const showSetPassword = isInvite || mustChange;
 
   useEffect(() => {
-    if (loading || !user || isInvite) return;
+    if (loading || !user || showSetPassword) return;
     if (role === "super_admin") nav({ to: "/admin/applications" });
     else if (role === "trainer") nav({ to: "/trainer" });
     else if (role === "client") nav({ to: "/client" });
     else nav({ to: "/pending" });
-  }, [user, role, loading, nav, isInvite]);
+  }, [user, role, loading, nav, showSetPassword]);
 
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
@@ -44,8 +49,10 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    try { await clearFlag({}); } catch { /* ignore */ }
+    await supabase.auth.refreshSession();
     setBusy(false);
-    if (error) return toast.error(error.message);
     toast.success("Password set! Welcome.");
     setIsInvite(false);
     window.location.hash = "";
