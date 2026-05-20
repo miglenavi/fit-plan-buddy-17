@@ -92,6 +92,23 @@ function AuthPage() {
         </div>
 
         <Card>
+          {isInvite ? (
+            <>
+              <CardHeader>
+                <h2 className="text-lg font-semibold">Set your password</h2>
+                <p className="text-sm text-muted-foreground">Welcome! Choose a password to finish setting up your account.</p>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSetPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="np">New password</Label>
+                    <Input id="np" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Set password & continue"}</Button>
+                </form>
+              </CardContent>
+            </>
+          ) : (
           <Tabs defaultValue="login">
             <CardHeader>
               <TabsList className="grid grid-cols-2 w-full">
