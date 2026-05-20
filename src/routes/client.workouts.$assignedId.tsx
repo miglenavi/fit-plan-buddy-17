@@ -164,6 +164,12 @@ function DoWorkout() {
           const ex = it.exercises ?? {};
           const isOpen = expandedId === it.exercise_id;
           const yt = ytId(ex.video_url);
+          const p = prev[it.exercise_id];
+          // Display target = max(plan, last actual)
+          const dispReps = Math.max(it.target_reps ?? 0, p?.actual_reps ?? 0) || it.target_reps;
+          const dispWeight = Math.max(Number(it.target_weight ?? 0), Number(p?.actual_weight ?? 0));
+          const showWeight = dispWeight > 0 ? dispWeight : it.target_weight;
+          const bumped = p && ((p.actual_reps ?? 0) > (it.target_reps ?? 0) || Number(p.actual_weight ?? 0) > Number(it.target_weight ?? 0));
           return (
             <Card key={it.id} className={log.completed ? "border-primary/60 bg-primary/5" : ""}>
               <CardContent className="p-0">
@@ -178,7 +184,8 @@ function DoWorkout() {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{ex.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {it.target_sets} × {it.target_reps}{it.target_weight ? ` @ ${it.target_weight}kg` : ""}
+                      {it.target_sets} × {dispReps}{showWeight ? ` @ ${showWeight}kg` : ""}
+                      {bumped ? " ↑" : ""}
                       {ex.muscle_group ? ` · ${ex.muscle_group}` : ""}
                     </div>
                   </div>
