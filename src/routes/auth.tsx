@@ -18,19 +18,40 @@ function AuthPage() {
   const { user, role, loading } = useAuth();
   const nav = useNavigate();
 
+  // Detect invite/recovery flow from URL hash
+  const [isInvite, setIsInvite] = useState(false);
   useEffect(() => {
-    if (loading || !user) return;
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (hash.includes("type=invite") || hash.includes("type=recovery")) {
+      setIsInvite(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading || !user || isInvite) return;
     if (role === "super_admin") nav({ to: "/admin/applications" });
     else if (role === "trainer") nav({ to: "/trainer" });
     else if (role === "client") nav({ to: "/client" });
     else nav({ to: "/pending" });
-  }, [user, role, loading, nav]);
+  }, [user, role, loading, nav, isInvite]);
 
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [note, setNote] = useState("");
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password set! Welcome.");
+    setIsInvite(false);
+    window.location.hash = "";
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +92,23 @@ function AuthPage() {
         </div>
 
         <Card>
+          {isInvite ? (
+            <>
+              <CardHeader>
+                <h2 className="text-lg font-semibold">Set your password</h2>
+                <p className="text-sm text-muted-foreground">Welcome! Choose a password to finish setting up your account.</p>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSetPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="np">New password</Label>
+                    <Input id="np" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Set password & continue"}</Button>
+                </form>
+              </CardContent>
+            </>
+          ) : (
           <Tabs defaultValue="login">
             <CardHeader>
               <TabsList className="grid grid-cols-2 w-full">
@@ -115,6 +153,7 @@ function AuthPage() {
               </TabsContent>
             </CardContent>
           </Tabs>
+          )}
         </Card>
         <p className="text-xs text-center text-muted-foreground mt-4">
           Clients: log in with the credentials your trainer gave you. Trainers: apply and wait for super‑admin approval.
