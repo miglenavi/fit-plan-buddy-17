@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { RoleGuard } from "@/components/RoleGuard";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { inviteTrainer } from "@/lib/trainers.functions";
 
 export const Route = createFileRoute("/admin/applications")({ ssr: false, component: Page });
 
@@ -79,6 +83,7 @@ function Applications() {
           <p className="text-muted-foreground text-sm">Approve or reject trainer signup requests.</p>
         </div>
         <div className="flex gap-2">
+          <InviteTrainerDialog onInvited={load} />
           <Button variant={filter === "pending" ? "default" : "outline"} size="sm" onClick={() => setFilter("pending")}>Pending</Button>
           <Button variant={filter === "all" ? "default" : "outline"} size="sm" onClick={() => setFilter("all")}>All</Button>
         </div>
@@ -132,5 +137,63 @@ function Applications() {
         </div>
       )}
     </div>
+  );
+}
+
+function InviteTrainerDialog({ onInvited }: { onInvited: () => void | Promise<void> }) {
+  const invite = useServerFn(inviteTrainer);
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    if (!email || !fullName) {
+      toast.error("Name and email are required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await invite({ data: { email: email.trim(), fullName: fullName.trim() } });
+      toast.success(`Invitation sent to ${email}`);
+      setOpen(false);
+      setEmail("");
+      setFullName("");
+      await onInvited();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to send invitation");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">Invite trainer</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Invite a trainer</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-name">Full name</Label>
+            <Input id="invite-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-email">Email</Label>
+            <Input id="invite-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            They'll receive an email invitation. Once they sign up, they'll be granted the trainer role automatically.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
+          <Button onClick={submit} disabled={submitting}>{submitting ? "Sending…" : "Send invitation"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
