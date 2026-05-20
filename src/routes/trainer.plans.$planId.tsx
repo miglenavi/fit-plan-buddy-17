@@ -1,8 +1,6 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { RoleGuard } from "@/components/RoleGuard";
-import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +11,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
   ssr: false,
-  component: () => <RoleGuard role="trainer"><AppShell><PlanDetail /></AppShell></RoleGuard>,
+  component: PlanDetail,
 });
 
 function PlanDetail() {
