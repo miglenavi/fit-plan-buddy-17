@@ -161,6 +161,45 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_applications: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          note: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          note?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          note?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trainer_clients: {
         Row: {
           client_id: string
@@ -285,6 +324,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_trainer: { Args: { _user_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -297,10 +337,14 @@ export type Database = {
         Returns: boolean
       }
       link_client_by_email: { Args: { _email: string }; Returns: string }
-      trainer_exists: { Args: never; Returns: boolean }
+      reapply_trainer: { Args: { _note: string }; Returns: undefined }
+      reject_trainer: {
+        Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "trainer" | "client"
+      app_role: "trainer" | "client" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -428,7 +472,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["trainer", "client"],
+      app_role: ["trainer", "client", "super_admin"],
     },
   },
 } as const
