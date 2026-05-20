@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/trainer/plans/$planId")({
 
 function PlanDetail() {
   const { planId } = useParams({ from: "/trainer/plans/$planId" });
+  const navigate = useNavigate();
   const [plan, setPlan] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
@@ -107,8 +108,11 @@ function PlanDetail() {
     });
     setAssigning(false);
     if (error) return toast.error(error.message);
-    toast.success("Workout assigned");
+    const clientName = clients.find((c) => c.client_id === clientId)?.full_name ?? "client";
+    toast.success(`Workout assigned to ${clientName} on ${scheduledDate}`);
     setClientId("");
+    setScheduledDate(new Date().toISOString().slice(0, 10));
+    navigate({ to: "/trainer/plans" });
   };
 
   return (
