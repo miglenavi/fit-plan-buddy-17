@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Dumbbell, ClipboardList, Calendar as CalIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/trainer/")({ component: () => <RoleGuard role="trainer"><AppShell><Dashboard /></AppShell></RoleGuard> });
+export const Route = createFileRoute("/trainer/")({
+  ssr: false, component: () => <RoleGuard role="trainer"><AppShell><Dashboard /></AppShell></RoleGuard> });
 
 function Dashboard() {
   const { fullName } = useAuth();

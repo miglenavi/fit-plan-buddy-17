@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Clock, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/client/history")({
+  ssr: false,
   component: () => <RoleGuard role="client"><AppShell><History /></AppShell></RoleGuard>,
 });
 

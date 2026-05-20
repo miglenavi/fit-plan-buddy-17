@@ -13,6 +13,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/exercises")({
+  ssr: false,
   component: () => <RoleGuard role="trainer"><AppShell><Exercises /></AppShell></RoleGuard>,
 });
 

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/client/workouts/$assignedId")({
+  ssr: false,
   component: () => <RoleGuard role="client"><AppShell><DoWorkout /></AppShell></RoleGuard>,
 });
 

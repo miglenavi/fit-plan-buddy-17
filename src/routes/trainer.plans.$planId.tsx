@@ -12,6 +12,7 @@ import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
+  ssr: false,
   component: () => <RoleGuard role="trainer"><AppShell><PlanDetail /></AppShell></RoleGuard>,
 });
 

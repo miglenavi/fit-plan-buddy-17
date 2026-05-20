@@ -11,7 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/auth")({ component: AuthPage });
+export const Route = createFileRoute("/auth")({
+  ssr: false, component: AuthPage });
 
 function AuthPage() {
   const { user, role, loading } = useAuth();
