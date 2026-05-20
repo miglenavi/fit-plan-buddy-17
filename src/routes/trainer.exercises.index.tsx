@@ -17,13 +17,16 @@ export const Route = createFileRoute("/trainer/exercises/")({
 
 function ExercisesList() {
   const [list, setList] = useState<any[]>([]);
+  const [uid, setUid] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [muscle, setMuscle] = useState("");
   const [desc, setDesc] = useState("");
 
   const load = async () => {
-    const { data } = await supabase.from("exercises").select("*").order("created_at", { ascending: false });
+    const { data: u } = await supabase.auth.getUser();
+    setUid(u.user?.id ?? null);
+    const { data } = await supabase.from("exercises").select("*").order("name");
     setList(data ?? []);
   };
   useEffect(() => { load(); }, []);
