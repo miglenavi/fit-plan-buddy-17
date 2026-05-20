@@ -108,8 +108,11 @@ function PlanDetail() {
     });
     setAssigning(false);
     if (error) return toast.error(error.message);
-    toast.success("Workout assigned");
+    const clientName = clients.find((c) => c.client_id === clientId)?.full_name ?? "client";
+    toast.success(`Workout assigned to ${clientName} on ${scheduledDate}`);
     setClientId("");
+    setScheduledDate(new Date().toISOString().slice(0, 10));
+    navigate({ to: "/trainer/plans" });
   };
 
   return (
