@@ -230,6 +230,25 @@ function DoWorkout() {
                       </div>
                     )}
 
+                    {p && (() => {
+                      const planReps = it.target_reps ?? 0;
+                      const lastReps = p.actual_reps ?? 0;
+                      const lastWt = p.actual_weight ?? 0;
+                      const hit = lastReps >= planReps;
+                      const lastStr = `${p.actual_sets ?? "?"} × ${lastReps}${lastWt ? ` @ ${lastWt}kg` : ""}`;
+                      return (
+                        <div className={`flex items-start gap-2 text-xs rounded-md px-3 py-2 ${hit ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700 dark:text-amber-400"}`}>
+                          <TrendingUp className="size-3.5 mt-0.5 shrink-0" />
+                          <div>
+                            Last time: <span className="font-semibold">{lastStr}</span>
+                            {hit
+                              ? ". Try to add reps or weight today."
+                              : ` (target was ${planReps}). Aim to finish all reps today.`}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     <div>
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Your log</Label>
                       <div className="grid grid-cols-3 gap-2 mt-2">
