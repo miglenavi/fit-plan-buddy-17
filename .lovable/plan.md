@@ -9,18 +9,21 @@ Switch progression from a trainer-side auto-fill (currently in plan editor) to a
 - Trainer just sets base sets/reps/(weight) like before.
 
 ### Client workout view (`src/routes/client.workouts.$assignedId.tsx`)
-For each exercise on the workout screen, look up that **client's most recent log for that exercise** (across all their previous assigned workouts) and show a small hint above the inputs:
+For each exercise on the workout screen, look up that **client's most recent log for that exercise** (across all their previous assigned workouts).
 
-- If a previous log exists and they hit/exceeded target last time:
+**Displayed target for today = max(plan target, client's last actual)** — per field (sets, reps, weight). So if the plan says 3×10 @ 10 kg but last time the client did 3×10 @ 12 kg, today's screen shows **3×10 @ 12 kg** as the target. The underlying plan record is not modified — this is a per-client display override computed on the fly.
+
+Hint shown above inputs:
+- Hit or exceeded target last time:
   > Last time: **3 × 10 @ 12 kg**. Try to add reps or weight today.
-- If they missed target last time:
-  > Last time: **3 × 8 @ 12 kg** (target was 10). Repeat the same and aim to finish all reps.
-- If no prior log: no hint (first time doing this exercise).
+- Missed target last time:
+  > Last time: **3 × 8 @ 12 kg** (target was 10). Aim to finish all reps today.
+- No prior log: no hint.
 
-The hint is informational only — no values are pre-filled into the input fields; client types their actual numbers as they do today.
+Inputs are not pre-filled; the client types actual numbers as they do today.
 
 ### After client logs the exercise
-When they save reps/weight, if they **matched or beat the target reps AND didn't increase weight or reps vs last time**, show a gentle toast/inline note:
+When they save reps/weight, if they **matched but didn't beat their last performance**, show a gentle toast:
 > Nice work. Next session, try one more rep or a bit more weight.
 
 This nudge fires once at save time and is purely informational.
