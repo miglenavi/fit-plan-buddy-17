@@ -87,15 +87,18 @@ function ExercisesList() {
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold truncate">{ex.name}</div>
                     {ex.muscle_group && <div className="text-xs text-muted-foreground mt-0.5">{ex.muscle_group}</div>}
+                    {!ex.trainer_id && <div className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">Built-in</div>}
                     {ex.description && <p className="text-sm mt-2 text-muted-foreground line-clamp-2">{ex.description}</p>}
                     <div className="flex gap-2 mt-2 text-muted-foreground">
                       {ex.image_url && <ImageIcon className="size-3.5" />}
                       {ex.video_url && <Video className="size-3.5" />}
                     </div>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={(e) => remove(e, ex.id)}>
-                    <Trash2 className="size-4 text-muted-foreground" />
-                  </Button>
+                  {ex.trainer_id === uid && (
+                    <Button size="icon" variant="ghost" onClick={(e) => remove(e, ex.id)}>
+                      <Trash2 className="size-4 text-muted-foreground" />
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
