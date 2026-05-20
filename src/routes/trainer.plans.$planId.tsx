@@ -45,9 +45,16 @@ function PlanDetail() {
       supabase.from("workout_plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("workout_plan_exercises").select("*, exercises(name, muscle_group)").eq("workout_plan_id", planId).order("order_index"),
       supabase.from("exercises").select("*").order("name"),
-      supabase.from("trainer_clients").select("client_id, profiles:client_id(full_name)").eq("trainer_id", uid ?? ""),
+      supabase.from("trainer_clients").select("client_id").eq("trainer_id", uid ?? ""),
     ]);
-    setPlan(p); setItems(it ?? []); setExercises(ex ?? []); setClients(tc ?? []);
+    let withNames: any[] = tc ?? [];
+    if (withNames.length) {
+      const ids = withNames.map((r) => r.client_id);
+      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+      const map = new Map((profs ?? []).map((p: any) => [p.id, p.full_name]));
+      withNames = withNames.map((r) => ({ ...r, full_name: map.get(r.client_id) ?? r.client_id }));
+    }
+    setPlan(p); setItems(it ?? []); setExercises(ex ?? []); setClients(withNames);
   };
   useEffect(() => { load(); }, [planId]);
 
