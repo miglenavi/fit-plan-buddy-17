@@ -18,19 +18,40 @@ function AuthPage() {
   const { user, role, loading } = useAuth();
   const nav = useNavigate();
 
+  // Detect invite/recovery flow from URL hash
+  const [isInvite, setIsInvite] = useState(false);
   useEffect(() => {
-    if (loading || !user) return;
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (hash.includes("type=invite") || hash.includes("type=recovery")) {
+      setIsInvite(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading || !user || isInvite) return;
     if (role === "super_admin") nav({ to: "/admin/applications" });
     else if (role === "trainer") nav({ to: "/trainer" });
     else if (role === "client") nav({ to: "/client" });
     else nav({ to: "/pending" });
-  }, [user, role, loading, nav]);
+  }, [user, role, loading, nav, isInvite]);
 
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [note, setNote] = useState("");
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password set! Welcome.");
+    setIsInvite(false);
+    window.location.hash = "";
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
