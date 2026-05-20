@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { clearMustChangePassword } from "@/lib/clients.functions";
 import { RoleGuard } from "@/components/RoleGuard";
 import { ClientShell } from "@/components/ClientShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
