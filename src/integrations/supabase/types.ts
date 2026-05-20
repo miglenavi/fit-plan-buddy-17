@@ -47,6 +47,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "assigned_workouts_client_profile_fk"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "assigned_workouts_workout_plan_id_fkey"
             columns: ["workout_plan_id"]
             isOneToOne: false
@@ -173,7 +180,15 @@ export type Database = {
           id?: string
           trainer_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trainer_clients_client_profile_fk"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
