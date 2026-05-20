@@ -22,7 +22,9 @@ import { Route as ClientHistoryRouteImport } from './routes/client.history'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as TrainerPlansIndexRouteImport } from './routes/trainer.plans.index'
+import { Route as TrainerExercisesIndexRouteImport } from './routes/trainer.exercises.index'
 import { Route as TrainerPlansPlanIdRouteImport } from './routes/trainer.plans.$planId'
+import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer.exercises.$exerciseId'
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
 import { Route as ClientWorkoutsAssignedIdRouteImport } from './routes/client.workouts.$assignedId'
 
@@ -91,11 +93,22 @@ const TrainerPlansIndexRoute = TrainerPlansIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TrainerPlansRoute,
 } as any)
+const TrainerExercisesIndexRoute = TrainerExercisesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TrainerExercisesRoute,
+} as any)
 const TrainerPlansPlanIdRoute = TrainerPlansPlanIdRouteImport.update({
   id: '/$planId',
   path: '/$planId',
   getParentRoute: () => TrainerPlansRoute,
 } as any)
+const TrainerExercisesExerciseIdRoute =
+  TrainerExercisesExerciseIdRouteImport.update({
+    id: '/$exerciseId',
+    path: '/$exerciseId',
+    getParentRoute: () => TrainerExercisesRoute,
+  } as any)
 const TrainerClientsClientIdRoute = TrainerClientsClientIdRouteImport.update({
   id: '/$clientId',
   path: '/$clientId',
@@ -116,14 +129,16 @@ export interface FileRoutesByFullPath {
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
-  '/trainer/exercises': typeof TrainerExercisesRoute
+  '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
   '/trainer/schedule': typeof TrainerScheduleRoute
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/client/workouts/$assignedId': typeof ClientWorkoutsAssignedIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
+  '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
+  '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
 }
 export interface FileRoutesByTo {
@@ -134,13 +149,14 @@ export interface FileRoutesByTo {
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
-  '/trainer/exercises': typeof TrainerExercisesRoute
   '/trainer/schedule': typeof TrainerScheduleRoute
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
   '/client/workouts/$assignedId': typeof ClientWorkoutsAssignedIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
+  '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
+  '/trainer/exercises': typeof TrainerExercisesIndexRoute
   '/trainer/plans': typeof TrainerPlansIndexRoute
 }
 export interface FileRoutesById {
@@ -152,14 +168,16 @@ export interface FileRoutesById {
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
-  '/trainer/exercises': typeof TrainerExercisesRoute
+  '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
   '/trainer/schedule': typeof TrainerScheduleRoute
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/client/workouts/$assignedId': typeof ClientWorkoutsAssignedIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
+  '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
+  '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
 }
 export interface FileRouteTypes {
@@ -179,7 +197,9 @@ export interface FileRouteTypes {
     | '/trainer/'
     | '/client/workouts/$assignedId'
     | '/trainer/clients/$clientId'
+    | '/trainer/exercises/$exerciseId'
     | '/trainer/plans/$planId'
+    | '/trainer/exercises/'
     | '/trainer/plans/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -190,13 +210,14 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/client/history'
     | '/trainer/clients'
-    | '/trainer/exercises'
     | '/trainer/schedule'
     | '/client'
     | '/trainer'
     | '/client/workouts/$assignedId'
     | '/trainer/clients/$clientId'
+    | '/trainer/exercises/$exerciseId'
     | '/trainer/plans/$planId'
+    | '/trainer/exercises'
     | '/trainer/plans'
   id:
     | '__root__'
@@ -214,7 +235,9 @@ export interface FileRouteTypes {
     | '/trainer/'
     | '/client/workouts/$assignedId'
     | '/trainer/clients/$clientId'
+    | '/trainer/exercises/$exerciseId'
     | '/trainer/plans/$planId'
+    | '/trainer/exercises/'
     | '/trainer/plans/'
   fileRoutesById: FileRoutesById
 }
@@ -226,7 +249,7 @@ export interface RootRouteChildren {
   AdminTrainersRoute: typeof AdminTrainersRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
   TrainerClientsRoute: typeof TrainerClientsRouteWithChildren
-  TrainerExercisesRoute: typeof TrainerExercisesRoute
+  TrainerExercisesRoute: typeof TrainerExercisesRouteWithChildren
   TrainerPlansRoute: typeof TrainerPlansRouteWithChildren
   TrainerScheduleRoute: typeof TrainerScheduleRoute
   ClientIndexRoute: typeof ClientIndexRoute
@@ -327,12 +350,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainerPlansIndexRouteImport
       parentRoute: typeof TrainerPlansRoute
     }
+    '/trainer/exercises/': {
+      id: '/trainer/exercises/'
+      path: '/'
+      fullPath: '/trainer/exercises/'
+      preLoaderRoute: typeof TrainerExercisesIndexRouteImport
+      parentRoute: typeof TrainerExercisesRoute
+    }
     '/trainer/plans/$planId': {
       id: '/trainer/plans/$planId'
       path: '/$planId'
       fullPath: '/trainer/plans/$planId'
       preLoaderRoute: typeof TrainerPlansPlanIdRouteImport
       parentRoute: typeof TrainerPlansRoute
+    }
+    '/trainer/exercises/$exerciseId': {
+      id: '/trainer/exercises/$exerciseId'
+      path: '/$exerciseId'
+      fullPath: '/trainer/exercises/$exerciseId'
+      preLoaderRoute: typeof TrainerExercisesExerciseIdRouteImport
+      parentRoute: typeof TrainerExercisesRoute
     }
     '/trainer/clients/$clientId': {
       id: '/trainer/clients/$clientId'
@@ -363,6 +400,19 @@ const TrainerClientsRouteWithChildren = TrainerClientsRoute._addFileChildren(
   TrainerClientsRouteChildren,
 )
 
+interface TrainerExercisesRouteChildren {
+  TrainerExercisesExerciseIdRoute: typeof TrainerExercisesExerciseIdRoute
+  TrainerExercisesIndexRoute: typeof TrainerExercisesIndexRoute
+}
+
+const TrainerExercisesRouteChildren: TrainerExercisesRouteChildren = {
+  TrainerExercisesExerciseIdRoute: TrainerExercisesExerciseIdRoute,
+  TrainerExercisesIndexRoute: TrainerExercisesIndexRoute,
+}
+
+const TrainerExercisesRouteWithChildren =
+  TrainerExercisesRoute._addFileChildren(TrainerExercisesRouteChildren)
+
 interface TrainerPlansRouteChildren {
   TrainerPlansPlanIdRoute: typeof TrainerPlansPlanIdRoute
   TrainerPlansIndexRoute: typeof TrainerPlansIndexRoute
@@ -385,7 +435,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminTrainersRoute: AdminTrainersRoute,
   ClientHistoryRoute: ClientHistoryRoute,
   TrainerClientsRoute: TrainerClientsRouteWithChildren,
-  TrainerExercisesRoute: TrainerExercisesRoute,
+  TrainerExercisesRoute: TrainerExercisesRouteWithChildren,
   TrainerPlansRoute: TrainerPlansRouteWithChildren,
   TrainerScheduleRoute: TrainerScheduleRoute,
   ClientIndexRoute: ClientIndexRoute,
@@ -395,3 +445,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
