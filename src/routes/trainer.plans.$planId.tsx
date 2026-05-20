@@ -18,6 +18,7 @@ export const Route = createFileRoute("/trainer/plans/$planId")({
 
 function PlanDetail() {
   const { planId } = useParams({ from: "/trainer/plans/$planId" });
+  const navigate = useNavigate();
   const [plan, setPlan] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
