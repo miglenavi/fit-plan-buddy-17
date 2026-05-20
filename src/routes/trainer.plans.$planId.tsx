@@ -54,7 +54,7 @@ function PlanDetail() {
       order_index: items.length,
     });
     if (error) toast.error(error.message);
-    else { setExId(""); setWeight(""); setSuggestion(null); toast.success("Added"); load(); }
+    else { setExId(""); setWeight(""); toast.success("Added"); load(); }
   };
 
   const remove = async (id: string) => {
