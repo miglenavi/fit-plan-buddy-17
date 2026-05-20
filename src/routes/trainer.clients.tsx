@@ -21,7 +21,7 @@ function Clients() {
   const load = async () => {
     const { data } = await supabase
       .from("trainer_clients")
-      .select("client_id, created_at, profiles!trainer_clients_client_id_fkey(id, full_name)")
+      .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
       .order("created_at", { ascending: false });
     setClients(data ?? []);
   };

@@ -14,7 +14,7 @@ function Schedule() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("assigned_workouts")
-        .select("id, scheduled_date, status, workout_plans(name), profiles!assigned_workouts_client_id_fkey(full_name)")
+        .select("id, scheduled_date, status, workout_plans(name), profiles!assigned_workouts_client_profile_fk(full_name)")
         .gte("scheduled_date", new Date(Date.now() - 30 * 86400e3).toISOString().slice(0, 10))
         .order("scheduled_date", { ascending: false });
       setItems(data ?? []);

@@ -22,7 +22,7 @@ function Dashboard() {
         supabase.from("exercises").select("id", { count: "exact", head: true }),
         supabase.from("workout_plans").select("id", { count: "exact", head: true }),
         supabase.from("assigned_workouts")
-          .select("id, status, client_id, workout_plans(name), profiles!assigned_workouts_client_id_fkey(full_name)")
+          .select("id, status, client_id, workout_plans(name), profiles!assigned_workouts_client_profile_fk(full_name)")
           .eq("scheduled_date", today),
       ]);
       setStats({ clients: c.count ?? 0, exercises: e.count ?? 0, plans: p.count ?? 0, today: t.data?.length ?? 0 });
