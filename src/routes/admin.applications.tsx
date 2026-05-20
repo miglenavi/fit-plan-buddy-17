@@ -139,3 +139,61 @@ function Applications() {
     </div>
   );
 }
+
+function InviteTrainerDialog({ onInvited }: { onInvited: () => void | Promise<void> }) {
+  const invite = useServerFn(inviteTrainer);
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    if (!email || !fullName) {
+      toast.error("Name and email are required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await invite({ data: { email: email.trim(), fullName: fullName.trim() } });
+      toast.success(`Invitation sent to ${email}`);
+      setOpen(false);
+      setEmail("");
+      setFullName("");
+      await onInvited();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to send invitation");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">Invite trainer</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Invite a trainer</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-name">Full name</Label>
+            <Input id="invite-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-email">Email</Label>
+            <Input id="invite-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            They'll receive an email invitation. Once they sign up, they'll be granted the trainer role automatically.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
+          <Button onClick={submit} disabled={submitting}>{submitting ? "Sending…" : "Send invitation"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
