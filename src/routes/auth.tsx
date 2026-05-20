@@ -14,19 +14,17 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   ssr: false, component: AuthPage });
 
+// Capture the URL hash synchronously at module load — Supabase's client
+// auto-clears the hash once it detects the invite/recovery token.
+const initialHash = typeof window !== "undefined" ? window.location.hash : "";
+const initialIsInvite =
+  initialHash.includes("type=invite") || initialHash.includes("type=recovery");
+
 function AuthPage() {
   const { user, role, loading } = useAuth();
   const nav = useNavigate();
 
-  // Detect invite/recovery flow from URL hash
-  const [isInvite, setIsInvite] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hash = window.location.hash;
-    if (hash.includes("type=invite") || hash.includes("type=recovery")) {
-      setIsInvite(true);
-    }
-  }, []);
+  const [isInvite, setIsInvite] = useState(initialIsInvite);
 
   useEffect(() => {
     if (loading || !user || isInvite) return;
