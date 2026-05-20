@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Swords, Users, ClipboardList, Calendar, History, LogOut, Home, Dumbbell } from "lucide-react";
+import { Swords, Users, ClipboardList, Calendar, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck } from "lucide-react";
 import type { ReactNode } from "react";
 
 const trainerNav = [
@@ -17,11 +17,21 @@ const clientNav = [
   { to: "/client/history", label: "History", icon: History },
 ];
 
+const adminNav = [
+  { to: "/admin/applications", label: "Applications", icon: UserCheck },
+  { to: "/admin/trainers", label: "Trainers", icon: ShieldCheck },
+];
+
 export function AppShell({ children }: { children: ReactNode }) {
-  const { role, fullName, signOut, user } = useAuth();
+  const { role, isSuperAdmin, isTrainer, isClient, fullName, signOut, user } = useAuth();
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const items = role === "trainer" ? trainerNav : clientNav;
+
+  const items = [
+    ...(isSuperAdmin ? adminNav : []),
+    ...(isTrainer ? trainerNav : []),
+    ...(isClient ? clientNav : []),
+  ];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -32,12 +42,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div>
             <div className="font-bold text-lg">ValhallaFit</div>
-            <div className="text-xs opacity-70 capitalize">{role ?? "..."}</div>
+            <div className="text-xs opacity-70 capitalize">{role?.replace("_", " ") ?? "..."}</div>
           </div>
         </div>
         <nav className="hidden md:flex flex-col p-3 gap-1 flex-1">
           {items.map((item) => {
-            const active = path === item.to || (item.to !== "/trainer" && item.to !== "/client" && path.startsWith(item.to));
+            const active = path === item.to || (!["/trainer", "/client"].includes(item.to) && path.startsWith(item.to));
             const Icon = item.icon;
             return (
               <Link
@@ -69,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-sidebar text-sidebar-foreground border-t border-sidebar-border flex justify-around z-50">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-sidebar text-sidebar-foreground border-t border-sidebar-border flex justify-around z-50 overflow-x-auto">
         {items.map((item) => {
           const active = path === item.to;
           const Icon = item.icon;

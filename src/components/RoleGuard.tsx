@@ -1,11 +1,35 @@
-import { useAuth } from "@/lib/auth";
+import { useAuth, type AppRole } from "@/lib/auth";
 import { Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-export function RoleGuard({ role, children }: { role: "trainer" | "client"; children: ReactNode }) {
-  const { user, role: r, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+function defaultRoute(role: AppRole | null): string {
+  if (role === "super_admin") return "/admin/applications";
+  if (role === "trainer") return "/trainer";
+  if (role === "client") return "/client";
+  return "/pending";
+}
+
+export function RoleGuard({
+  role,
+  anyOf,
+  children,
+}: {
+  role?: AppRole;
+  anyOf?: AppRole[];
+  children: ReactNode;
+}) {
+  const { user, roles, role: primary, loading } = useAuth();
+  if (loading)
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   if (!user) return <Navigate to="/auth" />;
-  if (r && r !== role) return <Navigate to={r === "trainer" ? "/trainer" : "/client"} />;
+
+  const allowed = anyOf ?? (role ? [role] : []);
+  // super_admin implicitly has trainer access
+  const effective = new Set<AppRole>(roles);
+  if (effective.has("super_admin")) effective.add("trainer");
+
+  if (allowed.length > 0 && !allowed.some((r) => effective.has(r))) {
+    return <Navigate to={defaultRoute(primary)} />;
+  }
   return <>{children}</>;
 }
