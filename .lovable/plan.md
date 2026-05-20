@@ -1,47 +1,45 @@
-# Weekly programs + progression + trainer progress view
+# Per-client progression prompts
 
-Shift from one-off date-based workout assignments to a weekly recurring program with built-in progression and trainer-side analytics.
+Switch progression from a trainer-side auto-fill (currently in plan editor) to a **client-side prompt** scoped to each client + exercise. Plans stay generic templates with base targets; the encouragement to push harder is shown to the client during their workout.
 
-## 1. Weekly programs (replaces single-date assignments)
+## What changes
 
-A trainer assigns a **program** to a client: a set of workout plans the client owes each week, for a fixed number of weeks. The client picks any day in the week to do each one.
+### Trainer plan editor (`src/routes/trainer.plans.$planId.tsx`)
+- Remove the "Last: 3×11 → suggested progression: 3×12" banner and auto-fill on exercise pick. Plans are templates and have no client context.
+- Trainer just sets base sets/reps/(weight) like before.
 
-- New table `client_programs`: `trainer_id`, `client_id`, `start_date`, `end_date`, `status` (active/ended).
-- New table `program_workouts`: `program_id`, `workout_plan_id`, `slot` (1..N) — defines "this program contains 3 workouts per week: A, B, C".
-- Keep `assigned_workouts` but repurpose it as the per-week instance: one row per (program_workout × week). Add `program_id`, `week_start_date` (Monday). `scheduled_date` becomes nullable (the day the client actually did it).
-- Background-fill on read: when a client loads the week, ensure rows exist for the current week's slots (lazy materialization — no cron needed).
+### Client workout view (`src/routes/client.workouts.$assignedId.tsx`)
+For each exercise on the workout screen, look up that **client's most recent log for that exercise** (across all their previous assigned workouts) and show a small hint above the inputs:
 
-**Trainer UI** (`trainer.clients.$clientId.tsx`): "Assign program" dialog — pick workout plans (N per week), pick start + end date. Replaces the single-date assign dialog.
+- If a previous log exists and they hit/exceeded target last time:
+  > Last time: **3 × 10 @ 12 kg**. Try to add reps or weight today.
+- If they missed target last time:
+  > Last time: **3 × 8 @ 12 kg** (target was 10). Repeat the same and aim to finish all reps.
+- If no prior log: no hint (first time doing this exercise).
 
-**Client UI** (`client.index.tsx`): show "This week" — all N workouts for the current week, each as Start/Resume/Done. Show progress like `2 / 3 done this week`. Below: next week preview.
+The hint is informational only — no values are pre-filled into the input fields; client types their actual numbers as they do today.
 
-## 2. Progression auto-suggest
+### After client logs the exercise
+When they save reps/weight, if they **matched or beat the target reps AND didn't increase weight or reps vs last time**, show a gentle toast/inline note:
+> Nice work. Next session, try one more rep or a bit more weight.
 
-When adding/editing an exercise in a workout plan, pre-fill targets from the last logged performance for this (client-agnostic for now — based on the plan's own history) +1 rep or +2.5 kg.
+This nudge fires once at save time and is purely informational.
 
-- New view/helper `last_exercise_log(exercise_id)` — returns most recent `actual_reps` / `actual_weight` across all logs.
-- In `trainer.plans.$planId.tsx`, when an exercise is picked in the add form, fetch its last log and pre-fill sets/reps/weight as `last + suggested bump`. Trainer can override before saving.
-- Small "Last time: 3×10 @ 40kg → suggested 3×10 @ 42.5kg" hint under the inputs.
+### Trainer progress view (`src/routes/trainer.clients.$clientId.tsx`)
+Already shows per-exercise progression sparklines from `exercise_logs`. No changes needed — it naturally reflects whether the client is pushing harder over time.
 
-## 3. Trainer progress view (on client detail page)
+## Data model
 
-Replace the flat history list with two sections:
-
-**a) Weekly completion grid** — last 8 weeks as columns, one row per program workout slot. Each cell shows done / missed / pending. Quick visual of consistency.
-
-**b) Per-exercise progression** — for each exercise the client has done, a sparkline of weight (or reps if bodyweight) over time. Flag regressions in red, stagnation (no improvement in 30 days) in amber.
-
-Both built from `exercise_logs` joined to `assigned_workouts` filtered by `client_id`. Recharts for the sparklines (already a common shadcn add).
-
-## Out of scope
-
-- Notifications / reminders.
-- Rest-day scheduling, deload weeks.
-- Per-client exercise progression suggestions (uses last-logged across the plan for now).
-- Editing a program after it starts (trainer can end + create new).
+No schema changes. Everything reads from existing `exercise_logs` joined to `assigned_workouts` filtered by `client_id` + `exercise_id`, ordered by `assigned_workouts.week_start_date DESC, completed_at DESC`, limit 1.
 
 ## Technical notes
 
-- Migration: create `client_programs`, `program_workouts`; alter `assigned_workouts` to add `program_id uuid`, `week_start_date date`, make `scheduled_date` nullable. RLS mirrors existing trainer/client policies.
-- Lazy week-materialization runs in a server function called by the client's "This week" loader so RLS stays simple.
-- Old single-date assignments stay readable (program_id null) so existing data isn't lost.
+- New helper `getLastClientExerciseLog(clientId, exerciseId)` — server fn returning `{ actual_sets, actual_reps, actual_weight, target_reps, target_weight }` or null.
+- Batch-fetch all hints for a workout in one query (one round-trip per workout view, not one per exercise).
+- Remove the `last_exercise_log`-style global lookup added previously to the plan editor.
+
+## Out of scope
+
+- Auto-incrementing target values
+- Trainer-defined progression rules per exercise
+- Deload weeks / periodization
