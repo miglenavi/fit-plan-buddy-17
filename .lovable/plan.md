@@ -1,48 +1,32 @@
-# Per-client progression prompts
+# Auto-save exercise detail page
 
-Switch progression from a trainer-side auto-fill (currently in plan editor) to a **client-side prompt** scoped to each client + exercise. Plans stay generic templates with base targets; the encouragement to push harder is shown to the client during their workout.
+Replace the manual "Save changes" button on the trainer exercise detail page with debounced auto-save, and add a small status indicator so the trainer knows their edits are persisted.
 
-## What changes
+## Behavior
 
-### Trainer plan editor (`src/routes/trainer.plans.$planId.tsx`)
-- Remove the "Last: 3×11 → suggested progression: 3×12" banner and auto-fill on exercise pick. Plans are templates and have no client context.
-- Trainer just sets base sets/reps/(weight) like before.
+On `src/routes/trainer.exercises.$exerciseId.tsx`:
 
-### Client workout view (`src/routes/client.workouts.$assignedId.tsx`)
-For each exercise on the workout screen, look up that **client's most recent log for that exercise** (across all their previous assigned workouts).
+- Remove the "Save changes" button entirely.
+- Watch the editable fields: **name**, **category**, **description**, **video URL**.
+- ~800ms after the user stops editing any of these, write the change to the `exercises` row.
+- Show a small inline status next to the page title:
+  - "Saving…" while a write is in flight
+  - "Saved" (with a subtle check, fades after ~2s) after success
+  - "Couldn't save — retry" on failure, with a manual retry link
+- Skip the first save on initial load (don't write back the values we just fetched).
+- Don't auto-save an empty name (name is required) — show "Name is required" in the status area instead.
 
-**Displayed target for today = max(plan target, client's last actual)** — per field (sets, reps, weight). So if the plan says 3×10 @ 10 kg but last time the client did 3×10 @ 12 kg, today's screen shows **3×10 @ 12 kg** as the target. The underlying plan record is not modified — this is a per-client display override computed on the fly.
+Image and video file uploads already save immediately on upload — that behavior stays.
 
-Hint shown above inputs:
-- Hit or exceeded target last time:
-  > Last time: **3 × 10 @ 12 kg**. Try to add reps or weight today.
-- Missed target last time:
-  > Last time: **3 × 8 @ 12 kg** (target was 10). Aim to finish all reps today.
-- No prior log: no hint.
+## Notes
 
-Inputs are not pre-filled; the client types actual numbers as they do today.
+- Auto-save makes a top-of-page Save button unnecessary, so we don't move it — we drop it.
+- The status indicator goes in the existing header row, to the right of the exercise name (left of the Delete button).
 
-### After client logs the exercise
-When they save reps/weight, if they **matched but didn't beat their last performance**, show a gentle toast:
-> Nice work. Next session, try one more rep or a bit more weight.
+## Technical details
 
-This nudge fires once at save time and is purely informational.
-
-### Trainer progress view (`src/routes/trainer.clients.$clientId.tsx`)
-Already shows per-exercise progression sparklines from `exercise_logs`. No changes needed — it naturally reflects whether the client is pushing harder over time.
-
-## Data model
-
-No schema changes. Everything reads from existing `exercise_logs` joined to `assigned_workouts` filtered by `client_id` + `exercise_id`, ordered by `assigned_workouts.week_start_date DESC, completed_at DESC`, limit 1.
-
-## Technical notes
-
-- New helper `getLastClientExerciseLog(clientId, exerciseId)` — server fn returning `{ actual_sets, actual_reps, actual_weight, target_reps, target_weight }` or null.
-- Batch-fetch all hints for a workout in one query (one round-trip per workout view, not one per exercise).
-- Remove the `last_exercise_log`-style global lookup added previously to the plan editor.
-
-## Out of scope
-
-- Auto-incrementing target values
-- Trainer-defined progression rules per exercise
-- Deload weeks / periodization
+- Use a `useEffect` with a `setTimeout` keyed off the four watched values; clear on each change for debounce.
+- Track a `hasLoaded` ref so the effect doesn't fire on hydration.
+- Single `update` call per debounce window with all four fields.
+- Status state: `"idle" | "saving" | "saved" | "error"`.
+- Keep `load()` for the initial fetch; no need to re-fetch after auto-save since we already hold the latest values locally.
