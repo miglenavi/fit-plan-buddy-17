@@ -40,7 +40,7 @@ function DoWorkout() {
     if (!a) return;
     setAssigned(a);
     const { data: items } = await supabase.from("workout_plan_exercises")
-      .select("*, exercises(name, muscle_group, description, image_url, video_url)")
+      .select("*, exercises(name, description, image_url, video_url)")
       .eq("workout_plan_id", a.workout_plan_id).order("order_index");
     setPlanItems(items ?? []);
     const { data: existing } = await supabase.from("exercise_logs").select("*").eq("assigned_workout_id", assignedId);
@@ -186,7 +186,7 @@ function DoWorkout() {
                     <div className="text-xs text-muted-foreground">
                       {it.target_sets} × {dispReps}{showWeight ? ` @ ${showWeight}kg` : ""}
                       {bumped ? " ↑" : ""}
-                      {ex.muscle_group ? ` · ${ex.muscle_group}` : ""}
+                      
                     </div>
                   </div>
                   {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}

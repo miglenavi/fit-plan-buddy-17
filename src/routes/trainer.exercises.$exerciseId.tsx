@@ -24,7 +24,7 @@ function ExerciseDetail() {
   const [cats, setCats] = useState<Category[]>([]);
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<string>("none");
-  const [muscle, setMuscle] = useState("");
+  
   const [desc, setDesc] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -40,7 +40,7 @@ function ExerciseDetail() {
     if (!data) return;
     setEx(data);
     setName(data.name);
-    setMuscle(data.muscle_group ?? "");
+    
     setDesc(data.description ?? "");
     setVideoUrl(data.video_url ?? "");
     setCategoryId((data as any).category_id ?? "none");
@@ -52,7 +52,7 @@ function ExerciseDetail() {
     e.preventDefault();
     setSaving(true);
     const { error } = await supabase.from("exercises").update({
-      name, muscle_group: muscle || null, description: desc || null, video_url: videoUrl || null,
+      name, description: desc || null, video_url: videoUrl || null,
       category_id: categoryId === "none" ? null : categoryId,
     } as any).eq("id", exerciseId);
     setSaving(false);
@@ -124,7 +124,7 @@ function ExerciseDetail() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{ex.name}</h1>
-          {ex.muscle_group && <p className="text-muted-foreground mt-1">{ex.muscle_group}</p>}
+          {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <p className="text-muted-foreground mt-1">{cn}</p> : null; })()}
         </div>
         <Button variant="outline" size="sm" onClick={remove}>
           <Trash2 className="size-4 mr-1" /> Delete
@@ -208,7 +208,7 @@ function ExerciseDetail() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>Muscle group (optional detail)</Label><Input value={muscle} onChange={(e) => setMuscle(e.target.value)} placeholder="e.g. Upper chest" /></div>
+            
             <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
             <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
           </form>

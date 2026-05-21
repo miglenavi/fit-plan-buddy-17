@@ -29,7 +29,7 @@ function PlanDetail() {
   // New-exercise dialog
   const [newExOpen, setNewExOpen] = useState(false);
   const [nxName, setNxName] = useState("");
-  const [nxMuscle, setNxMuscle] = useState("");
+  
   const [nxDesc, setNxDesc] = useState("");
   const [nxCategoryId, setNxCategoryId] = useState<string>("none");
   const [cats, setCats] = useState<{ id: string; name: string }[]>([]);
@@ -37,7 +37,7 @@ function PlanDetail() {
   const load = async () => {
     const [{ data: p }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
       supabase.from("workout_plans").select("*").eq("id", planId).maybeSingle(),
-      supabase.from("workout_plan_exercises").select("*, exercises(name, muscle_group, category_id)").eq("workout_plan_id", planId).order("order_index"),
+      supabase.from("workout_plan_exercises").select("*, exercises(name, category_id)").eq("workout_plan_id", planId).order("order_index"),
       supabase.from("exercises").select("*").order("name"),
       supabase.from("exercise_categories" as any).select("id, name").order("name"),
     ]);
@@ -72,13 +72,12 @@ function PlanDetail() {
     const { data, error } = await supabase.from("exercises").insert({
       trainer_id: u.user!.id,
       name: nxName,
-      muscle_group: nxMuscle || null,
       description: nxDesc || null,
       category_id: nxCategoryId === "none" ? null : nxCategoryId,
     } as any).select("id").single();
     if (error) return toast.error(error.message);
     toast.success("Exercise created");
-    setNxName(""); setNxMuscle(""); setNxDesc(""); setNxCategoryId("none"); setNewExOpen(false);
+    setNxName(""); setNxDesc(""); setNxCategoryId("none"); setNewExOpen(false);
     await load();
     if (data?.id) setExId(data.id);
   };
@@ -118,7 +117,7 @@ function PlanDetail() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2"><Label>Muscle group (optional detail)</Label><Input value={nxMuscle} onChange={(e) => setNxMuscle(e.target.value)} placeholder="e.g. Upper chest" /></div>
+                  
                   <div className="space-y-2"><Label>Description</Label><Textarea value={nxDesc} onChange={(e) => setNxDesc(e.target.value)} /></div>
                   <Button type="submit" className="w-full">Save</Button>
                 </form>
@@ -150,7 +149,7 @@ function PlanDetail() {
                         <SelectLabel>{g.name}</SelectLabel>
                         {g.items.map((e) => (
                           <SelectItem key={e.id} value={e.id}>
-                            {e.name}{e.muscle_group ? ` — ${e.muscle_group}` : ""}
+                            {e.name}
                           </SelectItem>
                         ))}
                       </SelectGroup>

@@ -214,7 +214,6 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
-          muscle_group: string | null
           name: string
           trainer_id: string | null
           video_url: string | null
@@ -225,7 +224,6 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
-          muscle_group?: string | null
           name: string
           trainer_id?: string | null
           video_url?: string | null
@@ -236,7 +234,6 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
-          muscle_group?: string | null
           name?: string
           trainer_id?: string | null
           video_url?: string | null
