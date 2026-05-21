@@ -25,7 +25,7 @@ function ExercisesList() {
   const [uid, setUid] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [muscle, setMuscle] = useState("");
+  
   const [desc, setDesc] = useState("");
   const [categoryId, setCategoryId] = useState<string>("none");
   const [filter, setFilter] = useState<string>("all");
@@ -48,14 +48,13 @@ function ExercisesList() {
     const { error } = await supabase.from("exercises").insert({
       trainer_id: u.user!.id,
       name,
-      muscle_group: muscle || null,
       description: desc || null,
       category_id: categoryId === "none" ? null : categoryId,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Exercise added");
-      setName(""); setMuscle(""); setDesc(""); setCategoryId("none"); setOpen(false); load();
+      setName(""); setDesc(""); setCategoryId("none"); setOpen(false); load();
     }
   };
 
@@ -105,7 +104,7 @@ function ExercisesList() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label>Muscle group (optional detail)</Label><Input value={muscle} onChange={(e) => setMuscle(e.target.value)} placeholder="e.g. Upper chest" /></div>
+              
               <div className="space-y-2"><Label>Description</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
               <Button type="submit" className="w-full">Save</Button>
             </form>
@@ -158,7 +157,7 @@ function ExercisesList() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold truncate">{ex.name}</div>
-                        {ex.muscle_group && <div className="text-xs text-muted-foreground mt-0.5">{ex.muscle_group}</div>}
+                        {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <div className="text-xs text-muted-foreground mt-0.5">{cn}</div> : null; })()}
                         {!ex.trainer_id && <Badge variant="secondary" className="mt-1 text-[10px]">Built-in</Badge>}
                         {ex.description && <p className="text-sm mt-2 text-muted-foreground line-clamp-2">{ex.description}</p>}
                         <div className="flex gap-2 mt-2 text-muted-foreground">
