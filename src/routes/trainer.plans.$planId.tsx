@@ -108,7 +108,17 @@ function PlanDetail() {
                 <DialogHeader><DialogTitle>Create exercise</DialogTitle></DialogHeader>
                 <form onSubmit={createExercise} className="space-y-4">
                   <div className="space-y-2"><Label>Name</Label><Input required value={nxName} onChange={(e) => setNxName(e.target.value)} /></div>
-                  <div className="space-y-2"><Label>Muscle group</Label><Input value={nxMuscle} onChange={(e) => setNxMuscle(e.target.value)} placeholder="Chest, Back, Legs..." /></div>
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select value={nxCategoryId} onValueChange={setNxCategoryId}>
+                      <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Uncategorized</SelectItem>
+                        {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2"><Label>Muscle group (optional detail)</Label><Input value={nxMuscle} onChange={(e) => setNxMuscle(e.target.value)} placeholder="e.g. Upper chest" /></div>
                   <div className="space-y-2"><Label>Description</Label><Textarea value={nxDesc} onChange={(e) => setNxDesc(e.target.value)} /></div>
                   <Button type="submit" className="w-full">Save</Button>
                 </form>
@@ -122,7 +132,31 @@ function PlanDetail() {
               <Label>Exercise</Label>
               <Select value={exId} onValueChange={setExId} required>
                 <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
-                <SelectContent>{exercises.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}{e.muscle_group ? ` — ${e.muscle_group}` : ""}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {(() => {
+                    const byCat = new Map<string, any[]>();
+                    for (const e of exercises) {
+                      const key = (e as any).category_id ?? "__none__";
+                      if (!byCat.has(key)) byCat.set(key, []);
+                      byCat.get(key)!.push(e);
+                    }
+                    const groups = Array.from(byCat.entries()).map(([id, items]) => ({
+                      id,
+                      name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
+                      items,
+                    })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
+                    return groups.map((g) => (
+                      <SelectGroup key={g.id}>
+                        <SelectLabel>{g.name}</SelectLabel>
+                        {g.items.map((e) => (
+                          <SelectItem key={e.id} value={e.id}>
+                            {e.name}{e.muscle_group ? ` — ${e.muscle_group}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ));
+                  })()}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
