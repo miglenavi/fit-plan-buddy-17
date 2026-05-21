@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Upload, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,11 +15,15 @@ export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
   component: ExerciseDetail,
 });
 
+type Category = { id: string; name: string };
+
 function ExerciseDetail() {
   const { exerciseId } = useParams({ from: "/trainer/exercises/$exerciseId" });
   const navigate = useNavigate();
   const [ex, setEx] = useState<any>(null);
+  const [cats, setCats] = useState<Category[]>([]);
   const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("none");
   const [muscle, setMuscle] = useState("");
   const [desc, setDesc] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -27,7 +32,10 @@ function ExerciseDetail() {
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const { data, error } = await supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle();
+    const [{ data, error }, { data: c }] = await Promise.all([
+      supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle(),
+      supabase.from("exercise_categories" as any).select("id, name").order("name"),
+    ]);
     if (error) { toast.error(error.message); return; }
     if (!data) return;
     setEx(data);
@@ -35,6 +43,8 @@ function ExerciseDetail() {
     setMuscle(data.muscle_group ?? "");
     setDesc(data.description ?? "");
     setVideoUrl(data.video_url ?? "");
+    setCategoryId((data as any).category_id ?? "none");
+    setCats(((c as any) ?? []) as Category[]);
   };
   useEffect(() => { load(); }, [exerciseId]);
 
@@ -43,7 +53,8 @@ function ExerciseDetail() {
     setSaving(true);
     const { error } = await supabase.from("exercises").update({
       name, muscle_group: muscle || null, description: desc || null, video_url: videoUrl || null,
-    }).eq("id", exerciseId);
+      category_id: categoryId === "none" ? null : categoryId,
+    } as any).eq("id", exerciseId);
     setSaving(false);
     if (error) toast.error(error.message);
     else { toast.success("Saved"); load(); }
@@ -187,7 +198,17 @@ function ExerciseDetail() {
         <CardContent>
           <form onSubmit={save} className="space-y-4">
             <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Muscle group</Label><Input value={muscle} onChange={(e) => setMuscle(e.target.value)} placeholder="Chest, Back, Legs..." /></div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Uncategorized</SelectItem>
+                  {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Muscle group (optional detail)</Label><Input value={muscle} onChange={(e) => setMuscle(e.target.value)} placeholder="e.g. Upper chest" /></div>
             <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
             <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
           </form>

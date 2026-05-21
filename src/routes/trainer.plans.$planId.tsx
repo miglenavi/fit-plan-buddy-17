@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Trash2, Plus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,14 +31,18 @@ function PlanDetail() {
   const [nxName, setNxName] = useState("");
   const [nxMuscle, setNxMuscle] = useState("");
   const [nxDesc, setNxDesc] = useState("");
+  const [nxCategoryId, setNxCategoryId] = useState<string>("none");
+  const [cats, setCats] = useState<{ id: string; name: string }[]>([]);
 
   const load = async () => {
-    const [{ data: p }, { data: it }, { data: ex }] = await Promise.all([
+    const [{ data: p }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
       supabase.from("workout_plans").select("*").eq("id", planId).maybeSingle(),
-      supabase.from("workout_plan_exercises").select("*, exercises(name, muscle_group)").eq("workout_plan_id", planId).order("order_index"),
+      supabase.from("workout_plan_exercises").select("*, exercises(name, muscle_group, category_id)").eq("workout_plan_id", planId).order("order_index"),
       supabase.from("exercises").select("*").order("name"),
+      supabase.from("exercise_categories" as any).select("id, name").order("name"),
     ]);
     setPlan(p); setItems(it ?? []); setExercises(ex ?? []);
+    setCats(((c as any) ?? []) as { id: string; name: string }[]);
   };
   useEffect(() => { load(); }, [planId]);
 
@@ -70,10 +74,11 @@ function PlanDetail() {
       name: nxName,
       muscle_group: nxMuscle || null,
       description: nxDesc || null,
-    }).select("id").single();
+      category_id: nxCategoryId === "none" ? null : nxCategoryId,
+    } as any).select("id").single();
     if (error) return toast.error(error.message);
     toast.success("Exercise created");
-    setNxName(""); setNxMuscle(""); setNxDesc(""); setNewExOpen(false);
+    setNxName(""); setNxMuscle(""); setNxDesc(""); setNxCategoryId("none"); setNewExOpen(false);
     await load();
     if (data?.id) setExId(data.id);
   };
@@ -103,7 +108,17 @@ function PlanDetail() {
                 <DialogHeader><DialogTitle>Create exercise</DialogTitle></DialogHeader>
                 <form onSubmit={createExercise} className="space-y-4">
                   <div className="space-y-2"><Label>Name</Label><Input required value={nxName} onChange={(e) => setNxName(e.target.value)} /></div>
-                  <div className="space-y-2"><Label>Muscle group</Label><Input value={nxMuscle} onChange={(e) => setNxMuscle(e.target.value)} placeholder="Chest, Back, Legs..." /></div>
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select value={nxCategoryId} onValueChange={setNxCategoryId}>
+                      <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Uncategorized</SelectItem>
+                        {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2"><Label>Muscle group (optional detail)</Label><Input value={nxMuscle} onChange={(e) => setNxMuscle(e.target.value)} placeholder="e.g. Upper chest" /></div>
                   <div className="space-y-2"><Label>Description</Label><Textarea value={nxDesc} onChange={(e) => setNxDesc(e.target.value)} /></div>
                   <Button type="submit" className="w-full">Save</Button>
                 </form>
@@ -117,7 +132,31 @@ function PlanDetail() {
               <Label>Exercise</Label>
               <Select value={exId} onValueChange={setExId} required>
                 <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
-                <SelectContent>{exercises.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}{e.muscle_group ? ` — ${e.muscle_group}` : ""}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {(() => {
+                    const byCat = new Map<string, any[]>();
+                    for (const e of exercises) {
+                      const key = (e as any).category_id ?? "__none__";
+                      if (!byCat.has(key)) byCat.set(key, []);
+                      byCat.get(key)!.push(e);
+                    }
+                    const groups = Array.from(byCat.entries()).map(([id, items]) => ({
+                      id,
+                      name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
+                      items,
+                    })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
+                    return groups.map((g) => (
+                      <SelectGroup key={g.id}>
+                        <SelectLabel>{g.name}</SelectLabel>
+                        {g.items.map((e) => (
+                          <SelectItem key={e.id} value={e.id}>
+                            {e.name}{e.muscle_group ? ` — ${e.muscle_group}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ));
+                  })()}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
