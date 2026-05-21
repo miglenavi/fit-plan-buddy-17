@@ -120,15 +120,32 @@ function PlanDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{plan?.name}</h1>
-          {plan?.description && <p className="text-muted-foreground mt-1">{plan.description}</p>}
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <CheckCircle2 className="size-3.5" /> Changes save automatically · Assign via client page
-          </p>
+        <div className="flex-1 space-y-2">
+          <Input
+            value={planName}
+            onChange={(e) => setPlanName(e.target.value)}
+            placeholder="Plan name"
+            className="!text-3xl font-bold tracking-tight h-auto border-none shadow-none px-0 focus-visible:ring-0 md:!text-3xl"
+          />
+          <Textarea
+            value={planDesc}
+            onChange={(e) => setPlanDesc(e.target.value)}
+            placeholder="Add a description (optional)"
+            rows={2}
+            className="resize-none border-none shadow-none px-0 text-muted-foreground focus-visible:ring-0"
+          />
+          <div className="text-xs text-muted-foreground min-h-[1.25rem]">
+            {status === "saving" && <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Saving…</span>}
+            {status === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="size-3" />Saved</span>}
+            {status === "error" && (!planName.trim()
+              ? <span className="text-destructive">Name is required</span>
+              : <button onClick={doSave} className="text-destructive hover:underline">Couldn't save — retry</button>)}
+            {status === "idle" && <span>Changes save automatically · Assign via client page</span>}
+          </div>
         </div>
         <Button asChild variant="outline"><Link to="/trainer/plans">Back to plans</Link></Button>
       </div>
+
 
       <Card>
         <CardHeader>
