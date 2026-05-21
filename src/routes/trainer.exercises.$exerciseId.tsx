@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Upload, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -197,7 +198,17 @@ function ExerciseDetail() {
         <CardContent>
           <form onSubmit={save} className="space-y-4">
             <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Muscle group</Label><Input value={muscle} onChange={(e) => setMuscle(e.target.value)} placeholder="Chest, Back, Legs..." /></div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Uncategorized</SelectItem>
+                  {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Muscle group (optional detail)</Label><Input value={muscle} onChange={(e) => setMuscle(e.target.value)} placeholder="e.g. Upper chest" /></div>
             <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
             <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
           </form>
