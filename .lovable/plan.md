@@ -1,32 +1,28 @@
-# Auto-save exercise detail page
+# Smoother workout plan creation
 
-Replace the manual "Save changes" button on the trainer exercise detail page with debounced auto-save, and add a small status indicator so the trainer knows their edits are persisted.
+Today, clicking "New plan" opens a dialog asking for name + description, then drops you back on the plans list. You then have to click into the new plan to actually add exercises. Two extra steps for what should be one flow.
 
-## Behavior
+## Proposed change
 
-On `src/routes/trainer.exercises.$exerciseId.tsx`:
+Skip the dialog entirely. "New plan" immediately creates a draft plan with a default name ("Untitled plan") and navigates straight to its detail page (`/trainer/plans/$planId`), where:
 
-- Remove the "Save changes" button entirely.
-- Watch the editable fields: **name**, **category**, **description**, **video URL**.
-- ~800ms after the user stops editing any of these, write the change to the `exercises` row.
-- Show a small inline status next to the page title:
-  - "Saving…" while a write is in flight
-  - "Saved" (with a subtle check, fades after ~2s) after success
-  - "Couldn't save — retry" on failure, with a manual retry link
-- Skip the first save on initial load (don't write back the values we just fetched).
-- Don't auto-save an empty name (name is required) — show "Name is required" in the status area instead.
+- The plan name is editable inline at the top (click the title to rename). Autosaves on blur, like the exercise page.
+- Description can be edited inline below the title (optional, autosaves).
+- You can add exercises right away — no extra dialog, no extra navigation.
 
-Image and video file uploads already save immediately on upload — that behavior stays.
+The current dialog component and its state are removed from `trainer.plans.index.tsx`.
 
-## Notes
+## Why this shape
 
-- Auto-save makes a top-of-page Save button unnecessary, so we don't move it — we drop it.
-- The status indicator goes in the existing header row, to the right of the exercise name (left of the Delete button).
+- One click to start building, matching how the exercise detail page already works (debounced autosave, no Save button).
+- No empty/abandoned plans problem worth solving here — trainer can delete from the list, and the cost of a stray "Untitled plan" row is low.
+- Consistent with the rest of the app's autosave behavior.
 
-## Technical details
+## Files touched
 
-- Use a `useEffect` with a `setTimeout` keyed off the four watched values; clear on each change for debounce.
-- Track a `hasLoaded` ref so the effect doesn't fire on hydration.
-- Single `update` call per debounce window with all four fields.
-- Status state: `"idle" | "saving" | "saved" | "error"`.
-- Keep `load()` for the initial fetch; no need to re-fetch after auto-save since we already hold the latest values locally.
+- `src/routes/trainer.plans.index.tsx` — remove dialog, change "New plan" to insert a row then `navigate({ to: '/trainer/plans/$planId', params: { planId } })`.
+- `src/routes/trainer.plans.$planId.tsx` — make name + description inline-editable with debounced autosave (same pattern as `trainer.exercises.$exerciseId.tsx`).
+
+## Alternative considered
+
+Keep the dialog but redirect to the new plan's detail page on submit. Simpler change, but still one unnecessary modal. Going straight in is cleaner — happy to do the dialog+redirect version instead if you'd prefer.
