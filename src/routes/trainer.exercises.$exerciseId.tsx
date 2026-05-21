@@ -29,7 +29,9 @@ function ExerciseDetail() {
   const [videoUrl, setVideoUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const hasLoaded = useRef(false);
+  const lastSaved = useRef<string>("");
 
   const load = async () => {
     const [{ data, error }, { data: c }] = await Promise.all([
@@ -40,25 +42,41 @@ function ExerciseDetail() {
     if (!data) return;
     setEx(data);
     setName(data.name);
-    
     setDesc(data.description ?? "");
     setVideoUrl(data.video_url ?? "");
     setCategoryId((data as any).category_id ?? "none");
     setCats(((c as any) ?? []) as Category[]);
+    lastSaved.current = JSON.stringify({
+      name: data.name,
+      description: data.description ?? "",
+      video_url: data.video_url ?? "",
+      category_id: (data as any).category_id ?? "none",
+    });
+    hasLoaded.current = true;
   };
   useEffect(() => { load(); }, [exerciseId]);
 
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+  const doSave = async () => {
     const { error } = await supabase.from("exercises").update({
       name, description: desc || null, video_url: videoUrl || null,
       category_id: categoryId === "none" ? null : categoryId,
     } as any).eq("id", exerciseId);
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else { toast.success("Saved"); load(); }
+    if (error) { setStatus("error"); return; }
+    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    setStatus("saved");
+    setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
   };
+
+  useEffect(() => {
+    if (!hasLoaded.current) return;
+    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    if (current === lastSaved.current) return;
+    if (!name.trim()) { setStatus("error"); return; }
+    setStatus("saving");
+    const t = setTimeout(() => { doSave(); }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, desc, videoUrl, categoryId]);
 
   const uploadFile = async (file: File, kind: "image" | "video") => {
     const { data: u } = await supabase.auth.getUser();
