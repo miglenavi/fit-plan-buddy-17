@@ -1,5 +1,5 @@
 import { createFileRoute, useParams, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Plus, CheckCircle2 } from "lucide-react";
+import { Trash2, Plus, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
@@ -19,6 +19,11 @@ export const Route = createFileRoute("/trainer/plans/$planId")({
 function PlanDetail() {
   const { planId } = useParams({ from: "/trainer/plans/$planId" });
   const [plan, setPlan] = useState<any>(null);
+  const [planName, setPlanName] = useState("");
+  const [planDesc, setPlanDesc] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const hasLoaded = useRef(false);
+  const lastSaved = useRef<string>("");
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
   const [exId, setExId] = useState("");
@@ -41,10 +46,40 @@ function PlanDetail() {
       supabase.from("exercises").select("*").order("name"),
       supabase.from("exercise_categories" as any).select("id, name").order("name"),
     ]);
-    setPlan(p); setItems(it ?? []); setExercises(ex ?? []);
+    setPlan(p);
+    if (p) {
+      setPlanName(p.name ?? "");
+      setPlanDesc(p.description ?? "");
+      lastSaved.current = JSON.stringify({ name: p.name ?? "", description: p.description ?? "" });
+      hasLoaded.current = true;
+    }
+    setItems(it ?? []); setExercises(ex ?? []);
     setCats(((c as any) ?? []) as { id: string; name: string }[]);
   };
   useEffect(() => { load(); }, [planId]);
+
+  const doSave = async () => {
+    const { error } = await supabase
+      .from("workout_plans")
+      .update({ name: planName, description: planDesc || null })
+      .eq("id", planId);
+    if (error) { setStatus("error"); return; }
+    lastSaved.current = JSON.stringify({ name: planName, description: planDesc });
+    setStatus("saved");
+    setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
+  };
+
+  useEffect(() => {
+    if (!hasLoaded.current) return;
+    const current = JSON.stringify({ name: planName, description: planDesc });
+    if (current === lastSaved.current) return;
+    if (!planName.trim()) { setStatus("error"); return; }
+    setStatus("saving");
+    const t = setTimeout(() => { doSave(); }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planName, planDesc]);
+
 
 
   const add = async (e: React.FormEvent) => {
@@ -85,15 +120,32 @@ function PlanDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{plan?.name}</h1>
-          {plan?.description && <p className="text-muted-foreground mt-1">{plan.description}</p>}
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <CheckCircle2 className="size-3.5" /> Changes save automatically · Assign via client page
-          </p>
+        <div className="flex-1 space-y-2">
+          <Input
+            value={planName}
+            onChange={(e) => setPlanName(e.target.value)}
+            placeholder="Plan name"
+            className="!text-3xl font-bold tracking-tight h-auto border-none shadow-none px-0 focus-visible:ring-0 md:!text-3xl"
+          />
+          <Textarea
+            value={planDesc}
+            onChange={(e) => setPlanDesc(e.target.value)}
+            placeholder="Add a description (optional)"
+            rows={2}
+            className="resize-none border-none shadow-none px-0 text-muted-foreground focus-visible:ring-0"
+          />
+          <div className="text-xs text-muted-foreground min-h-[1.25rem]">
+            {status === "saving" && <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Saving…</span>}
+            {status === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="size-3" />Saved</span>}
+            {status === "error" && (!planName.trim()
+              ? <span className="text-destructive">Name is required</span>
+              : <button onClick={doSave} className="text-destructive hover:underline">Couldn't save — retry</button>)}
+            {status === "idle" && <span>Changes save automatically · Assign via client page</span>}
+          </div>
         </div>
         <Button asChild variant="outline"><Link to="/trainer/plans">Back to plans</Link></Button>
       </div>
+
 
       <Card>
         <CardHeader>

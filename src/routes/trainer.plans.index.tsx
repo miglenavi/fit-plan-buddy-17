@@ -1,13 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, ChevronRight, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/")({
@@ -16,10 +12,9 @@ export const Route = createFileRoute("/trainer/plans/")({
 });
 
 function Plans() {
+  const navigate = useNavigate();
   const [list, setList] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [desc, setDesc] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from("workout_plans").select("*").order("created_at", { ascending: false });
@@ -27,12 +22,17 @@ function Plans() {
   };
   useEffect(() => { load(); }, []);
 
-  const create = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const create = async () => {
+    setCreating(true);
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("workout_plans").insert({ trainer_id: u.user!.id, name, description: desc || null });
-    if (error) toast.error(error.message);
-    else { toast.success("Plan created"); setName(""); setDesc(""); setOpen(false); load(); }
+    const { data, error } = await supabase
+      .from("workout_plans")
+      .insert({ trainer_id: u.user!.id, name: "Untitled plan" })
+      .select("id")
+      .single();
+    setCreating(false);
+    if (error || !data) { toast.error(error?.message ?? "Could not create plan"); return; }
+    navigate({ to: "/trainer/plans/$planId", params: { planId: data.id } });
   };
 
   const remove = async (id: string) => {
@@ -47,17 +47,10 @@ function Plans() {
           <h1 className="text-3xl font-bold tracking-tight">Workout Plans</h1>
           <p className="text-muted-foreground mt-1">Build reusable templates for your clients</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="size-4 mr-1" /> New plan</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create workout plan</DialogTitle></DialogHeader>
-            <form onSubmit={create} className="space-y-4">
-              <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Push Day, Leg Day..." /></div>
-              <div className="space-y-2"><Label>Description</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
-              <Button type="submit" className="w-full">Create</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={create} disabled={creating}>
+          {creating ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Plus className="size-4 mr-1" />}
+          New plan
+        </Button>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
