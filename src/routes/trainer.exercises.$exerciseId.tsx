@@ -144,15 +144,24 @@ function ExerciseDetail() {
           <h1 className="text-3xl font-bold tracking-tight">{ex.name}</h1>
           {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <p className="text-muted-foreground mt-1">{cn}</p> : null; })()}
         </div>
-        <Button variant="outline" size="sm" onClick={remove}>
-          <Trash2 className="size-4 mr-1" /> Delete
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-muted-foreground min-w-[90px] text-right">
+            {status === "saving" && <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Saving…</span>}
+            {status === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="size-3" />Saved</span>}
+            {status === "error" && (!name.trim()
+              ? <span className="text-destructive">Name is required</span>
+              : <button onClick={doSave} className="text-destructive hover:underline">Couldn't save — retry</button>)}
+          </div>
+          <Button variant="outline" size="sm" onClick={remove}>
+            <Trash2 className="size-4 mr-1" /> Delete
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader><CardTitle>Details</CardTitle></CardHeader>
         <CardContent>
-          <form onSubmit={save} className="space-y-4">
+          <div className="space-y-4">
             <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div className="space-y-2">
               <Label>Category</Label>
@@ -164,12 +173,11 @@ function ExerciseDetail() {
                 </SelectContent>
               </Select>
             </div>
-            
             <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
-          </form>
+          </div>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader><CardTitle>Visual</CardTitle></CardHeader>
