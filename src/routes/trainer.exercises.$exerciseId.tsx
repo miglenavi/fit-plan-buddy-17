@@ -1,5 +1,5 @@
 import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Upload, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, Trash2, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
@@ -29,7 +29,9 @@ function ExerciseDetail() {
   const [videoUrl, setVideoUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const hasLoaded = useRef(false);
+  const lastSaved = useRef<string>("");
 
   const load = async () => {
     const [{ data, error }, { data: c }] = await Promise.all([
@@ -40,25 +42,41 @@ function ExerciseDetail() {
     if (!data) return;
     setEx(data);
     setName(data.name);
-    
     setDesc(data.description ?? "");
     setVideoUrl(data.video_url ?? "");
     setCategoryId((data as any).category_id ?? "none");
     setCats(((c as any) ?? []) as Category[]);
+    lastSaved.current = JSON.stringify({
+      name: data.name,
+      description: data.description ?? "",
+      video_url: data.video_url ?? "",
+      category_id: (data as any).category_id ?? "none",
+    });
+    hasLoaded.current = true;
   };
   useEffect(() => { load(); }, [exerciseId]);
 
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+  const doSave = async () => {
     const { error } = await supabase.from("exercises").update({
       name, description: desc || null, video_url: videoUrl || null,
       category_id: categoryId === "none" ? null : categoryId,
     } as any).eq("id", exerciseId);
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else { toast.success("Saved"); load(); }
+    if (error) { setStatus("error"); return; }
+    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    setStatus("saved");
+    setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
   };
+
+  useEffect(() => {
+    if (!hasLoaded.current) return;
+    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    if (current === lastSaved.current) return;
+    if (!name.trim()) { setStatus("error"); return; }
+    setStatus("saving");
+    const t = setTimeout(() => { doSave(); }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, desc, videoUrl, categoryId]);
 
   const uploadFile = async (file: File, kind: "image" | "video") => {
     const { data: u } = await supabase.auth.getUser();
@@ -126,15 +144,24 @@ function ExerciseDetail() {
           <h1 className="text-3xl font-bold tracking-tight">{ex.name}</h1>
           {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <p className="text-muted-foreground mt-1">{cn}</p> : null; })()}
         </div>
-        <Button variant="outline" size="sm" onClick={remove}>
-          <Trash2 className="size-4 mr-1" /> Delete
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-muted-foreground min-w-[90px] text-right">
+            {status === "saving" && <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Saving…</span>}
+            {status === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="size-3" />Saved</span>}
+            {status === "error" && (!name.trim()
+              ? <span className="text-destructive">Name is required</span>
+              : <button onClick={doSave} className="text-destructive hover:underline">Couldn't save — retry</button>)}
+          </div>
+          <Button variant="outline" size="sm" onClick={remove}>
+            <Trash2 className="size-4 mr-1" /> Delete
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader><CardTitle>Details</CardTitle></CardHeader>
         <CardContent>
-          <form onSubmit={save} className="space-y-4">
+          <div className="space-y-4">
             <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div className="space-y-2">
               <Label>Category</Label>
@@ -146,12 +173,11 @@ function ExerciseDetail() {
                 </SelectContent>
               </Select>
             </div>
-            
             <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
-          </form>
+          </div>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader><CardTitle>Visual</CardTitle></CardHeader>
