@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Swords, Users, ClipboardList, Calendar, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck } from "lucide-react";
+import { Swords, Users, ClipboardList, Calendar, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck, Tag } from "lucide-react";
 import type { ReactNode } from "react";
 
 const trainerNav = [
@@ -20,6 +20,7 @@ const clientNav = [
 const adminNav = [
   { to: "/admin/applications", label: "Applications", icon: UserCheck },
   { to: "/admin/trainers", label: "Trainers", icon: ShieldCheck },
+  { to: "/admin/categories", label: "Categories", icon: Tag },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
