@@ -46,10 +46,40 @@ function PlanDetail() {
       supabase.from("exercises").select("*").order("name"),
       supabase.from("exercise_categories" as any).select("id, name").order("name"),
     ]);
-    setPlan(p); setItems(it ?? []); setExercises(ex ?? []);
+    setPlan(p);
+    if (p) {
+      setPlanName(p.name ?? "");
+      setPlanDesc(p.description ?? "");
+      lastSaved.current = JSON.stringify({ name: p.name ?? "", description: p.description ?? "" });
+      hasLoaded.current = true;
+    }
+    setItems(it ?? []); setExercises(ex ?? []);
     setCats(((c as any) ?? []) as { id: string; name: string }[]);
   };
   useEffect(() => { load(); }, [planId]);
+
+  const doSave = async () => {
+    const { error } = await supabase
+      .from("workout_plans")
+      .update({ name: planName, description: planDesc || null })
+      .eq("id", planId);
+    if (error) { setStatus("error"); return; }
+    lastSaved.current = JSON.stringify({ name: planName, description: planDesc });
+    setStatus("saved");
+    setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
+  };
+
+  useEffect(() => {
+    if (!hasLoaded.current) return;
+    const current = JSON.stringify({ name: planName, description: planDesc });
+    if (current === lastSaved.current) return;
+    if (!planName.trim()) { setStatus("error"); return; }
+    setStatus("saving");
+    const t = setTimeout(() => { doSave(); }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planName, planDesc]);
+
 
 
   const add = async (e: React.FormEvent) => {
