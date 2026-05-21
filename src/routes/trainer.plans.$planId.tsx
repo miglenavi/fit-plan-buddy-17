@@ -19,6 +19,11 @@ export const Route = createFileRoute("/trainer/plans/$planId")({
 function PlanDetail() {
   const { planId } = useParams({ from: "/trainer/plans/$planId" });
   const [plan, setPlan] = useState<any>(null);
+  const [planName, setPlanName] = useState("");
+  const [planDesc, setPlanDesc] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const hasLoaded = useRef(false);
+  const lastSaved = useRef<string>("");
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
   const [exId, setExId] = useState("");
