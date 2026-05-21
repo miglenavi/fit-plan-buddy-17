@@ -132,6 +132,28 @@ function ExerciseDetail() {
       </div>
 
       <Card>
+        <CardHeader><CardTitle>Details</CardTitle></CardHeader>
+        <CardContent>
+          <form onSubmit={save} className="space-y-4">
+            <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Uncategorized</SelectItem>
+                  {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
+            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Visual</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {ex.image_url ? (
@@ -193,27 +215,6 @@ function ExerciseDetail() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Details</CardTitle></CardHeader>
-        <CardContent>
-          <form onSubmit={save} className="space-y-4">
-            <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Uncategorized</SelectItem>
-                  {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   );
 }
