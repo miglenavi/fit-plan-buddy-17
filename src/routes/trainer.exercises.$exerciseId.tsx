@@ -14,11 +14,15 @@ export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
   component: ExerciseDetail,
 });
 
+type Category = { id: string; name: string };
+
 function ExerciseDetail() {
   const { exerciseId } = useParams({ from: "/trainer/exercises/$exerciseId" });
   const navigate = useNavigate();
   const [ex, setEx] = useState<any>(null);
+  const [cats, setCats] = useState<Category[]>([]);
   const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("none");
   const [muscle, setMuscle] = useState("");
   const [desc, setDesc] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -27,7 +31,10 @@ function ExerciseDetail() {
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const { data, error } = await supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle();
+    const [{ data, error }, { data: c }] = await Promise.all([
+      supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle(),
+      supabase.from("exercise_categories" as any).select("id, name").order("name"),
+    ]);
     if (error) { toast.error(error.message); return; }
     if (!data) return;
     setEx(data);
@@ -35,6 +42,8 @@ function ExerciseDetail() {
     setMuscle(data.muscle_group ?? "");
     setDesc(data.description ?? "");
     setVideoUrl(data.video_url ?? "");
+    setCategoryId((data as any).category_id ?? "none");
+    setCats(((c as any) ?? []) as Category[]);
   };
   useEffect(() => { load(); }, [exerciseId]);
 
@@ -43,7 +52,8 @@ function ExerciseDetail() {
     setSaving(true);
     const { error } = await supabase.from("exercises").update({
       name, muscle_group: muscle || null, description: desc || null, video_url: videoUrl || null,
-    }).eq("id", exerciseId);
+      category_id: categoryId === "none" ? null : categoryId,
+    } as any).eq("id", exerciseId);
     setSaving(false);
     if (error) toast.error(error.message);
     else { toast.success("Saved"); load(); }
