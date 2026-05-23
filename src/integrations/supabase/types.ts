@@ -108,30 +108,6 @@ export type Database = {
         }
         Relationships: []
       }
-      client_temp_passwords: {
-        Row: {
-          client_id: string
-          created_at: string
-          temp_password: string
-          trainer_id: string
-          updated_at: string
-        }
-        Insert: {
-          client_id: string
-          created_at?: string
-          temp_password: string
-          trainer_id: string
-          updated_at?: string
-        }
-        Update: {
-          client_id?: string
-          created_at?: string
-          temp_password?: string
-          trainer_id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       exercise_categories: {
         Row: {
           created_at: string
