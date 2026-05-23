@@ -3,15 +3,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-function generateTempPassword(): string {
-  const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let out = "";
-  const bytes = new Uint8Array(12);
-  crypto.getRandomValues(bytes);
-  for (let i = 0; i < 12; i++) out += chars[bytes[i] % chars.length];
-  return out;
-}
-
 async function assertTrainer(supabase: any, userId: string) {
   const { data, error } = await supabase
     .from("user_roles")
@@ -23,51 +14,44 @@ async function assertTrainer(supabase: any, userId: string) {
   if (!data) throw new Error("Only trainers can perform this action");
 }
 
-export const createClientWithTempPassword = createServerFn({ method: "POST" })
+export const inviteClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z.object({
       email: z.string().email().max(255),
       fullName: z.string().min(1).max(255),
+      redirectTo: z.string().url().max(500),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertTrainer(supabase, userId);
 
-    const tempPassword = generateTempPassword();
-
-    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: data.fullName,
-        invited_as: "client",
-        invited_by: userId,
-        must_change_password: true,
+    const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      data.email,
+      {
+        redirectTo: data.redirectTo,
+        data: {
+          full_name: data.fullName,
+          invited_as: "client",
+          invited_by: userId,
+        },
       },
-    });
+    );
     if (error) throw new Error(error.message);
-    const clientId = created.user?.id;
-    if (!clientId) throw new Error("Failed to create user");
+    const clientId = invited.user?.id;
+    if (!clientId) throw new Error("Failed to invite user");
 
-    const { error: insErr } = await supabaseAdmin
-      .from("client_temp_passwords")
-      .upsert({
-        client_id: clientId,
-        trainer_id: userId,
-        temp_password: tempPassword,
-      });
-    if (insErr) throw new Error(insErr.message);
-
-    return { clientId, email: data.email, tempPassword };
+    return { clientId, email: data.email };
   });
 
-export const resetClientTempPassword = createServerFn({ method: "POST" })
+export const resendClientInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ clientId: z.string().uuid() }).parse(input),
+    z.object({
+      clientId: z.string().uuid(),
+      redirectTo: z.string().url().max(500),
+    }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -83,42 +67,30 @@ export const resetClientTempPassword = createServerFn({ method: "POST" })
     if (linkErr) throw new Error(linkErr.message);
     if (!link) throw new Error("Not your client");
 
-    const tempPassword = generateTempPassword();
+    // Fetch the client's email
+    const { data: userRes, error: userErr } =
+      await supabaseAdmin.auth.admin.getUserById(data.clientId);
+    if (userErr) throw new Error(userErr.message);
+    const email = userRes.user?.email;
+    if (!email) throw new Error("Client email not found");
 
-    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
-      data.clientId,
-      {
-        password: tempPassword,
-        user_metadata: { must_change_password: true },
-      },
-    );
-    if (updErr) throw new Error(updErr.message);
+    // Generate a fresh magic link (works whether or not the user already confirmed)
+    const { error: linkGenErr } = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+      options: { redirectTo: data.redirectTo },
+    });
+    if (linkGenErr) throw new Error(linkGenErr.message);
 
-    const { error: upsertErr } = await supabaseAdmin
-      .from("client_temp_passwords")
-      .upsert({
-        client_id: data.clientId,
-        trainer_id: userId,
-        temp_password: tempPassword,
-      });
-    if (upsertErr) throw new Error(upsertErr.message);
-
-    return { tempPassword };
+    return { ok: true, email };
   });
 
 export const clearMustChangePassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-
     await supabaseAdmin.auth.admin.updateUserById(userId, {
       user_metadata: { must_change_password: false },
     });
-
-    await supabaseAdmin
-      .from("client_temp_passwords")
-      .delete()
-      .eq("client_id", userId);
-
     return { ok: true };
   });
