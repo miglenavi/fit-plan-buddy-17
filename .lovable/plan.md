@@ -1,28 +1,44 @@
-# Smoother workout plan creation
+# Basic Landing Page for ValhallaFit
 
-Today, clicking "New plan" opens a dialog asking for name + description, then drops you back on the plans list. You then have to click into the new plan to actually add exercises. Two extra steps for what should be one flow.
+Add a clean, simple public landing page at `/` that introduces the app and its services, with a clear call-to-action to the existing `/auth` page.
 
-## Proposed change
+## Routing change
 
-Skip the dialog entirely. "New plan" immediately creates a draft plan with a default name ("Untitled plan") and navigates straight to its detail page (`/trainer/plans/$planId`), where:
+Currently `src/routes/index.tsx` redirects every visitor straight to `/auth` (or their dashboard if logged in). I'll change it so:
+- **Logged-out visitors** → see the new landing page
+- **Logged-in users** → still auto-redirect to their dashboard (`/admin/applications`, `/trainer`, `/client`, or `/pending`)
 
-- The plan name is editable inline at the top (click the title to rename). Autosaves on blur, like the exercise page.
-- Description can be edited inline below the title (optional, autosaves).
-- You can add exercises right away — no extra dialog, no extra navigation.
+This keeps the app flow intact for existing users while giving new visitors something to read first.
 
-The current dialog component and its state are removed from `trainer.plans.index.tsx`.
+## Page structure
 
-## Why this shape
+One single route file (`src/routes/index.tsx`) — no extra sub-routes, since you asked for very basic.
 
-- One click to start building, matching how the exercise detail page already works (debounced autosave, no Save button).
-- No empty/abandoned plans problem worth solving here — trainer can delete from the list, and the cost of a stray "Untitled plan" row is low.
-- Consistent with the rest of the app's autosave behavior.
+Sections, top to bottom:
+
+1. **Header** — ValhallaFit logo (the Swords icon already used in `/auth`) + "Log in" and "Apply as trainer" buttons (both link to `/auth`).
+2. **Hero** — Big headline ("Train like a Viking."), one-line subhead about coaching + workout tracking, primary CTA "Apply as trainer", secondary "Client log in".
+3. **Services / What you get** — 3 simple feature cards:
+   - **For trainers** — Manage clients, build workout plans, schedule sessions.
+   - **For clients** — Follow your plan, log workouts, track progress.
+   - **All in one place** — Exercise library, weekly schedule, history.
+4. **How it works** — 3 short numbered steps (Trainer applies → Super-admin approves → Trainer onboards clients via email invite).
+5. **Footer CTA + copyright** — One more "Get started" button and a small "© ValhallaFit" line.
+
+## Styling
+
+- Reuse existing semantic tokens from `src/styles.css` (primary green, background, muted, accent). No new colors.
+- Same gradient background style already used on `/auth` (`bg-gradient-to-br from-background to-accent/30`) for visual consistency.
+- shadcn `Button` and `Card` components.
+- Responsive: single column on mobile, 3-column grid for the services section on `md:` and up.
+- Add proper `head()` metadata: title, description, og:title, og:description.
 
 ## Files touched
 
-- `src/routes/trainer.plans.index.tsx` — remove dialog, change "New plan" to insert a row then `navigate({ to: '/trainer/plans/$planId', params: { planId } })`.
-- `src/routes/trainer.plans.$planId.tsx` — make name + description inline-editable with debounced autosave (same pattern as `trainer.exercises.$exerciseId.tsx`).
+- **edit** `src/routes/index.tsx` — replace redirect-only logic with the landing page + keep authed-user redirect.
 
-## Alternative considered
+That's it — no DB changes, no new dependencies, no auth changes.
 
-Keep the dialog but redirect to the new plan's detail page on submit. Simpler change, but still one unnecessary modal. Going straight in is cleaner — happy to do the dialog+redirect version instead if you'd prefer.
+---
+
+Want me to go ahead with this, or would you like to tweak the sections / copy / add more (pricing, testimonials, FAQ) first?
