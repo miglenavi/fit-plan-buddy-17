@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrainersRouteImport } from './routes/trainers'
 import { Route as PendingRouteImport } from './routes/pending'
+import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainerIndexRouteImport } from './routes/trainer.index'
@@ -30,9 +32,19 @@ import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
 import { Route as ClientWorkoutsAssignedIdRouteImport } from './routes/client.workouts.$assignedId'
 
+const TrainersRoute = TrainersRouteImport.update({
+  id: '/trainers',
+  path: '/trainers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PendingRoute = PendingRouteImport.update({
   id: '/pending',
   path: '/pending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientsRoute = ClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -136,7 +148,9 @@ const ClientWorkoutsAssignedIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clients': typeof ClientsRoute
   '/pending': typeof PendingRoute
+  '/trainers': typeof TrainersRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -158,7 +172,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clients': typeof ClientsRoute
   '/pending': typeof PendingRoute
+  '/trainers': typeof TrainersRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -179,7 +195,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clients': typeof ClientsRoute
   '/pending': typeof PendingRoute
+  '/trainers': typeof TrainersRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -203,7 +221,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/clients'
     | '/pending'
+    | '/trainers'
     | '/admin/applications'
     | '/admin/categories'
     | '/admin/trainers'
@@ -225,7 +245,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/clients'
     | '/pending'
+    | '/trainers'
     | '/admin/applications'
     | '/admin/categories'
     | '/admin/trainers'
@@ -245,7 +267,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/clients'
     | '/pending'
+    | '/trainers'
     | '/admin/applications'
     | '/admin/categories'
     | '/admin/trainers'
@@ -268,7 +292,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ClientsRoute: typeof ClientsRoute
   PendingRoute: typeof PendingRoute
+  TrainersRoute: typeof TrainersRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
@@ -285,11 +311,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trainers': {
+      id: '/trainers'
+      path: '/trainers'
+      fullPath: '/trainers'
+      preLoaderRoute: typeof TrainersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pending': {
       id: '/pending'
       path: '/pending'
       fullPath: '/pending'
       preLoaderRoute: typeof PendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients': {
+      id: '/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof ClientsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -470,7 +510,9 @@ const TrainerPlansRouteWithChildren = TrainerPlansRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ClientsRoute: ClientsRoute,
   PendingRoute: PendingRoute,
+  TrainersRoute: TrainersRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminTrainersRoute: AdminTrainersRoute,
@@ -487,13 +529,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

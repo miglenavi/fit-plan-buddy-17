@@ -58,18 +58,26 @@ function Index() {
 
         <section className="py-12 grid gap-5 md:grid-cols-3">
           {[
-            { icon: Users, title: "For trainers", body: "Manage clients, build workout plans, schedule sessions in one place." },
-            { icon: Dumbbell, title: "For clients", body: "Follow your plan, log workouts, and watch your progress stack up." },
-            { icon: ClipboardList, title: "All in one place", body: "Exercise library, weekly schedule, and full training history." },
-          ].map((f) => (
-            <Card key={f.title}>
-              <CardContent className="p-6">
-                <f.icon className="size-8 text-primary mb-4" />
-                <h3 className="font-semibold text-lg">{f.title}</h3>
-                <p className="text-sm text-muted-foreground mt-2">{f.body}</p>
-              </CardContent>
-            </Card>
-          ))}
+            { icon: Users, title: "For trainers", body: "Manage clients, build workout plans, schedule sessions in one place.", to: "/trainers" as const },
+            { icon: Dumbbell, title: "For clients", body: "Follow your plan, log workouts, and watch your progress stack up.", to: "/clients" as const },
+            { icon: ClipboardList, title: "All in one place", body: "Exercise library, weekly schedule, and full training history.", to: null },
+          ].map((f) => {
+            const card = (
+              <Card className={f.to ? "hover:border-primary transition-colors h-full" : "h-full"}>
+                <CardContent className="p-6">
+                  <f.icon className="size-8 text-primary mb-4" />
+                  <h3 className="font-semibold text-lg">{f.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2">{f.body}</p>
+                  {f.to && <p className="text-sm text-primary mt-3 font-medium">Learn more →</p>}
+                </CardContent>
+              </Card>
+            );
+            return f.to ? (
+              <Link key={f.title} to={f.to}>{card}</Link>
+            ) : (
+              <div key={f.title}>{card}</div>
+            );
+          })}
         </section>
 
         <section className="py-16 max-w-3xl mx-auto">
