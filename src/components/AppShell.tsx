@@ -41,10 +41,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="size-9 rounded-xl bg-primary flex items-center justify-center">
             <Swords className="size-5 text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <div className="font-bold text-lg">ValhallaFit</div>
             <div className="text-xs opacity-70 capitalize">{role?.replace("_", " ") ?? "..."}</div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Sign out"
+            className="md:hidden text-sidebar-foreground hover:bg-sidebar-accent"
+            onClick={async () => { await signOut(); nav({ to: "/auth" }); }}
+          >
+            <LogOut className="size-5" />
+          </Button>
         </div>
         <nav className="hidden md:flex flex-col p-3 gap-1 flex-1">
           {items.map((item) => {
