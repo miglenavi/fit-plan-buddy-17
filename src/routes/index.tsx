@@ -227,7 +227,7 @@ function Index() {
                     "See today's workout and what's coming next",
                     "Log sets, reps, and weights from the gym floor",
                     "Look back at past sessions to remember last time's load",
-                    "Track personal progress as plans evolve",
+                    "See progress build up over time and stay motivated",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2.5">
                       <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
