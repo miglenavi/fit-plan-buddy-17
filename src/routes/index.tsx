@@ -202,12 +202,12 @@ function Index() {
             </div>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               {[
-                { icon: LayoutDashboard, title: "Trainer Dashboard", body: "Manage clients, workout plans, exercises, and schedules from a single home screen." },
-                { icon: Smartphone, title: "Client Mobile App", body: "Clients view workouts, complete sessions, and track progress from their phone." },
-                { icon: ClipboardList, title: "Workout Plan Builder", body: "Create structured programs and assign them to one or many clients." },
-                { icon: LineChart, title: "Progress Tracking", body: "Keep a complete history of workouts and performance over time." },
-                { icon: Library, title: "Exercise Library", body: "Organize exercises and build plans faster with a reusable catalogue." },
-                { icon: ShieldCheck, title: "Role-Based Access", body: "Dedicated experiences for admins, trainers, and clients." },
+                { icon: LayoutDashboard, title: "Trainer dashboard", body: "One home base for clients, plans, exercises, and today's sessions — less spreadsheet juggling, more coaching." },
+                { icon: Smartphone, title: "Client mobile app", body: "Clients always know what to do next and can log sets from the gym floor without messaging back and forth." },
+                { icon: ClipboardList, title: "Program builder", body: "Build structured programs that help clients improve week after week, then reuse or tailor them per client." },
+                { icon: LineChart, title: "Progress tracking", body: "See how each client is progressing over time and know when a plan needs adjusting." },
+                { icon: Library, title: "Exercise library", body: "A reusable catalogue so building the next plan takes minutes, not an afternoon." },
+                { icon: ShieldCheck, title: "Role-based access", body: "Dedicated experiences for trainers and clients, with the right permissions out of the box." },
               ].map((f) => (
                 <Card key={f.title} className="border bg-card hover:border-primary/40 transition-colors">
                   <CardContent className="p-6">
