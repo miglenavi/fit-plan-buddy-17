@@ -26,6 +26,8 @@ import {
   Rocket,
   X,
   ArrowRight,
+  LayoutDashboard,
+  ClipboardList,
 } from "lucide-react";
 import trainerDashboardImg from "@/assets/screenshot-trainer-dashboard.jpg";
 import planBuilderImg from "@/assets/screenshot-plan-builder.jpg";
@@ -94,12 +96,13 @@ function Index() {
           <div className="container mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-sm">
             <Rocket className="size-4 shrink-0 text-primary" />
             <p className="text-center">
-              Built as an AI-assisted product experiment using Lovable and Supabase.{" "}
+              <span className="font-medium">Currently developing ValhallaFit v1.0</span>
+              <span className="hidden sm:inline opacity-80"> — A coaching platform for personal trainers and their clients.</span>{" "}
               <button
                 onClick={() => setAboutOpen(true)}
                 className="underline underline-offset-2 font-medium hover:text-primary transition-colors"
               >
-                Learn more →
+                The story behind ValhallaFit →
               </button>
             </p>
             <button
@@ -123,7 +126,7 @@ function Index() {
             <span className="font-bold text-lg tracking-tight">ValhallaFit</span>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+            <a href="#today" className="hover:text-foreground transition-colors">What exists</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
             <a href="#coming-soon" className="hover:text-foreground transition-colors">Roadmap</a>
           </nav>
@@ -135,13 +138,13 @@ function Index() {
       </header>
 
       <main>
-        {/* Hero */}
+        {/* Hero — tightened spacing */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-accent/40 via-background to-background pointer-events-none" />
-          <div className="container mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-20 relative">
+          <div className="container mx-auto px-4 pt-10 pb-8 md:pt-14 md:pb-12 relative">
             <div className="max-w-3xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground mb-6">
-                <span className="size-1.5 rounded-full bg-primary" />
+                <span className="size-1.5 rounded-full bg-primary animate-pulse" />
                 In active development · v1.0
               </div>
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.05]">
@@ -162,10 +165,13 @@ function Index() {
                   <Button size="lg" variant="outline">Client login</Button>
                 </Link>
               </div>
+              <p className="mt-5 text-xs md:text-sm text-muted-foreground">
+                Trainer dashboard <span className="mx-2 opacity-50">•</span> Client mobile app <span className="mx-2 opacity-50">•</span> Progressive workout planning
+              </p>
             </div>
 
             {/* Product screenshot showcase */}
-            <div className="mt-14 md:mt-20 max-w-6xl mx-auto">
+            <div className="mt-10 md:mt-14 max-w-6xl mx-auto">
               <div className="relative rounded-2xl border bg-card shadow-2xl overflow-hidden">
                 <div className="flex items-center gap-1.5 px-4 py-3 border-b bg-muted/50">
                   <span className="size-2.5 rounded-full bg-destructive/60" />
@@ -185,23 +191,26 @@ function Index() {
           </div>
         </section>
 
-        {/* Features */}
-        <section id="features" className="py-20 md:py-28">
+        {/* What exists today */}
+        <section id="today" className="py-16 md:py-24">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center mb-14">
-              <p className="text-sm font-medium text-primary mb-3">Features</p>
+            <div className="max-w-2xl mx-auto text-center mb-12">
+              <p className="text-sm font-medium text-primary mb-3">Available now</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Everything trainers need in one platform
+                What exists today
               </h2>
+              <p className="mt-4 text-muted-foreground">
+                Everything needed to run and deliver coaching in one place.
+              </p>
             </div>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               {[
-                { icon: Users, title: "Client Management", body: "Manage your client roster and coaching relationships in one place." },
-                { icon: Dumbbell, title: "Progressive Workout Planning", body: "Build structured programs designed for long-term progress." },
-                { icon: Smartphone, title: "Mobile Experience", body: "Clients access workouts, complete sessions, and track progress from their phone." },
-                { icon: LineChart, title: "Progress Tracking", body: "Monitor completed workouts and performance over time." },
-                { icon: Library, title: "Exercise Library", body: "Create and organize workouts faster." },
-                { icon: ShieldCheck, title: "Role-Based Access", body: "Dedicated experiences for trainers, clients, and administrators." },
+                { icon: LayoutDashboard, title: "Trainer Dashboard", body: "Manage clients, workout plans, exercises, and schedules from a single home screen." },
+                { icon: Smartphone, title: "Client Mobile App", body: "Clients view workouts, complete sessions, and track progress from their phone." },
+                { icon: ClipboardList, title: "Workout Plan Builder", body: "Create structured programs and assign them to one or many clients." },
+                { icon: LineChart, title: "Progress Tracking", body: "Keep a complete history of workouts and performance over time." },
+                { icon: Library, title: "Exercise Library", body: "Organize exercises and build plans faster with a reusable catalogue." },
+                { icon: ShieldCheck, title: "Role-Based Access", body: "Dedicated experiences for admins, trainers, and clients." },
               ].map((f) => (
                 <Card key={f.title} className="border bg-card hover:border-primary/40 transition-colors">
                   <CardContent className="p-6">
@@ -223,11 +232,12 @@ function Index() {
             <div>
               <p className="text-sm font-medium text-primary mb-3">Workout plan builder</p>
               <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Build progressive programs in minutes
+                Programs that drive real progression
               </h3>
               <p className="mt-4 text-muted-foreground">
-                Drag exercises from your library, set targets per week, and assign plans to one
-                client or many. Programs are structured so progression isn't an afterthought.
+                Create structured progressive programs that help clients improve week after week.
+                Reuse them across your roster or tailor them to a single client — without rebuilding
+                from scratch every time.
               </p>
             </div>
             <div className="rounded-xl border bg-card shadow-lg overflow-hidden">
@@ -256,12 +266,12 @@ function Index() {
             <div className="order-1 lg:order-2">
               <p className="text-sm font-medium text-primary mb-3">Client mobile experience</p>
               <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Clients train from their phone
+                Coaching that travels to the gym floor
               </h3>
               <p className="mt-4 text-muted-foreground">
-                A focused workout screen with sets, reps, and progress tracking — designed for the
-                gym floor, not the boardroom. Clients tick off exercises and the trainer sees it
-                immediately.
+                Clients always know what to do next and trainers can track progress without chasing
+                updates. Each completed set syncs back so the next coaching decision is grounded in
+                real data.
               </p>
             </div>
           </div>
@@ -270,11 +280,15 @@ function Index() {
         {/* How it works */}
         <section id="how-it-works" className="py-20 md:py-28">
           <div className="container mx-auto px-4 max-w-4xl">
-            <div className="text-center mb-14">
+            <div className="text-center mb-12">
               <p className="text-sm font-medium text-primary mb-3">How it works</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
                 A simple coaching loop
               </h2>
+              <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+                ValhallaFit supports the entire coaching journey, from program creation to
+                long-term client progress.
+              </p>
             </div>
             <ol className="grid gap-4 md:grid-cols-2">
               {[
@@ -310,17 +324,17 @@ function Index() {
                 Smarter coaching is coming
               </h2>
               <p className="mt-4 text-muted-foreground">
-                We're building tools that help trainers identify opportunities, risks, and coaching
-                actions faster.
+                ValhallaFit is evolving from workout management software into a coaching assistant
+                that helps trainers identify opportunities, risks, and next actions faster.
               </p>
             </div>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {[
                 { icon: LineChart, title: "Progression Recommendations", body: "Suggest when clients may be ready to increase weight, volume, intensity, or training frequency." },
                 { icon: Activity, title: "Client Analytics", body: "Automatically surface trends in performance, consistency, and adherence." },
-                { icon: AlertTriangle, title: "Risk Detection", body: "Highlight potential issues such as missed sessions, insufficient recovery, lack of mobility work, or declining performance patterns." },
-                { icon: FileText, title: "Weekly Coach Summaries", body: "Provide a simple overview of client progress and areas that may need attention." },
-                { icon: Bell, title: "Motivation & Accountability", body: "Help clients stay consistent through reminders, milestones, and coaching nudges." },
+                { icon: AlertTriangle, title: "Risk Detection", body: "Highlight potential issues such as missed sessions, insufficient recovery, or declining performance patterns." },
+                { icon: FileText, title: "Weekly Coach Summaries", body: "A simple overview of who is progressing, who may need support, and what changed this week." },
+                { icon: Bell, title: "Client Motivation & Accountability", body: "Automated reminders and coaching nudges that help clients stay consistent between sessions." },
               ].map((f) => (
                 <Card key={f.title} className="border-dashed bg-card/60">
                   <CardContent className="p-6">
@@ -347,8 +361,12 @@ function Index() {
             </h2>
             <p className="mt-5 text-lg text-muted-foreground">
               ValhallaFit combines workout planning, client management, and performance tracking
-              into a single platform. Our goal is to simplify coaching today while building
-              intelligent tools that help trainers make better decisions tomorrow.
+              into a single platform.
+            </p>
+            <p className="mt-4 text-muted-foreground">
+              Today it helps trainers manage coaching more efficiently. Tomorrow it will help
+              trainers make better decisions through automation, progression insights, and
+              proactive coaching recommendations.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 justify-center">
               <Link to="/auth">
@@ -376,7 +394,7 @@ function Index() {
             onClick={() => setAboutOpen(true)}
             className="hover:text-foreground transition-colors"
           >
-            About this project
+            The story behind ValhallaFit
           </button>
         </div>
       </footer>
@@ -385,15 +403,19 @@ function Index() {
       <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">About this project</DialogTitle>
+            <DialogTitle className="text-2xl">Building ValhallaFit</DialogTitle>
             <DialogDescription className="sr-only">
               Background on ValhallaFit and what it does today.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 text-sm leading-relaxed">
             <p className="text-muted-foreground">
-              ValhallaFit was created to explore how modern AI-assisted development tools can
-              accelerate product creation and validation.
+              ValhallaFit was created to explore how modern product and development tools can
+              accelerate software creation and validation.
+            </p>
+            <p className="text-muted-foreground">
+              The platform helps personal trainers manage clients, create progressive workout
+              plans, track performance, and deliver a better coaching experience.
             </p>
             <div>
               <p className="font-semibold mb-2">Current functionality includes:</p>
@@ -405,7 +427,7 @@ function Index() {
                   "Progressive training programs",
                   "Exercise library",
                   "Progress tracking",
-                  "Mobile workout experience for clients",
+                  "Mobile workout experience",
                   "Role-based permissions",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2">
@@ -416,8 +438,12 @@ function Index() {
               </ul>
             </div>
             <p className="text-muted-foreground">
-              The long-term vision is to help trainers spend less time on administration and more
-              time coaching through intelligent automation and coaching insights.
+              Future development focuses on reducing administrative work for trainers through
+              coaching automation, progression insights, adherence monitoring, and risk detection.
+            </p>
+            <p className="text-muted-foreground">
+              The goal is simple: help trainers spend less time managing spreadsheets and more
+              time coaching people.
             </p>
             <p className="text-sm pt-2 border-t">
               Built by <span className="font-semibold text-foreground">Miglė Navickaitė</span>.
