@@ -391,7 +391,7 @@ function Index() {
             onClick={() => setAboutOpen(true)}
             className="hover:text-foreground transition-colors"
           >
-            The story behind ValhallaFit
+            Why did I build ValhallaFit?
           </button>
         </div>
       </footer>
