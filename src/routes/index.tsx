@@ -291,63 +291,57 @@ function Index() {
 
 
         {/* How it works */}
-        <section id="how-it-works" className="py-20 md:py-28">
+        <section id="how-it-works" className="py-16 md:py-20">
           <div className="container mx-auto px-4 max-w-4xl">
-            <div className="text-center mb-12">
+            <div className="text-center mb-10">
               <p className="text-sm font-medium text-primary mb-3">How it works</p>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
                 A simple coaching loop
               </h2>
-              <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-                ValhallaFit supports the entire coaching journey, from program creation to
-                long-term client progress.
-              </p>
             </div>
             <ol className="grid gap-4 md:grid-cols-2">
               {[
-                "Trainer joins ValhallaFit",
-                "Creates workout programs",
-                "Assigns plans to clients",
-                "Clients complete workouts in the mobile app",
-                "Progress is tracked and reviewed",
-                "Programs are continuously improved based on results",
+                { title: "Plan", body: "Build a progressive program from your exercise library." },
+                { title: "Assign", body: "Schedule the plan for a specific client." },
+                { title: "Train", body: "The client follows it on their phone and logs each set." },
+                { title: "Review", body: "Check what was completed and adjust the next block." },
               ].map((step, i) => (
                 <li
-                  key={i}
+                  key={step.title}
                   className="flex gap-4 items-start p-5 rounded-xl border bg-card"
                 >
-                  <span className="size-8 shrink-0 rounded-lg bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm">
+                  <span className="size-8 shrink-0 rounded-lg bg-primary text-primary-foreground font-semibold flex items-center justify-center text-sm">
                     {i + 1}
                   </span>
-                  <p className="pt-1 text-sm md:text-base">{step}</p>
+                  <div className="pt-0.5">
+                    <div className="font-semibold text-sm md:text-base">{step.title}</div>
+                    <p className="text-sm text-muted-foreground mt-0.5">{step.body}</p>
+                  </div>
                 </li>
               ))}
             </ol>
           </div>
         </section>
 
-        {/* Coming soon */}
-        <section id="coming-soon" className="py-20 md:py-28 bg-muted/40 border-y">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <div className="max-w-2xl mx-auto text-center mb-14">
+        {/* Roadmap */}
+        <section id="coming-soon" className="py-16 md:py-20 bg-muted/40 border-y">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="max-w-2xl mx-auto text-center mb-10">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium mb-4">
                 <Sparkles className="size-3.5" /> Roadmap
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Smarter coaching is coming
+              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+                What's next
               </h2>
               <p className="mt-4 text-muted-foreground">
-                ValhallaFit is evolving from workout management software into a coaching assistant
-                that helps trainers identify opportunities, risks, and next actions faster.
+                Helping trainers spend less time on admin and make faster coaching decisions.
               </p>
             </div>
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-3">
               {[
-                { icon: LineChart, title: "Progression Recommendations", body: "Suggest when clients may be ready to increase weight, volume, intensity, or training frequency." },
-                { icon: Activity, title: "Client Analytics", body: "Automatically surface trends in performance, consistency, and adherence." },
-                { icon: AlertTriangle, title: "Risk Detection", body: "Highlight potential issues such as missed sessions, insufficient recovery, or declining performance patterns." },
-                { icon: FileText, title: "Weekly Coach Summaries", body: "A simple overview of who is progressing, who may need support, and what changed this week." },
-                { icon: Bell, title: "Client Motivation & Accountability", body: "Automated reminders and coaching nudges that help clients stay consistent between sessions." },
+                { icon: LineChart, title: "Progression suggestions", body: "Surface when a client may be ready to increase weight, volume, or intensity." },
+                { icon: AlertTriangle, title: "Risk signals", body: "Flag missed sessions, stalled progress, or signs a plan needs adjusting." },
+                { icon: FileText, title: "Weekly summaries", body: "A short read-out of who's progressing and what changed this week." },
               ].map((f) => (
                 <Card key={f.title} className="border-dashed bg-card/60">
                   <CardContent className="p-6">
@@ -366,33 +360,20 @@ function Index() {
           </div>
         </section>
 
-        {/* Built for modern coaching */}
-        <section className="py-20 md:py-28">
-          <div className="container mx-auto px-4 max-w-3xl text-center">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Built for modern coaching
-            </h2>
-            <p className="mt-5 text-lg text-muted-foreground">
-              ValhallaFit combines workout planning, client management, and performance tracking
-              into a single platform.
+        {/* Slim CTA strip */}
+        <section className="border-b">
+          <div className="container mx-auto px-4 py-10 md:py-12 flex flex-col md:flex-row items-center justify-between gap-4 max-w-5xl">
+            <p className="text-base md:text-lg font-medium text-foreground text-center md:text-left">
+              Coaching a few clients and tired of the spreadsheets?
             </p>
-            <p className="mt-4 text-muted-foreground">
-              Today it helps trainers manage coaching more efficiently. Tomorrow it will help
-              trainers make better decisions through automation, progression insights, and
-              proactive coaching recommendations.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3 justify-center">
-              <Link to="/auth">
-                <Button size="lg" className="gap-2">
-                  Apply as trainer <ArrowRight className="size-4" />
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button size="lg" variant="outline">Client login</Button>
-              </Link>
-            </div>
+            <Link to="/auth">
+              <Button size="lg" className="gap-2">
+                Apply as trainer <ArrowRight className="size-4" />
+              </Button>
+            </Link>
           </div>
         </section>
+
       </main>
 
       <footer className="border-t">
