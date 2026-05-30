@@ -165,41 +165,6 @@ function Index() {
         </section>
 
 
-        {/* What exists today */}
-        <section id="today" className="py-16 md:py-20">
-
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center mb-12">
-              <p className="text-sm font-medium text-primary mb-3">Available now</p>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                What exists today
-              </h2>
-              <p className="mt-4 text-muted-foreground">
-                Everything needed to run and deliver coaching in one place.
-              </p>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-              {[
-                { icon: LayoutDashboard, title: "Trainer dashboard", body: "One home base for clients, plans, exercises, and today's sessions — less spreadsheet juggling, more coaching." },
-                { icon: Smartphone, title: "Client mobile app", body: "Clients always know what to do next and can log sets from the gym floor without messaging back and forth." },
-                { icon: ClipboardList, title: "Program builder", body: "Build structured programs that help clients improve week after week, then reuse or tailor them per client." },
-                { icon: LineChart, title: "Progress tracking", body: "See how each client is progressing over time and know when a plan needs adjusting." },
-                { icon: Library, title: "Exercise library", body: "A reusable catalogue so building the next plan takes minutes, not an afternoon." },
-                { icon: ShieldCheck, title: "Role-based access", body: "Dedicated experiences for trainers and clients, with the right permissions out of the box." },
-              ].map((f) => (
-                <Card key={f.title} className="border bg-card hover:border-primary/40 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="size-10 rounded-lg bg-accent flex items-center justify-center mb-4">
-                      <f.icon className="size-5 text-primary" />
-                    </div>
-                    <h3 className="font-semibold">{f.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{f.body}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* Two sides of the platform — trainer + client, illustrated with feature lists */}
         <section className="py-16 md:py-20 bg-muted/40 border-y">
