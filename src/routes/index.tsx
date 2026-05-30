@@ -23,7 +23,6 @@ import {
   AlertTriangle,
   FileText,
   Bell,
-  Rocket,
   X,
   ArrowRight,
   LayoutDashboard,
