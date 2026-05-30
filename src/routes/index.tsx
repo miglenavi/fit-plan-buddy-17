@@ -202,7 +202,7 @@ function Index() {
         </section>
 
         {/* Two sides of the platform — trainer + client, illustrated with feature lists */}
-        <section className="py-16 md:py-24 bg-muted/40 border-y">
+        <section className="py-16 md:py-20 bg-muted/40 border-y">
           <div className="container mx-auto px-4 max-w-6xl">
             <div className="max-w-2xl mx-auto text-center mb-12">
               <p className="text-sm font-medium text-primary mb-3">Two sides, one platform</p>
