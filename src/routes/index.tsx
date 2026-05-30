@@ -25,12 +25,13 @@ import {
   Bell,
   X,
   ArrowRight,
+  ArrowDown,
   LayoutDashboard,
   ClipboardList,
+  CheckCircle2,
+  Repeat,
 } from "lucide-react";
-import trainerDashboardImg from "@/assets/screenshot-trainer-dashboard.jpg";
-import planBuilderImg from "@/assets/screenshot-plan-builder.jpg";
-import clientMobileImg from "@/assets/screenshot-client-mobile.jpg";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
