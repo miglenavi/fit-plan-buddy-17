@@ -1,44 +1,43 @@
-# Basic Landing Page for ValhallaFit
+## Quick pass: sidebar polish + trainer dashboard rebuild
 
-Add a clean, simple public landing page at `/` that introduces the app and its services, with a clear call-to-action to the existing `/auth` page.
+Two files, no schema/token/dependency changes.
 
-## Routing change
+### 1. `src/components/AppShell.tsx` — sidebar polish
 
-Currently `src/routes/index.tsx` redirects every visitor straight to `/auth` (or their dashboard if logged in). I'll change it so:
-- **Logged-out visitors** → see the new landing page
-- **Logged-in users** → still auto-redirect to their dashboard (`/admin/applications`, `/trainer`, `/client`, or `/pending`)
+- Add **section labels** above nav groups (uppercase muted text: "Admin", "Coaching", "Client")
+- Refine active state: 3px primary left-edge bar + bolder text (instead of only bg fill); icons go primary on hover
+- Tighten padding, slightly larger logo tile with soft glow
+- Bottom user block: avatar circle with initials + name + email
+- Mobile bottom nav: primary dot indicator under active item
 
-This keeps the app flow intact for existing users while giving new visitors something to read first.
+### 2. `src/routes/trainer.index.tsx` — dashboard rebuild
 
-## Page structure
+Layout matching the mockup's rhythm:
 
-One single route file (`src/routes/index.tsx`) — no extra sub-routes, since you asked for very basic.
+**Header**
+- Greeting + today's date
+- Right-aligned quick actions: New plan, Add exercise, Invite client
 
-Sections, top to bottom:
+**Stat tiles (4-up, lg:grid-cols-4)**
+- Same 4 metrics (clients, exercises, plans, today's sessions)
+- Richer cards: large number, label, icon in primary-tinted rounded square, "View all →" footer
+- `shadow-sm` → hover `shadow-md`, subtle border
 
-1. **Header** — ValhallaFit logo (the Swords icon already used in `/auth`) + "Log in" and "Apply as trainer" buttons (both link to `/auth`).
-2. **Hero** — Big headline ("Train like a Viking."), one-line subhead about coaching + workout tracking, primary CTA "Apply as trainer", secondary "Client log in".
-3. **Services / What you get** — 3 simple feature cards:
-   - **For trainers** — Manage clients, build workout plans, schedule sessions.
-   - **For clients** — Follow your plan, log workouts, track progress.
-   - **All in one place** — Exercise library, weekly schedule, history.
-4. **How it works** — 3 short numbered steps (Trainer applies → Super-admin approves → Trainer onboards clients via email invite).
-5. **Footer CTA + copyright** — One more "Get started" button and a small "© ValhallaFit" line.
+**Main grid (lg:grid-cols-3)**
+- **Today's sessions** (col-span-2): card list with initial-avatar circles, client name, plan name, color-coded status pills. Empty state with icon + "No sessions today" + "Schedule one →"
+- **This week** (col-span-1): completion rate with thin progress bar + recent 5-item activity feed from `assigned_workouts` ordered by `updated_at`
 
-## Styling
+**Empty states**
+- Each card gets a real empty state: tinted icon square + one-line message + CTA
 
-- Reuse existing semantic tokens from `src/styles.css` (primary green, background, muted, accent). No new colors.
-- Same gradient background style already used on `/auth` (`bg-gradient-to-br from-background to-accent/30`) for visual consistency.
-- shadcn `Button` and `Card` components.
-- Responsive: single column on mobile, 3-column grid for the services section on `md:` and up.
-- Add proper `head()` metadata: title, description, og:title, og:description.
+### Data
+- Same `useEffect` `Promise.all`, plus two extra queries:
+  - Weekly aggregate from `assigned_workouts` (last 7 days grouped by status)
+  - Recent 5 `assigned_workouts` ordered `updated_at desc`
 
-## Files touched
+### Out of scope
+- Plan builder restyle, client mobile restyle, replacing landing screenshots, new deps, token changes, schema changes
 
-- **edit** `src/routes/index.tsx` — replace redirect-only logic with the landing page + keep authed-user redirect.
-
-That's it — no DB changes, no new dependencies, no auth changes.
-
----
-
-Want me to go ahead with this, or would you like to tweak the sections / copy / add more (pricing, testimonials, FAQ) first?
+### Files
+- edit `src/components/AppShell.tsx`
+- edit `src/routes/trainer.index.tsx`
