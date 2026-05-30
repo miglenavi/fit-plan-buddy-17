@@ -90,27 +90,24 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Announcement banner */}
+      {/* Announcement banner — personal, subtle */}
       {bannerOpen && (
-        <div className="bg-foreground text-background">
-          <div className="container mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-sm">
-            <Rocket className="size-4 shrink-0 text-primary" />
-            <p className="text-center">
-              <span className="font-medium">Currently developing ValhallaFit v1.0</span>
-              <span className="hidden sm:inline opacity-80"> — A coaching platform for personal trainers and their clients.</span>{" "}
-              <button
-                onClick={() => setAboutOpen(true)}
-                className="underline underline-offset-2 font-medium hover:text-primary transition-colors"
-              >
-                The story behind ValhallaFit →
-              </button>
-            </p>
+        <div className="border-b bg-accent/40">
+          <div className="container mx-auto px-4 py-2 flex items-center justify-center gap-3 text-sm">
+            <button
+              onClick={() => setAboutOpen(true)}
+              className="text-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span aria-hidden>🚀</span>{" "}
+              <span className="font-medium text-foreground">Why did I build ValhallaFit?</span>{" "}
+              <span className="underline underline-offset-2">Read the story →</span>
+            </button>
             <button
               onClick={dismissBanner}
-              aria-label="Dismiss announcement"
-              className="ml-2 opacity-70 hover:opacity-100 transition-opacity shrink-0"
+              aria-label="Dismiss"
+              className="ml-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
             >
-              <X className="size-4" />
+              <X className="size-3.5" />
             </button>
           </div>
         </div>
