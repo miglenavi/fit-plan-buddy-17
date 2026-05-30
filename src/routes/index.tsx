@@ -144,9 +144,9 @@ function Index() {
                 A coaching platform for personal trainers.
               </h1>
               <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                Manage clients, build progressive workout plans, and track client progress —
-                without the spreadsheets.
+                Help clients stay consistent, track progress, and build stronger training habits.
               </p>
+
               <div className="mt-8 flex flex-col items-center gap-3">
                 <Link to="/auth">
                   <Button size="lg" className="gap-2">
