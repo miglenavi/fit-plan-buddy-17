@@ -14,18 +14,16 @@ import {
   Swords,
   Smartphone,
   LineChart,
-  Library,
-  ShieldCheck,
   Sparkles,
   AlertTriangle,
   FileText,
   X,
   ArrowRight,
   LayoutDashboard,
-  ClipboardList,
   CheckCircle2,
   Repeat,
 } from "lucide-react";
+
 
 
 
