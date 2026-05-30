@@ -166,7 +166,8 @@ function Index() {
 
 
         {/* What exists today */}
-        <section id="today" className="py-16 md:py-24">
+        <section id="today" className="py-16 md:py-20">
+
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto text-center mb-12">
               <p className="text-sm font-medium text-primary mb-3">Available now</p>
