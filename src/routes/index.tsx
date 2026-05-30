@@ -119,10 +119,10 @@ function Index() {
             <span className="font-bold text-lg tracking-tight">ValhallaFit</span>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-            <a href="#today" className="hover:text-foreground transition-colors">What exists</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
             <a href="#coming-soon" className="hover:text-foreground transition-colors">Roadmap</a>
           </nav>
+
           <div className="flex items-center gap-2">
             <Link to="/auth"><Button variant="ghost" size="sm">Client login</Button></Link>
             <Link to="/auth"><Button size="sm">Apply as trainer</Button></Link>
