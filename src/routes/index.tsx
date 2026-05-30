@@ -14,18 +14,16 @@ import {
   Swords,
   Smartphone,
   LineChart,
-  Library,
-  ShieldCheck,
   Sparkles,
   AlertTriangle,
   FileText,
   X,
   ArrowRight,
   LayoutDashboard,
-  ClipboardList,
   CheckCircle2,
   Repeat,
 } from "lucide-react";
+
 
 
 
@@ -119,10 +117,10 @@ function Index() {
             <span className="font-bold text-lg tracking-tight">ValhallaFit</span>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-            <a href="#today" className="hover:text-foreground transition-colors">What exists</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
             <a href="#coming-soon" className="hover:text-foreground transition-colors">Roadmap</a>
           </nav>
+
           <div className="flex items-center gap-2">
             <Link to="/auth"><Button variant="ghost" size="sm">Client login</Button></Link>
             <Link to="/auth"><Button size="sm">Apply as trainer</Button></Link>
@@ -144,9 +142,9 @@ function Index() {
                 A coaching platform for personal trainers.
               </h1>
               <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                Manage clients, build progressive workout plans, and track client progress —
-                without the spreadsheets.
+                Help clients stay consistent, track progress, and build stronger training habits.
               </p>
+
               <div className="mt-8 flex flex-col items-center gap-3">
                 <Link to="/auth">
                   <Button size="lg" className="gap-2">
@@ -165,41 +163,6 @@ function Index() {
         </section>
 
 
-        {/* What exists today */}
-        <section id="today" className="py-16 md:py-20">
-
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center mb-12">
-              <p className="text-sm font-medium text-primary mb-3">Available now</p>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                What exists today
-              </h2>
-              <p className="mt-4 text-muted-foreground">
-                Everything needed to run and deliver coaching in one place.
-              </p>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-              {[
-                { icon: LayoutDashboard, title: "Trainer dashboard", body: "One home base for clients, plans, exercises, and today's sessions — less spreadsheet juggling, more coaching." },
-                { icon: Smartphone, title: "Client mobile app", body: "Clients always know what to do next and can log sets from the gym floor without messaging back and forth." },
-                { icon: ClipboardList, title: "Program builder", body: "Build structured programs that help clients improve week after week, then reuse or tailor them per client." },
-                { icon: LineChart, title: "Progress tracking", body: "See how each client is progressing over time and know when a plan needs adjusting." },
-                { icon: Library, title: "Exercise library", body: "A reusable catalogue so building the next plan takes minutes, not an afternoon." },
-                { icon: ShieldCheck, title: "Role-based access", body: "Dedicated experiences for trainers and clients, with the right permissions out of the box." },
-              ].map((f) => (
-                <Card key={f.title} className="border bg-card hover:border-primary/40 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="size-10 rounded-lg bg-accent flex items-center justify-center mb-4">
-                      <f.icon className="size-5 text-primary" />
-                    </div>
-                    <h3 className="font-semibold">{f.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{f.body}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* Two sides of the platform — trainer + client, illustrated with feature lists */}
         <section className="py-16 md:py-20 bg-muted/40 border-y">
@@ -230,11 +193,12 @@ function Index() {
                 </div>
                 <ul className="space-y-3 text-sm">
                   {[
-                    "Manage clients and keep notes in one place",
+                    "Spend session time coaching, not updating spreadsheets",
                     "Build progressive workout plans with reusable exercises",
                     "Assign plans and schedule sessions per client",
                     "Review completed workouts and progress over time",
                   ].map((item) => (
+
                     <li key={item} className="flex items-start gap-2.5">
                       <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
                       <span>{item}</span>
@@ -261,7 +225,7 @@ function Index() {
                     "See today's workout and what's coming next",
                     "Log sets, reps, and weights from the gym floor",
                     "Look back at past sessions to remember last time's load",
-                    "Track personal progress as plans evolve",
+                    "See progress build up over time and stay motivated",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2.5">
                       <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
