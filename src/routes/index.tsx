@@ -167,24 +167,37 @@ function Index() {
               </p>
             </div>
 
-            {/* Product screenshot showcase */}
-            <div className="mt-10 md:mt-14 max-w-6xl mx-auto">
-              <div className="relative rounded-2xl border bg-card shadow-2xl overflow-hidden">
-                <div className="flex items-center gap-1.5 px-4 py-3 border-b bg-muted/50">
-                  <span className="size-2.5 rounded-full bg-destructive/60" />
-                  <span className="size-2.5 rounded-full bg-chart-3/60" />
-                  <span className="size-2.5 rounded-full bg-primary/60" />
-                  <span className="ml-3 text-xs text-muted-foreground">app.valhallafit.com / trainer</span>
-                </div>
-                <img
-                  src={trainerDashboardImg}
-                  alt="ValhallaFit trainer dashboard showing today's sessions, weekly schedule, and client stats"
-                  width={1600}
-                  height={1024}
-                  className="w-full h-auto block"
-                />
+            {/* Coaching workflow — simple illustrated steps, no fake dashboards */}
+            <div className="mt-12 md:mt-16 max-w-5xl mx-auto">
+              <div className="grid gap-3 md:gap-4 md:grid-cols-4 relative">
+                {[
+                  { icon: Users, label: "Manage clients", body: "One roster, real notes, no spreadsheets." },
+                  { icon: ClipboardList, label: "Build plans", body: "Reusable programs with sets, reps, and progression." },
+                  { icon: Smartphone, label: "Clients train", body: "Workouts delivered to the client's phone." },
+                  { icon: LineChart, label: "Track progress", body: "See what changed and adjust the next block." },
+                ].map((s, i) => (
+                  <div key={s.label} className="relative">
+                    <div className="h-full rounded-xl border bg-card p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="size-9 rounded-lg bg-accent flex items-center justify-center">
+                          <s.icon className="size-5 text-primary" />
+                        </div>
+                        <span className="text-xs font-semibold text-muted-foreground">Step {i + 1}</span>
+                      </div>
+                      <div className="font-semibold">{s.label}</div>
+                      <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{s.body}</p>
+                    </div>
+                    {i < 3 && (
+                      <>
+                        <ArrowRight className="hidden md:block size-4 text-muted-foreground absolute top-1/2 -right-3 -translate-y-1/2" />
+                        <ArrowDown className="md:hidden size-4 text-muted-foreground mx-auto my-1" />
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
+
           </div>
         </section>
 
