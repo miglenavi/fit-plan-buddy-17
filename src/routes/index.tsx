@@ -12,25 +12,21 @@ import {
 } from "@/components/ui/dialog";
 import {
   Swords,
-  Users,
-  Dumbbell,
   Smartphone,
   LineChart,
   Library,
   ShieldCheck,
   Sparkles,
-  Activity,
   AlertTriangle,
   FileText,
-  Bell,
   X,
   ArrowRight,
-  ArrowDown,
   LayoutDashboard,
   ClipboardList,
   CheckCircle2,
   Repeat,
 } from "lucide-react";
+
 
 
 export const Route = createFileRoute("/")({
