@@ -25,12 +25,13 @@ import {
   Bell,
   X,
   ArrowRight,
+  ArrowDown,
   LayoutDashboard,
   ClipboardList,
+  CheckCircle2,
+  Repeat,
 } from "lucide-react";
-import trainerDashboardImg from "@/assets/screenshot-trainer-dashboard.jpg";
-import planBuilderImg from "@/assets/screenshot-plan-builder.jpg";
-import clientMobileImg from "@/assets/screenshot-client-mobile.jpg";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -166,24 +167,37 @@ function Index() {
               </p>
             </div>
 
-            {/* Product screenshot showcase */}
-            <div className="mt-10 md:mt-14 max-w-6xl mx-auto">
-              <div className="relative rounded-2xl border bg-card shadow-2xl overflow-hidden">
-                <div className="flex items-center gap-1.5 px-4 py-3 border-b bg-muted/50">
-                  <span className="size-2.5 rounded-full bg-destructive/60" />
-                  <span className="size-2.5 rounded-full bg-chart-3/60" />
-                  <span className="size-2.5 rounded-full bg-primary/60" />
-                  <span className="ml-3 text-xs text-muted-foreground">app.valhallafit.com / trainer</span>
-                </div>
-                <img
-                  src={trainerDashboardImg}
-                  alt="ValhallaFit trainer dashboard showing today's sessions, weekly schedule, and client stats"
-                  width={1600}
-                  height={1024}
-                  className="w-full h-auto block"
-                />
+            {/* Coaching workflow — simple illustrated steps, no fake dashboards */}
+            <div className="mt-12 md:mt-16 max-w-5xl mx-auto">
+              <div className="grid gap-3 md:gap-4 md:grid-cols-4 relative">
+                {[
+                  { icon: Users, label: "Manage clients", body: "One roster, real notes, no spreadsheets." },
+                  { icon: ClipboardList, label: "Build plans", body: "Reusable programs with sets, reps, and progression." },
+                  { icon: Smartphone, label: "Clients train", body: "Workouts delivered to the client's phone." },
+                  { icon: LineChart, label: "Track progress", body: "See what changed and adjust the next block." },
+                ].map((s, i) => (
+                  <div key={s.label} className="relative">
+                    <div className="h-full rounded-xl border bg-card p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="size-9 rounded-lg bg-accent flex items-center justify-center">
+                          <s.icon className="size-5 text-primary" />
+                        </div>
+                        <span className="text-xs font-semibold text-muted-foreground">Step {i + 1}</span>
+                      </div>
+                      <div className="font-semibold">{s.label}</div>
+                      <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{s.body}</p>
+                    </div>
+                    {i < 3 && (
+                      <>
+                        <ArrowRight className="hidden md:block size-4 text-muted-foreground absolute top-1/2 -right-3 -translate-y-1/2" />
+                        <ArrowDown className="md:hidden size-4 text-muted-foreground mx-auto my-1" />
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
+
           </div>
         </section>
 
@@ -222,56 +236,94 @@ function Index() {
           </div>
         </section>
 
-        {/* Product showcase strip: plan builder + mobile */}
+        {/* Two sides of the platform — trainer + client, illustrated with feature lists */}
         <section className="py-16 md:py-24 bg-muted/40 border-y">
-          <div className="container mx-auto px-4 grid gap-10 lg:grid-cols-2 items-center max-w-6xl">
-            <div>
-              <p className="text-sm font-medium text-primary mb-3">Workout plan builder</p>
-              <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Programs that drive real progression
-              </h3>
+          <div className="container mx-auto px-4 max-w-6xl">
+            <div className="max-w-2xl mx-auto text-center mb-12">
+              <p className="text-sm font-medium text-primary mb-3">Two sides, one platform</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                Built for the trainer and the client
+              </h2>
               <p className="mt-4 text-muted-foreground">
-                Create structured progressive programs that help clients improve week after week.
-                Reuse them across your roster or tailor them to a single client — without rebuilding
-                from scratch every time.
+                A web workspace for the trainer. A focused mobile experience for the client.
               </p>
             </div>
-            <div className="rounded-xl border bg-card shadow-lg overflow-hidden">
-              <img
-                src={planBuilderImg}
-                alt="ValhallaFit workout plan builder with exercise library and sets/reps panel"
-                width={1600}
-                height={1024}
-                loading="lazy"
-                className="w-full h-auto block"
-              />
-            </div>
-          </div>
 
-          <div className="container mx-auto px-4 grid gap-10 lg:grid-cols-2 items-center max-w-6xl mt-20">
-            <div className="order-2 lg:order-1 flex justify-center">
-              <img
-                src={clientMobileImg}
-                alt="ValhallaFit client mobile workout screen showing exercises and progress"
-                width={420}
-                height={560}
-                loading="lazy"
-                className="w-full max-w-xs h-auto rounded-2xl"
-              />
+            <div className="grid gap-5 md:grid-cols-2">
+              {/* Trainer side */}
+              <div className="rounded-2xl border bg-card p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <LayoutDashboard className="size-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      For trainers · Web
+                    </div>
+                    <h3 className="font-semibold text-lg">Coach from one workspace</h3>
+                  </div>
+                </div>
+                <ul className="space-y-3 text-sm">
+                  {[
+                    "Manage clients and keep notes in one place",
+                    "Build progressive workout plans with reusable exercises",
+                    "Assign plans and schedule sessions per client",
+                    "Review completed workouts and progress over time",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Client side */}
+              <div className="rounded-2xl border bg-card p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Smartphone className="size-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      For clients · Mobile
+                    </div>
+                    <h3 className="font-semibold text-lg">Train without the back-and-forth</h3>
+                  </div>
+                </div>
+                <ul className="space-y-3 text-sm">
+                  {[
+                    "See today's workout and what's coming next",
+                    "Log sets, reps, and weights from the gym floor",
+                    "Look back at past sessions to remember last time's load",
+                    "Track personal progress as plans evolve",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-            <div className="order-1 lg:order-2">
-              <p className="text-sm font-medium text-primary mb-3">Client mobile experience</p>
-              <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Coaching that travels to the gym floor
-              </h3>
-              <p className="mt-4 text-muted-foreground">
-                Clients always know what to do next and trainers can track progress without chasing
-                updates. Each completed set syncs back so the next coaching decision is grounded in
-                real data.
-              </p>
+
+            {/* Progressive training callout */}
+            <div className="mt-8 rounded-2xl border bg-card p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-5">
+              <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Repeat className="size-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">Progressive programs, not one-off workouts</h3>
+                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                  Plans are designed to evolve week after week. Each completed session feeds back
+                  into the next coaching decision, so clients keep moving forward instead of
+                  repeating the same routine.
+                </p>
+              </div>
             </div>
           </div>
         </section>
+
 
         {/* How it works */}
         <section id="how-it-works" className="py-20 md:py-28">
