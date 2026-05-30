@@ -131,71 +131,39 @@ function Index() {
       </header>
 
       <main>
-        {/* Hero — tightened spacing */}
+        {/* Hero */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-accent/40 via-background to-background pointer-events-none" />
-          <div className="container mx-auto px-4 pt-10 pb-8 md:pt-14 md:pb-12 relative">
+          <div className="container mx-auto px-4 pt-16 pb-20 md:pt-24 md:pb-28 relative">
             <div className="max-w-3xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground mb-6">
                 <span className="size-1.5 rounded-full bg-primary animate-pulse" />
-                In active development · v1.0
+                In active development
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.05]">
-                Coach clients. Track progress.{" "}
-                <span className="text-primary">Build stronger training habits.</span>
+              <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
+                A coaching platform for personal trainers.
               </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-                ValhallaFit helps personal trainers manage clients, create progressive workout
-                plans, and track performance from one platform.
+              <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                Manage clients, build progressive workout plans, and track client progress —
+                without the spreadsheets.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3 justify-center">
+              <div className="mt-8 flex flex-col items-center gap-3">
                 <Link to="/auth">
                   <Button size="lg" className="gap-2">
                     Apply as trainer <ArrowRight className="size-4" />
                   </Button>
                 </Link>
-                <Link to="/auth">
-                  <Button size="lg" variant="outline">Client login</Button>
+                <Link
+                  to="/auth"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Already a client? Sign in →
                 </Link>
               </div>
-              <p className="mt-5 text-xs md:text-sm text-muted-foreground">
-                Trainer dashboard <span className="mx-2 opacity-50">•</span> Client mobile app <span className="mx-2 opacity-50">•</span> Progressive workout planning
-              </p>
             </div>
-
-            {/* Coaching workflow — simple illustrated steps, no fake dashboards */}
-            <div className="mt-12 md:mt-16 max-w-5xl mx-auto">
-              <div className="grid gap-3 md:gap-4 md:grid-cols-4 relative">
-                {[
-                  { icon: Users, label: "Manage clients", body: "One roster, real notes, no spreadsheets." },
-                  { icon: ClipboardList, label: "Build plans", body: "Reusable programs with sets, reps, and progression." },
-                  { icon: Smartphone, label: "Clients train", body: "Workouts delivered to the client's phone." },
-                  { icon: LineChart, label: "Track progress", body: "See what changed and adjust the next block." },
-                ].map((s, i) => (
-                  <div key={s.label} className="relative">
-                    <div className="h-full rounded-xl border bg-card p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="size-9 rounded-lg bg-accent flex items-center justify-center">
-                          <s.icon className="size-5 text-primary" />
-                        </div>
-                        <span className="text-xs font-semibold text-muted-foreground">Step {i + 1}</span>
-                      </div>
-                      <div className="font-semibold">{s.label}</div>
-                      <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{s.body}</p>
-                    </div>
-                    {i < 3 && (
-                      <>
-                        <ArrowRight className="hidden md:block size-4 text-muted-foreground absolute top-1/2 -right-3 -translate-y-1/2" />
-                        <ArrowDown className="md:hidden size-4 text-muted-foreground mx-auto my-1" />
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
           </div>
         </section>
+
 
         {/* What exists today */}
         <section id="today" className="py-16 md:py-24">
