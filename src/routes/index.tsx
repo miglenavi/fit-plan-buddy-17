@@ -195,11 +195,12 @@ function Index() {
                 </div>
                 <ul className="space-y-3 text-sm">
                   {[
-                    "Manage clients and keep notes in one place",
+                    "Spend session time coaching, not updating spreadsheets",
                     "Build progressive workout plans with reusable exercises",
                     "Assign plans and schedule sessions per client",
                     "Review completed workouts and progress over time",
                   ].map((item) => (
+
                     <li key={item} className="flex items-start gap-2.5">
                       <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
                       <span>{item}</span>
