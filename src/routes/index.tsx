@@ -23,7 +23,6 @@ import {
   AlertTriangle,
   FileText,
   Bell,
-  Rocket,
   X,
   ArrowRight,
   LayoutDashboard,
@@ -90,27 +89,24 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Announcement banner */}
+      {/* Announcement banner — personal, subtle */}
       {bannerOpen && (
-        <div className="bg-foreground text-background">
-          <div className="container mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-sm">
-            <Rocket className="size-4 shrink-0 text-primary" />
-            <p className="text-center">
-              <span className="font-medium">Currently developing ValhallaFit v1.0</span>
-              <span className="hidden sm:inline opacity-80"> — A coaching platform for personal trainers and their clients.</span>{" "}
-              <button
-                onClick={() => setAboutOpen(true)}
-                className="underline underline-offset-2 font-medium hover:text-primary transition-colors"
-              >
-                The story behind ValhallaFit →
-              </button>
-            </p>
+        <div className="border-b bg-accent/40">
+          <div className="container mx-auto px-4 py-2 flex items-center justify-center gap-3 text-sm">
+            <button
+              onClick={() => setAboutOpen(true)}
+              className="text-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span aria-hidden>🚀</span>{" "}
+              <span className="font-medium text-foreground">Why did I build ValhallaFit?</span>{" "}
+              <span className="underline underline-offset-2">Read the story →</span>
+            </button>
             <button
               onClick={dismissBanner}
-              aria-label="Dismiss announcement"
-              className="ml-2 opacity-70 hover:opacity-100 transition-opacity shrink-0"
+              aria-label="Dismiss"
+              className="ml-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
             >
-              <X className="size-4" />
+              <X className="size-3.5" />
             </button>
           </div>
         </div>
@@ -205,12 +201,12 @@ function Index() {
             </div>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               {[
-                { icon: LayoutDashboard, title: "Trainer Dashboard", body: "Manage clients, workout plans, exercises, and schedules from a single home screen." },
-                { icon: Smartphone, title: "Client Mobile App", body: "Clients view workouts, complete sessions, and track progress from their phone." },
-                { icon: ClipboardList, title: "Workout Plan Builder", body: "Create structured programs and assign them to one or many clients." },
-                { icon: LineChart, title: "Progress Tracking", body: "Keep a complete history of workouts and performance over time." },
-                { icon: Library, title: "Exercise Library", body: "Organize exercises and build plans faster with a reusable catalogue." },
-                { icon: ShieldCheck, title: "Role-Based Access", body: "Dedicated experiences for admins, trainers, and clients." },
+                { icon: LayoutDashboard, title: "Trainer dashboard", body: "One home base for clients, plans, exercises, and today's sessions — less spreadsheet juggling, more coaching." },
+                { icon: Smartphone, title: "Client mobile app", body: "Clients always know what to do next and can log sets from the gym floor without messaging back and forth." },
+                { icon: ClipboardList, title: "Program builder", body: "Build structured programs that help clients improve week after week, then reuse or tailor them per client." },
+                { icon: LineChart, title: "Progress tracking", body: "See how each client is progressing over time and know when a plan needs adjusting." },
+                { icon: Library, title: "Exercise library", body: "A reusable catalogue so building the next plan takes minutes, not an afternoon." },
+                { icon: ShieldCheck, title: "Role-based access", body: "Dedicated experiences for trainers and clients, with the right permissions out of the box." },
               ].map((f) => (
                 <Card key={f.title} className="border bg-card hover:border-primary/40 transition-colors">
                   <CardContent className="p-6">
@@ -394,59 +390,43 @@ function Index() {
             onClick={() => setAboutOpen(true)}
             className="hover:text-foreground transition-colors"
           >
-            The story behind ValhallaFit
+            Why did I build ValhallaFit?
           </button>
         </div>
       </footer>
 
-      {/* About modal */}
+      {/* About modal — personal story */}
       <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Building ValhallaFit</DialogTitle>
+            <DialogTitle className="text-2xl">Why did I build ValhallaFit?</DialogTitle>
             <DialogDescription className="sr-only">
-              Background on ValhallaFit and what it does today.
+              The personal story behind ValhallaFit.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 text-sm leading-relaxed">
-            <p className="text-muted-foreground">
-              ValhallaFit was created to explore how modern product and development tools can
-              accelerate software creation and validation.
+          <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+            <p>
+              ValhallaFit started because my partner began coaching people in the gym.
             </p>
-            <p className="text-muted-foreground">
-              The platform helps personal trainers manage clients, create progressive workout
-              plans, track performance, and deliver a better coaching experience.
+            <p>
+              Like many trainers, he quickly found himself managing workout plans, tracking
+              progress, and updating spreadsheets instead of focusing on coaching.
             </p>
-            <div>
-              <p className="font-semibold mb-2">Current functionality includes:</p>
-              <ul className="space-y-1.5 text-muted-foreground">
-                {[
-                  "Trainer dashboard",
-                  "Client management",
-                  "Workout planning",
-                  "Progressive training programs",
-                  "Exercise library",
-                  "Progress tracking",
-                  "Mobile workout experience",
-                  "Role-based permissions",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="mt-1.5 size-1.5 rounded-full bg-primary shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <p className="text-muted-foreground">
-              Future development focuses on reducing administrative work for trainers through
-              coaching automation, progression insights, adherence monitoring, and risk detection.
+            <p>
+              At the same time, I was one of his clients. I wanted an easier way to remember what
+              weights I used last time, see my progress, and celebrate small wins along the way.
             </p>
-            <p className="text-muted-foreground">
-              The goal is simple: help trainers spend less time managing spreadsheets and more
-              time coaching people.
+            <p className="text-foreground font-medium">So I started building ValhallaFit.</p>
+            <p>
+              The goal is simple: help trainers spend less time managing workouts and more time
+              helping people make progress.
             </p>
-            <p className="text-sm pt-2 border-t">
-              Built by <span className="font-semibold text-foreground">Miglė Navickaitė</span>.
+            <p>
+              And yes, the name is a bit of an inside joke. If you've met my partner, you'll
+              probably understand why Valhalla felt like the right name.
+            </p>
+            <p className="text-sm pt-3 border-t text-foreground">
+              — <span className="font-semibold">Miglė Navickaitė</span>
             </p>
           </div>
         </DialogContent>
