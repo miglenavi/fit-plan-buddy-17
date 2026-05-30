@@ -41,8 +41,8 @@ type TodaySession = {
 type ActivityItem = {
   id: string;
   status: string;
-  updated_at: string;
-  scheduled_date: string;
+  created_at: string;
+  scheduled_date: string | null;
   workout_plans: { name: string } | null;
   profiles: { full_name: string | null } | null;
 };
@@ -93,9 +93,9 @@ function Dashboard() {
         supabase
           .from("assigned_workouts")
           .select(
-            "id, status, updated_at, scheduled_date, workout_plans(name), profiles!assigned_workouts_client_profile_fk(full_name)"
+            "id, status, created_at, scheduled_date, workout_plans(name), profiles!assigned_workouts_client_profile_fk(full_name)"
           )
-          .order("updated_at", { ascending: false })
+          .order("created_at", { ascending: false })
           .limit(5),
       ]);
 
