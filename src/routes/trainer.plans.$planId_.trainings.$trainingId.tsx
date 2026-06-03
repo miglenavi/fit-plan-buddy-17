@@ -16,7 +16,7 @@ export const Route = createFileRoute("/trainer/plans/$planId_/trainings/$trainin
 });
 
 function TrainingDetail() {
-  const { planId, trainingId } = useParams({ from: "/trainer/plans/$planId/trainings/$trainingId" });
+  const { planId, trainingId } = useParams({ from: "/trainer/plans/$planId_/trainings/$trainingId" });
   const [training, setTraining] = useState<any>(null);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
