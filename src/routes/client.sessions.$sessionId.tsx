@@ -83,7 +83,7 @@ function LiveSession() {
             const match = (prevSEs ?? []).find((x: any) => x.session_id === ps.id && x.exercise_id === cur.exercise_id);
             if (match && (match.set_logs?.length ?? 0) > 0) {
               last[cur.id] = {
-                date: ps.completed_at,
+                date: ps.completed_at ?? "",
                 sets: match.set_logs.map((l: any) => ({ set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed })).sort((a: any, b: any) => a.set_index - b.set_index),
               };
               break;
