@@ -1,135 +1,135 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { RoleGuard } from "@/components/RoleGuard";
 import { ClientShell } from "@/components/ClientShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight, Calendar, Play } from "lucide-react";
+import { ArrowRight, Play, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { weekStart, addDays, fmtWeekRange } from "@/lib/week";
+import { startSession } from "@/lib/sessions.functions";
 
 export const Route = createFileRoute("/client/")({
   ssr: false,
-  component: () => <RoleGuard role="client"><ClientShell title="This week"><ClientToday /></ClientShell></RoleGuard>,
+  component: () => <RoleGuard role="client"><ClientShell title="Today"><ClientToday /></ClientShell></RoleGuard>,
 });
 
 function ClientToday() {
   const { fullName } = useAuth();
-  const thisWeek = weekStart(new Date());
-  const nextWeek = addDays(thisWeek, 7).toISOString().slice(0, 10);
-  const [current, setCurrent] = useState<any[]>([]);
-  const [upcoming, setUpcoming] = useState<any[]>([]);
-  const [legacy, setLegacy] = useState<any[]>([]); // old date-based assignments
+  const navigate = useNavigate();
+  const start = useServerFn(startSession);
+  const [program, setProgram] = useState<any>(null);
+  const [trainings, setTrainings] = useState<any[]>([]);
+  const [lastDone, setLastDone] = useState<string | null>(null);
+  const [starting, setStarting] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const [{ data: w }, { data: n }, { data: l }] = await Promise.all([
-        supabase.from("assigned_workouts")
-          .select("id, status, completed_at, scheduled_date, week_start_date, workout_plan_id, workout_plans(name, description)")
-          .eq("week_start_date", thisWeek)
-          .order("workout_plan_id"),
-        supabase.from("assigned_workouts")
-          .select("id, week_start_date, workout_plans(name)")
-          .eq("week_start_date", nextWeek)
-          .order("workout_plan_id"),
-        supabase.from("assigned_workouts")
-          .select("id, status, scheduled_date, workout_plans(name, description)")
-          .is("week_start_date", null)
-          .eq("scheduled_date", new Date().toISOString().slice(0, 10)),
-      ]);
-      setCurrent(w ?? []); setUpcoming(n ?? []); setLegacy(l ?? []);
+      const { data: progs } = await supabase
+        .from("client_programs")
+        .select("id, plan_id, status, plans(id, name, description)")
+        .eq("status", "active")
+        .order("start_date", { ascending: false })
+        .limit(1);
+      const p = progs?.[0];
+      setProgram(p ?? null);
+      if (p?.plan_id) {
+        const { data: t } = await supabase
+          .from("trainings")
+          .select("id, name, description, order_index, training_exercises(id)")
+          .eq("plan_id", p.plan_id)
+          .order("order_index");
+        setTrainings(t ?? []);
+      }
+      const { data: last } = await supabase
+        .from("training_sessions")
+        .select("training_id, completed_at")
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(1);
+      setLastDone(last?.[0]?.training_id ?? null);
     })();
-  }, [thisWeek, nextWeek]);
+  }, []);
 
-  const all = [...current, ...legacy];
-  const done = all.filter((x) => x.status === "completed").length;
+  // Next suggestion: the training after the last completed one, in order_index. Wraps around.
+  let nextId: string | null = null;
+  if (trainings.length > 0) {
+    if (!lastDone) nextId = trainings[0].id;
+    else {
+      const idx = trainings.findIndex((t) => t.id === lastDone);
+      nextId = trainings[(idx + 1) % trainings.length]?.id ?? trainings[0].id;
+    }
+  }
+
+  const doStart = async (trainingId: string) => {
+    setStarting(trainingId);
+    try {
+      const res = await start({ data: { trainingId } });
+      navigate({ to: "/client/sessions/$sessionId", params: { sessionId: res.sessionId } });
+    } catch (e: any) {
+      setStarting(null);
+      alert(e.message ?? "Couldn't start");
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Hey{fullName ? `, ${fullName.split(" ")[0]}` : ""} 👋</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{fmtWeekRange(thisWeek)}</p>
+        {program?.plans?.name && <p className="text-sm text-muted-foreground mt-0.5">Current plan: {program.plans.name}</p>}
       </div>
 
-      {all.length > 0 && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">This week's progress</span>
-              <span className="text-sm tabular-nums">{done} / {all.length}</span>
-            </div>
-            <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <div className="h-full bg-primary transition-all" style={{ width: `${all.length ? (done / all.length) * 100 : 0}%` }} />
-            </div>
-          </CardContent>
-        </Card>
+      {!program && (
+        <Card><CardContent className="p-5 text-sm text-muted-foreground text-center">
+          No active plan yet. Your trainer will set one up soon 🌿
+        </CardContent></Card>
       )}
 
-      <section>
-        <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1">Workouts to do</h2>
-        {all.length === 0 ? (
-          <Card><CardContent className="p-5 text-sm text-muted-foreground text-center">
-            No program assigned yet. Your trainer will set one up soon 🌿
-          </CardContent></Card>
-        ) : (
-          <div className="space-y-3">
-            {all.map((t) => (
-              <Card key={t.id} className={t.status === "completed" ? "border-primary/40 bg-primary/5" : ""}>
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-lg">{t.workout_plans?.name}</div>
-                      {t.workout_plans?.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{t.workout_plans.description}</p>
-                      )}
-                      {t.status === "completed" && t.completed_at && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Done {new Date(t.completed_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                        </p>
-                      )}
-                    </div>
-                    {t.status === "completed" && <CheckCircle2 className="size-5 text-primary shrink-0" />}
-                  </div>
-                  <div className="mt-4">
-                    {t.status === "completed" ? (
-                      <Link to="/client/workouts/$assignedId" params={{ assignedId: t.id }} className="text-sm text-primary underline">
-                        Review
-                      </Link>
-                    ) : (
-                      <Link to="/client/workouts/$assignedId" params={{ assignedId: t.id }} className="block">
-                        <Button className="w-full" size="lg">
-                          {t.status === "in_progress" ? <><Play className="size-4 mr-1" /> Resume</> : <>Start workout <ArrowRight className="size-4 ml-1" /></>}
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
+      {program && trainings.length === 0 && (
+        <Card><CardContent className="p-5 text-sm text-muted-foreground text-center">
+          Your plan is being put together — no trainings yet.
+        </CardContent></Card>
+      )}
 
-      {upcoming.length > 0 && (
+      {trainings.length > 0 && (
         <section>
-          <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
-            <Calendar className="size-3.5" /> Next week
-          </h2>
-          <Card>
-            <CardContent className="p-0">
-              <ul className="divide-y">
-                {upcoming.map((u) => (
-                  <li key={u.id} className="px-4 py-3 flex justify-between items-center">
-                    <span className="font-medium text-sm">{u.workout_plans?.name}</span>
-                    <span className="text-xs text-muted-foreground">{fmtWeekRange(u.week_start_date)}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1">Pick a training</h2>
+          <div className="space-y-3">
+            {trainings.map((t) => {
+              const isNext = t.id === nextId;
+              return (
+                <Card key={t.id} className={isNext ? "border-primary/60 bg-primary/5" : ""}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold flex items-center gap-1.5">
+                          {t.name}
+                          {isNext && <span className="text-[10px] font-medium uppercase tracking-wider text-primary bg-primary/15 px-1.5 py-0.5 rounded inline-flex items-center gap-1"><Sparkles className="size-3" />Next up</span>}
+                        </div>
+                        {t.description && <p className="text-xs text-muted-foreground mt-1">{t.description}</p>}
+                        <div className="text-xs text-muted-foreground mt-1">{t.training_exercises?.length ?? 0} exercises</div>
+                      </div>
+                    </div>
+                    <Button className="w-full mt-3" disabled={starting === t.id} onClick={() => doStart(t.id)}>
+                      <Play className="size-4 mr-1.5" /> {starting === t.id ? "Starting…" : "Start training"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </section>
       )}
+
+      <Card>
+        <CardContent className="p-4">
+          <Link to="/client/history" className="flex items-center justify-between text-sm">
+            <span className="font-medium">View history</span>
+            <ArrowRight className="size-4 text-muted-foreground" />
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }
