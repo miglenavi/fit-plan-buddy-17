@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Swords, Users, ClipboardList, Calendar, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck, Tag } from "lucide-react";
+import { Swords, Users, ClipboardList, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck, Tag } from "lucide-react";
 import type { ReactNode } from "react";
 
 const trainerNav = [
@@ -9,7 +9,6 @@ const trainerNav = [
   { to: "/trainer/clients", label: "Clients", icon: Users },
   { to: "/trainer/exercises", label: "Exercises", icon: Dumbbell },
   { to: "/trainer/plans", label: "Workout Plans", icon: ClipboardList },
-  { to: "/trainer/schedule", label: "Schedule", icon: Calendar },
 ];
 
 const clientNav = [
