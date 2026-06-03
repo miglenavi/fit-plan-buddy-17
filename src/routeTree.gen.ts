@@ -16,7 +16,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainerIndexRouteImport } from './routes/trainer.index'
 import { Route as ClientIndexRouteImport } from './routes/client.index'
-import { Route as TrainerScheduleRouteImport } from './routes/trainer.schedule'
 import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
 import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
 import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
@@ -65,11 +64,6 @@ const TrainerIndexRoute = TrainerIndexRouteImport.update({
 const ClientIndexRoute = ClientIndexRouteImport.update({
   id: '/client/',
   path: '/client/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrainerScheduleRoute = TrainerScheduleRouteImport.update({
-  id: '/trainer/schedule',
-  path: '/trainer/schedule',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrainerPlansRoute = TrainerPlansRouteImport.update({
@@ -159,7 +153,6 @@ export interface FileRoutesByFullPath {
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
-  '/trainer/schedule': typeof TrainerScheduleRoute
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/client/workouts/$assignedId': typeof ClientWorkoutsAssignedIdRoute
@@ -181,7 +174,6 @@ export interface FileRoutesByTo {
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
-  '/trainer/schedule': typeof TrainerScheduleRoute
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
   '/client/workouts/$assignedId': typeof ClientWorkoutsAssignedIdRoute
@@ -206,7 +198,6 @@ export interface FileRoutesById {
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
-  '/trainer/schedule': typeof TrainerScheduleRoute
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/client/workouts/$assignedId': typeof ClientWorkoutsAssignedIdRoute
@@ -232,7 +223,6 @@ export interface FileRouteTypes {
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
-    | '/trainer/schedule'
     | '/client/'
     | '/trainer/'
     | '/client/workouts/$assignedId'
@@ -254,7 +244,6 @@ export interface FileRouteTypes {
     | '/client/history'
     | '/client/profile'
     | '/trainer/clients'
-    | '/trainer/schedule'
     | '/client'
     | '/trainer'
     | '/client/workouts/$assignedId'
@@ -278,7 +267,6 @@ export interface FileRouteTypes {
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
-    | '/trainer/schedule'
     | '/client/'
     | '/trainer/'
     | '/client/workouts/$assignedId'
@@ -303,7 +291,6 @@ export interface RootRouteChildren {
   TrainerClientsRoute: typeof TrainerClientsRouteWithChildren
   TrainerExercisesRoute: typeof TrainerExercisesRouteWithChildren
   TrainerPlansRoute: typeof TrainerPlansRouteWithChildren
-  TrainerScheduleRoute: typeof TrainerScheduleRoute
   ClientIndexRoute: typeof ClientIndexRoute
   TrainerIndexRoute: typeof TrainerIndexRoute
   ClientWorkoutsAssignedIdRoute: typeof ClientWorkoutsAssignedIdRoute
@@ -358,13 +345,6 @@ declare module '@tanstack/react-router' {
       path: '/client'
       fullPath: '/client/'
       preLoaderRoute: typeof ClientIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trainer/schedule': {
-      id: '/trainer/schedule'
-      path: '/trainer/schedule'
-      fullPath: '/trainer/schedule'
-      preLoaderRoute: typeof TrainerScheduleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trainer/plans': {
@@ -521,7 +501,6 @@ const rootRouteChildren: RootRouteChildren = {
   TrainerClientsRoute: TrainerClientsRouteWithChildren,
   TrainerExercisesRoute: TrainerExercisesRouteWithChildren,
   TrainerPlansRoute: TrainerPlansRouteWithChildren,
-  TrainerScheduleRoute: TrainerScheduleRoute,
   ClientIndexRoute: ClientIndexRoute,
   TrainerIndexRoute: TrainerIndexRoute,
   ClientWorkoutsAssignedIdRoute: ClientWorkoutsAssignedIdRoute,
@@ -529,3 +508,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
