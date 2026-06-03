@@ -17,7 +17,10 @@ function Plans() {
   const [creating, setCreating] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("workout_plans").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("plans")
+      .select("id, name, description, status, trainings(id)")
+      .order("created_at", { ascending: false });
     setList(data ?? []);
   };
   useEffect(() => { load(); }, []);
@@ -26,7 +29,7 @@ function Plans() {
     setCreating(true);
     const { data: u } = await supabase.auth.getUser();
     const { data, error } = await supabase
-      .from("workout_plans")
+      .from("plans")
       .insert({ trainer_id: u.user!.id, name: "Untitled plan" })
       .select("id")
       .single();
@@ -36,7 +39,8 @@ function Plans() {
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from("workout_plans").delete().eq("id", id);
+    if (!confirm("Delete this plan and all its trainings?")) return;
+    const { error } = await supabase.from("plans").delete().eq("id", id);
     if (error) toast.error(error.message); else load();
   };
 
@@ -44,8 +48,8 @@ function Plans() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Workout Plans</h1>
-          <p className="text-muted-foreground mt-1">Build reusable templates for your clients</p>
+          <h1 className="text-3xl font-bold tracking-tight">Plans</h1>
+          <p className="text-muted-foreground mt-1">Reusable programs you assign to clients</p>
         </div>
         <Button onClick={create} disabled={creating}>
           {creating ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Plus className="size-4 mr-1" />}
@@ -56,10 +60,13 @@ function Plans() {
       <div className="grid sm:grid-cols-2 gap-3">
         {list.map((p) => (
           <Card key={p.id} className="hover:border-primary transition-colors">
-            <CardContent className="p-4 flex items-center justify-between">
-              <Link to="/trainer/plans/$planId" params={{ planId: p.id }} className="flex-1">
-                <div className="font-semibold">{p.name}</div>
-                {p.description && <p className="text-sm text-muted-foreground mt-1">{p.description}</p>}
+            <CardContent className="p-4 flex items-center justify-between gap-3">
+              <Link to="/trainer/plans/$planId" params={{ planId: p.id }} className="flex-1 min-w-0">
+                <div className="font-semibold truncate">{p.name}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {(p.trainings?.length ?? 0)} training{(p.trainings?.length ?? 0) === 1 ? "" : "s"}
+                  {p.description ? ` · ${p.description}` : ""}
+                </div>
               </Link>
               <div className="flex items-center gap-1">
                 <Button size="icon" variant="ghost" onClick={() => remove(p.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
