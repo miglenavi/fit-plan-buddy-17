@@ -72,6 +72,7 @@ function TrainingDetail() {
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!exId) return toast.error("Pick an exercise first");
     if (repsMax < repsMin) return toast.error("Max reps must be ≥ min reps");
     const { error } = await supabase.from("training_exercises").insert({
       training_id: trainingId,
@@ -151,7 +152,7 @@ function TrainingDetail() {
             <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
             <div className="space-y-2"><Label>Rest (sec)</Label><Input type="number" min="0" value={rest} onChange={(e) => setRest(e.target.value)} placeholder="optional" /></div>
             <div className="space-y-2 sm:col-span-4"><Label>Coach notes</Label><Input value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} placeholder="Cues, tempo, etc." /></div>
-            <Button type="submit" className="sm:col-span-6" disabled={!exId}><Plus className="size-4 mr-1" /> Add to training</Button>
+            <Button type="submit" className="sm:col-span-6"><Plus className="size-4 mr-1" /> {exId ? "Add exercise to training" : "Select an exercise above to add"}</Button>
           </form>
         </CardContent>
       </Card>
