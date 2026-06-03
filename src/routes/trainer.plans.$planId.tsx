@@ -20,6 +20,7 @@ function PlanDetail() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [trainings, setTrainings] = useState<any[]>([]);
+  const [adding, setAdding] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const loaded = useRef(false);
   const lastSaved = useRef("");
@@ -55,13 +56,21 @@ function PlanDetail() {
   }, [name, desc, planId]);
 
   const addTraining = async () => {
-    const { data, error } = await supabase.from("trainings").insert({
-      plan_id: planId,
-      name: "Untitled training",
-      order_index: trainings.length,
-    }).select("id").single();
-    if (error || !data) { toast.error(error?.message ?? "Couldn't add"); return; }
-    navigate({ to: "/trainer/plans/$planId/trainings/$trainingId", params: { planId, trainingId: data.id } });
+    if (adding) return;
+    setAdding(true);
+    try {
+      const { data, error } = await supabase.from("trainings").insert({
+        plan_id: planId,
+        name: "Untitled training",
+        order_index: trainings.length,
+      }).select("id, name, description, order_index, training_exercises(id)").single();
+      if (error || !data) { toast.error(error?.message ?? "Could not add training"); return; }
+      setTrainings((prev) => [...prev, data]);
+      toast.success("Training added");
+      navigate({ to: "/trainer/plans/$planId/trainings/$trainingId", params: { planId, trainingId: data.id } });
+    } finally {
+      setAdding(false);
+    }
   };
 
   const removeTraining = async (id: string) => {
@@ -91,7 +100,10 @@ function PlanDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>Trainings</CardTitle>
-          <Button size="sm" onClick={addTraining}><Plus className="size-4 mr-1" /> Add training</Button>
+          <Button size="sm" onClick={addTraining} disabled={adding}>
+            {adding ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Plus className="size-4 mr-1" />}
+            {adding ? "Creating…" : "Add training"}
+          </Button>
         </CardHeader>
         <CardContent>
           {trainings.length === 0 ? (
