@@ -30,7 +30,7 @@ import { Route as TrainerPlansPlanIdRouteImport } from './routes/trainer.plans.$
 import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer.exercises.$exerciseId'
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
 import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.sessions.$sessionId'
-import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId.trainings.$trainingId'
+import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
 
 const TrainersRoute = TrainersRouteImport.update({
   id: '/trainers',
@@ -140,9 +140,9 @@ const ClientSessionsSessionIdRoute = ClientSessionsSessionIdRouteImport.update({
 } as any)
 const TrainerPlansPlanIdTrainingsTrainingIdRoute =
   TrainerPlansPlanIdTrainingsTrainingIdRouteImport.update({
-    id: '/trainings/$trainingId',
-    path: '/trainings/$trainingId',
-    getParentRoute: () => TrainerPlansPlanIdRoute,
+    id: '/$planId_/trainings/$trainingId',
+    path: '/$planId/trainings/$trainingId',
+    getParentRoute: () => TrainerPlansRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -164,7 +164,7 @@ export interface FileRoutesByFullPath {
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
-  '/trainer/plans/$planId': typeof TrainerPlansPlanIdRouteWithChildren
+  '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
@@ -186,7 +186,7 @@ export interface FileRoutesByTo {
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
-  '/trainer/plans/$planId': typeof TrainerPlansPlanIdRouteWithChildren
+  '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
   '/trainer/exercises': typeof TrainerExercisesIndexRoute
   '/trainer/plans': typeof TrainerPlansIndexRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
@@ -211,10 +211,10 @@ export interface FileRoutesById {
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
-  '/trainer/plans/$planId': typeof TrainerPlansPlanIdRouteWithChildren
+  '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
-  '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
+  '/trainer/plans/$planId_/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -286,7 +286,7 @@ export interface FileRouteTypes {
     | '/trainer/plans/$planId'
     | '/trainer/exercises/'
     | '/trainer/plans/'
-    | '/trainer/plans/$planId/trainings/$trainingId'
+    | '/trainer/plans/$planId_/trainings/$trainingId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -457,12 +457,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientSessionsSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trainer/plans/$planId/trainings/$trainingId': {
-      id: '/trainer/plans/$planId/trainings/$trainingId'
-      path: '/trainings/$trainingId'
+    '/trainer/plans/$planId_/trainings/$trainingId': {
+      id: '/trainer/plans/$planId_/trainings/$trainingId'
+      path: '/$planId/trainings/$trainingId'
       fullPath: '/trainer/plans/$planId/trainings/$trainingId'
       preLoaderRoute: typeof TrainerPlansPlanIdTrainingsTrainingIdRouteImport
-      parentRoute: typeof TrainerPlansPlanIdRoute
+      parentRoute: typeof TrainerPlansRoute
     }
   }
 }
@@ -492,26 +492,17 @@ const TrainerExercisesRouteChildren: TrainerExercisesRouteChildren = {
 const TrainerExercisesRouteWithChildren =
   TrainerExercisesRoute._addFileChildren(TrainerExercisesRouteChildren)
 
-interface TrainerPlansPlanIdRouteChildren {
+interface TrainerPlansRouteChildren {
+  TrainerPlansPlanIdRoute: typeof TrainerPlansPlanIdRoute
+  TrainerPlansIndexRoute: typeof TrainerPlansIndexRoute
   TrainerPlansPlanIdTrainingsTrainingIdRoute: typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
 
-const TrainerPlansPlanIdRouteChildren: TrainerPlansPlanIdRouteChildren = {
+const TrainerPlansRouteChildren: TrainerPlansRouteChildren = {
+  TrainerPlansPlanIdRoute: TrainerPlansPlanIdRoute,
+  TrainerPlansIndexRoute: TrainerPlansIndexRoute,
   TrainerPlansPlanIdTrainingsTrainingIdRoute:
     TrainerPlansPlanIdTrainingsTrainingIdRoute,
-}
-
-const TrainerPlansPlanIdRouteWithChildren =
-  TrainerPlansPlanIdRoute._addFileChildren(TrainerPlansPlanIdRouteChildren)
-
-interface TrainerPlansRouteChildren {
-  TrainerPlansPlanIdRoute: typeof TrainerPlansPlanIdRouteWithChildren
-  TrainerPlansIndexRoute: typeof TrainerPlansIndexRoute
-}
-
-const TrainerPlansRouteChildren: TrainerPlansRouteChildren = {
-  TrainerPlansPlanIdRoute: TrainerPlansPlanIdRouteWithChildren,
-  TrainerPlansIndexRoute: TrainerPlansIndexRoute,
 }
 
 const TrainerPlansRouteWithChildren = TrainerPlansRoute._addFileChildren(
@@ -539,3 +530,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

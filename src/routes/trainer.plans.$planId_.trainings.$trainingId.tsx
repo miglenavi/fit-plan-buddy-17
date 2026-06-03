@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Trash2, Plus, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/trainer/plans/$planId/trainings/$trainingId")({
+export const Route = createFileRoute("/trainer/plans/$planId_/trainings/$trainingId")({
   ssr: false,
   component: TrainingDetail,
 });
