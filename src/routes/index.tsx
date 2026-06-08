@@ -122,7 +122,7 @@ function Index() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link to="/auth"><Button variant="ghost" size="sm">Client login</Button></Link>
+            <Link to="/auth"><Button variant="ghost" size="sm">Log in</Button></Link>
             <Link to="/auth"><Button size="sm">Apply as trainer</Button></Link>
           </div>
         </div>
@@ -155,7 +155,7 @@ function Index() {
                   to="/auth"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Already a client? Sign in →
+                  Already have an account? Sign in →
                 </Link>
               </div>
             </div>
