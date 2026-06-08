@@ -155,7 +155,7 @@ function Index() {
                   to="/auth"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Already a client? Sign in →
+                  Already have an account? Sign in →
                 </Link>
               </div>
             </div>
