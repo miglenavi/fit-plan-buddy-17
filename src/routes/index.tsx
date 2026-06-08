@@ -122,7 +122,7 @@ function Index() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link to="/auth"><Button variant="ghost" size="sm">Client login</Button></Link>
+            <Link to="/auth"><Button variant="ghost" size="sm">Log in</Button></Link>
             <Link to="/auth"><Button size="sm">Apply as trainer</Button></Link>
           </div>
         </div>
