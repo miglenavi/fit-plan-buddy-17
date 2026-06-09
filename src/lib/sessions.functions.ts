@@ -26,7 +26,7 @@ export const startSession = createServerFn({ method: "POST" })
     // Load template exercises
     const { data: tplExs, error: tplErr } = await supabase
       .from("training_exercises")
-      .select("id, exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes")
+      .select("id, exercise_id, alternative_exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes")
       .eq("training_id", data.trainingId)
       .order("order_index");
     if (tplErr) throw new Error(tplErr.message);
@@ -46,10 +46,11 @@ export const startSession = createServerFn({ method: "POST" })
     if (sErr || !session) throw new Error(sErr?.message ?? "Failed to create session");
 
     if (tplExs && tplExs.length > 0) {
-      const seRows = tplExs.map((t) => ({
+      const seRows = tplExs.map((t: any) => ({
         session_id: session.id,
         training_exercise_id: t.id,
         exercise_id: t.exercise_id,
+        alternative_exercise_id: t.alternative_exercise_id,
         order_index: t.order_index,
         target_sets: t.target_sets,
         target_reps_min: t.target_reps_min,
