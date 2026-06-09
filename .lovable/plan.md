@@ -1,26 +1,19 @@
-## Plan: optional alternative ("or") exercise
+## Problem
 
-Add a lightweight way for trainers to attach a second exercise to a slot, shown as "A or B". Keep the UI minimal — no new sections, no prominent controls.
+When a trainer invites a client, the invite email link signs the user in via Supabase, but on first visit the "Set your password" form only appears when the URL hash still contains `type=invite`. If the hash gets consumed or the client navigates anywhere else (homepage, role redirect, refresh), they end up at `/auth` as a logged-out-looking screen with no password and can't sign in.
 
-### 1. Database
-Add one nullable column to `training_exercises`:
-- `alternative_exercise_id uuid` → references `exercises(id)` on delete set null
+The codebase already has a `must_change_password` flag concept (`AuthPage` reads it, `clearMustChangePassword` clears it, `RoleGuard` redirects to `/auth` while it's true), but `inviteClient` never sets it.
 
-Mirror on `session_exercises` so the choice carries into a started session. No new tables, no RLS changes.
+## Fix
 
-### 2. Trainer UI — `trainer.plans.$planId_.trainings.$trainingId.tsx`
-- Add-exercise form: a single extra dropdown squeezed into the existing grid, labeled "Or (optional)". No new card, no separate section.
-- Existing rows: just append `· or <Alt name>` to the small muted meta line under the exercise name. No edit affordance in this pass — to change the alternative the trainer removes and re-adds the row (keeps UI footprint zero).
+1. **`src/lib/clients.functions.ts` — `inviteClient`**: include `must_change_password: true` in the invited user's `user_metadata`. This way, even after the invite hash is consumed and the user lands elsewhere, `AuthPage` shows the "Set your password" form, and `RoleGuard` keeps redirecting back there until they set one.
 
-### 3. Client session UI
-- `client.sessions.$sessionId.tsx`: if a slot has an alternative, show the name as `Primary or Alternative` (plain text, same style). No picker UI — both names visible, client logs against the primary as today. Keeping this purely informational for now.
+2. **`src/lib/clients.functions.ts` — `resendClientInvite`**: before generating the new magic link, call `supabaseAdmin.auth.admin.updateUserById` to re-set `must_change_password: true`. Safe because the resend button is for clients who haven't activated; if they already chose a password they wouldn't need a resend, and even if they do, they'll set a fresh one through the same flow.
 
-### 4. Server
-- `startSession` (`src/lib/sessions.functions.ts`): include `alternative_exercise_id` in the snapshot insert.
+3. **`src/routes/index.tsx`**: if `user.user_metadata.must_change_password` is true, render `<Navigate to="/auth" />` instead of routing to `/client`/`/trainer`. The homepage currently auto-routes authenticated users by role, which bypasses the password-set screen for invited clients who happen to land on `/`.
 
-### Out of scope
-- No superset, no 3+ alternatives, no per-row edit popover, no client-side "which one did I do?" tracking.
+## Out of scope
 
-### Technical details
-- Migrations: `ALTER TABLE training_exercises ADD COLUMN alternative_exercise_id uuid REFERENCES exercises(id) ON DELETE SET NULL;` and same on `session_exercises`.
-- Trainer load query: add `alternative:exercises!training_exercises_alternative_exercise_id_fkey(name)` to the existing select.
+- No change to `AuthPage`, `RoleGuard`, or `clearMustChangePassword` — they already do the right thing once the flag is set.
+- No change to the invite email template or Supabase redirect allow-list.
+- No change to the trainer-invite UI.

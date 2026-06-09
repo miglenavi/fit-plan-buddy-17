@@ -35,9 +35,11 @@ export const inviteClient = createServerFn({ method: "POST" })
           full_name: data.fullName,
           invited_as: "client",
           invited_by: userId,
+          must_change_password: true,
         },
       },
     );
+
     if (error) throw new Error(error.message);
     const clientId = invited.user?.id;
     if (!clientId) throw new Error("Failed to invite user");
@@ -73,6 +75,15 @@ export const resendClientInvite = createServerFn({ method: "POST" })
     if (userErr) throw new Error(userErr.message);
     const email = userRes.user?.email;
     if (!email) throw new Error("Client email not found");
+
+    // Re-flag the user so the set-password screen shows even if they navigate away from the hash
+    await supabaseAdmin.auth.admin.updateUserById(data.clientId, {
+      user_metadata: {
+        ...(userRes.user?.user_metadata ?? {}),
+        must_change_password: true,
+      },
+    });
+
 
     // Generate a fresh magic link (works whether or not the user already confirmed)
     const { error: linkGenErr } = await supabaseAdmin.auth.admin.generateLink({
