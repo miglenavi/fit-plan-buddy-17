@@ -1,25 +1,26 @@
-## Plan
+## Plan: optional alternative ("or") exercise
 
-1. **Keep the database insert as-is**
-   - The request is succeeding: the backend returned `201` and created training `c9bb8870-d8ce-4569-a3c5-7b4f839965cc`.
-   - So this is not a permission/database failure; it is a UI/navigation feedback problem.
+Add a lightweight way for trainers to attach a second exercise to a slot, shown as "A or B". Keep the UI minimal — no new sections, no prominent controls.
 
-2. **Fix the Add training UX on the plan page**
-   - Add a local loading state so repeated clicks are blocked while the new training is being created.
-   - Show immediate feedback on the button, e.g. `Creating…` with a spinner.
-   - After creation, show a success toast like `Training added`.
+### 1. Database
+Add one nullable column to `training_exercises`:
+- `alternative_exercise_id uuid` → references `exercises(id)` on delete set null
 
-3. **Make the result obvious even if navigation does not visually feel like a jump**
-   - After insert, update the local `trainings` list immediately with the new row.
-   - Then navigate to the new training editor using the existing typed route.
-   - If navigation fails or feels imperceptible, the user will still see the new training appear in the list.
+Mirror on `session_exercises` so the choice carries into a started session. No new tables, no RLS changes.
 
-4. **Add safer error handling**
-   - Wrap the create flow in `try/finally` so the button never gets stuck.
-   - Keep the existing error toast, but make the message clearer: `Could not add training`.
+### 2. Trainer UI — `trainer.plans.$planId_.trainings.$trainingId.tsx`
+- Add-exercise form: a single extra dropdown squeezed into the existing grid, labeled "Or (optional)". No new card, no separate section.
+- Existing rows: just append `· or <Alt name>` to the small muted meta line under the exercise name. No edit affordance in this pass — to change the alternative the trainer removes and re-adds the row (keeps UI footprint zero).
 
-## Technical details
+### 3. Client session UI
+- `client.sessions.$sessionId.tsx`: if a slot has an alternative, show the name as `Primary or Alternative` (plain text, same style). No picker UI — both names visible, client logs against the primary as today. Keeping this purely informational for now.
 
-- Primary file: `src/routes/trainer.plans.$planId.tsx`
-- The current insert works, but `navigate(...)` does not produce enough visible confirmation for the user.
-- I will not change the workout architecture or database schema for this fix.
+### 4. Server
+- `startSession` (`src/lib/sessions.functions.ts`): include `alternative_exercise_id` in the snapshot insert.
+
+### Out of scope
+- No superset, no 3+ alternatives, no per-row edit popover, no client-side "which one did I do?" tracking.
+
+### Technical details
+- Migrations: `ALTER TABLE training_exercises ADD COLUMN alternative_exercise_id uuid REFERENCES exercises(id) ON DELETE SET NULL;` and same on `session_exercises`.
+- Trainer load query: add `alternative:exercises!training_exercises_alternative_exercise_id_fkey(name)` to the existing select.

@@ -182,6 +182,7 @@ export type Database = {
       }
       session_exercises: {
         Row: {
+          alternative_exercise_id: string | null
           exercise_id: string
           id: string
           notes: string | null
@@ -194,6 +195,7 @@ export type Database = {
           training_exercise_id: string | null
         }
         Insert: {
+          alternative_exercise_id?: string | null
           exercise_id: string
           id?: string
           notes?: string | null
@@ -206,6 +208,7 @@ export type Database = {
           training_exercise_id?: string | null
         }
         Update: {
+          alternative_exercise_id?: string | null
           exercise_id?: string
           id?: string
           notes?: string | null
@@ -218,6 +221,13 @@ export type Database = {
           training_exercise_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "session_exercises_alternative_exercise_id_fkey"
+            columns: ["alternative_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "session_exercises_exercise_id_fkey"
             columns: ["exercise_id"]
@@ -355,6 +365,7 @@ export type Database = {
       }
       training_exercises: {
         Row: {
+          alternative_exercise_id: string | null
           coach_notes: string | null
           exercise_id: string
           id: string
@@ -367,6 +378,7 @@ export type Database = {
           training_id: string
         }
         Insert: {
+          alternative_exercise_id?: string | null
           coach_notes?: string | null
           exercise_id: string
           id?: string
@@ -379,6 +391,7 @@ export type Database = {
           training_id: string
         }
         Update: {
+          alternative_exercise_id?: string | null
           coach_notes?: string | null
           exercise_id?: string
           id?: string
@@ -391,6 +404,13 @@ export type Database = {
           training_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "training_exercises_alternative_exercise_id_fkey"
+            columns: ["alternative_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "training_exercises_exercise_id_fkey"
             columns: ["exercise_id"]

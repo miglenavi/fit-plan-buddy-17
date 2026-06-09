@@ -29,6 +29,7 @@ function TrainingDetail() {
 
   // add-exercise form
   const [exId, setExId] = useState("");
+  const [altExId, setAltExId] = useState("");
   const [sets, setSets] = useState(3);
   const [repsMin, setRepsMin] = useState(8);
   const [repsMax, setRepsMax] = useState(10);
@@ -39,7 +40,7 @@ function TrainingDetail() {
   const load = async () => {
     const [{ data: t }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
       supabase.from("trainings").select("*").eq("id", trainingId).maybeSingle(),
-      supabase.from("training_exercises").select("*, exercises(name, category_id, muscle_groups)").eq("training_id", trainingId).order("order_index"),
+      supabase.from("training_exercises").select("*, alternative_exercise_id, exercises(name, category_id, muscle_groups)").eq("training_id", trainingId).order("order_index"),
       supabase.from("exercises").select("id, name, category_id").order("name"),
       supabase.from("exercise_categories" as any).select("id, name").order("name"),
     ]);
@@ -73,10 +74,12 @@ function TrainingDetail() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!exId) return toast.error("Pick an exercise first");
+    if (altExId && altExId === exId) return toast.error("Alternative must differ from the primary exercise");
     if (repsMax < repsMin) return toast.error("Max reps must be ≥ min reps");
     const { error } = await supabase.from("training_exercises").insert({
       training_id: trainingId,
       exercise_id: exId,
+      alternative_exercise_id: altExId || null,
       target_sets: sets,
       target_reps_min: repsMin,
       target_reps_max: repsMax,
@@ -84,10 +87,10 @@ function TrainingDetail() {
       rest_seconds: rest ? Number(rest) : null,
       coach_notes: coachNotes || null,
       order_index: items.length,
-    });
+    } as any);
     if (error) toast.error(error.message);
     else {
-      setExId(""); setWeight(""); setRest(""); setCoachNotes("");
+      setExId(""); setAltExId(""); setWeight(""); setRest(""); setCoachNotes("");
       toast.success("Added");
       load();
     }
@@ -119,33 +122,50 @@ function TrainingDetail() {
         <CardHeader><CardTitle>Add exercise</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={add} className="grid sm:grid-cols-6 gap-3 items-end">
-            <div className="space-y-2 sm:col-span-3">
-              <Label>Exercise</Label>
-              <Select value={exId} onValueChange={setExId} required>
-                <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
-                <SelectContent>
-                  {(() => {
-                    const byCat = new Map<string, any[]>();
-                    for (const e of exercises) {
-                      const key = (e as any).category_id ?? "__none__";
-                      if (!byCat.has(key)) byCat.set(key, []);
-                      byCat.get(key)!.push(e);
-                    }
-                    const groups = Array.from(byCat.entries()).map(([id, items]) => ({
-                      id,
-                      name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
-                      items,
-                    })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
-                    return groups.map((g) => (
-                      <SelectGroup key={g.id}>
-                        <SelectLabel>{g.name}</SelectLabel>
-                        {g.items.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
-                      </SelectGroup>
-                    ));
-                  })()}
-                </SelectContent>
-              </Select>
-            </div>
+            {(() => {
+              const byCat = new Map<string, any[]>();
+              for (const e of exercises) {
+                const key = (e as any).category_id ?? "__none__";
+                if (!byCat.has(key)) byCat.set(key, []);
+                byCat.get(key)!.push(e);
+              }
+              const groups = Array.from(byCat.entries()).map(([id, items]) => ({
+                id,
+                name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
+                items,
+              })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
+              const renderGroups = (excludeId?: string) => groups.map((g) => {
+                const filtered = excludeId ? g.items.filter((e) => e.id !== excludeId) : g.items;
+                if (filtered.length === 0) return null;
+                return (
+                  <SelectGroup key={g.id}>
+                    <SelectLabel>{g.name}</SelectLabel>
+                    {filtered.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                  </SelectGroup>
+                );
+              });
+              return (
+                <>
+                  <div className="space-y-2 sm:col-span-3">
+                    <Label>Exercise</Label>
+                    <Select value={exId} onValueChange={setExId} required>
+                      <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
+                      <SelectContent>{renderGroups()}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 sm:col-span-3">
+                    <Label className="text-muted-foreground font-normal">Or alternative <span className="text-xs">(optional)</span></Label>
+                    <Select value={altExId || "__none__"} onValueChange={(v) => setAltExId(v === "__none__" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {renderGroups(exId)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              );
+            })()}
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps min</Label><Input type="number" min="1" value={repsMin} onChange={(e) => setRepsMin(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps max</Label><Input type="number" min="1" value={repsMax} onChange={(e) => setRepsMax(+e.target.value)} /></div>
@@ -164,12 +184,17 @@ function TrainingDetail() {
             <p className="text-muted-foreground text-sm">No exercises yet.</p>
           ) : (
             <ul className="divide-y">
-              {items.map((it, i) => (
+              {items.map((it, i) => {
+                const altName = it.alternative_exercise_id ? exercises.find((e) => e.id === it.alternative_exercise_id)?.name : null;
+                return (
                 <li key={it.id} className="py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</div>
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{it.exercises?.name}</div>
+                      <div className="font-medium truncate">
+                        {it.exercises?.name}
+                        {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
                         {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
@@ -180,7 +205,8 @@ function TrainingDetail() {
                   </div>
                   <Button size="icon" variant="ghost" onClick={() => remove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </CardContent>
