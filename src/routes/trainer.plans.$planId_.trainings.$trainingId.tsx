@@ -122,33 +122,50 @@ function TrainingDetail() {
         <CardHeader><CardTitle>Add exercise</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={add} className="grid sm:grid-cols-6 gap-3 items-end">
-            <div className="space-y-2 sm:col-span-3">
-              <Label>Exercise</Label>
-              <Select value={exId} onValueChange={setExId} required>
-                <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
-                <SelectContent>
-                  {(() => {
-                    const byCat = new Map<string, any[]>();
-                    for (const e of exercises) {
-                      const key = (e as any).category_id ?? "__none__";
-                      if (!byCat.has(key)) byCat.set(key, []);
-                      byCat.get(key)!.push(e);
-                    }
-                    const groups = Array.from(byCat.entries()).map(([id, items]) => ({
-                      id,
-                      name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
-                      items,
-                    })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
-                    return groups.map((g) => (
-                      <SelectGroup key={g.id}>
-                        <SelectLabel>{g.name}</SelectLabel>
-                        {g.items.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
-                      </SelectGroup>
-                    ));
-                  })()}
-                </SelectContent>
-              </Select>
-            </div>
+            {(() => {
+              const byCat = new Map<string, any[]>();
+              for (const e of exercises) {
+                const key = (e as any).category_id ?? "__none__";
+                if (!byCat.has(key)) byCat.set(key, []);
+                byCat.get(key)!.push(e);
+              }
+              const groups = Array.from(byCat.entries()).map(([id, items]) => ({
+                id,
+                name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
+                items,
+              })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
+              const renderGroups = (excludeId?: string) => groups.map((g) => {
+                const filtered = excludeId ? g.items.filter((e) => e.id !== excludeId) : g.items;
+                if (filtered.length === 0) return null;
+                return (
+                  <SelectGroup key={g.id}>
+                    <SelectLabel>{g.name}</SelectLabel>
+                    {filtered.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                  </SelectGroup>
+                );
+              });
+              return (
+                <>
+                  <div className="space-y-2 sm:col-span-3">
+                    <Label>Exercise</Label>
+                    <Select value={exId} onValueChange={setExId} required>
+                      <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
+                      <SelectContent>{renderGroups()}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 sm:col-span-3">
+                    <Label className="text-muted-foreground font-normal">Or alternative <span className="text-xs">(optional)</span></Label>
+                    <Select value={altExId || "__none__"} onValueChange={(v) => setAltExId(v === "__none__" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {renderGroups(exId)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              );
+            })()}
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps min</Label><Input type="number" min="1" value={repsMin} onChange={(e) => setRepsMin(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps max</Label><Input type="number" min="1" value={repsMax} onChange={(e) => setRepsMax(+e.target.value)} /></div>
