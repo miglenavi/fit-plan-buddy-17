@@ -192,7 +192,10 @@ function LiveSession() {
                     {allDone ? <CheckCircle2 className="size-4" /> : i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{ex.name}</div>
+                    <div className="font-semibold text-sm truncate">
+                      {ex.name}
+                      {se.alternative?.name && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {se.target_sets} × {targetReps}{se.target_weight ? ` @ ${se.target_weight}kg` : ""}
                     </div>
