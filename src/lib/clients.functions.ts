@@ -35,8 +35,9 @@ export const inviteClient = createServerFn({ method: "POST" })
           full_name: data.fullName,
           invited_as: "client",
           invited_by: userId,
+          must_change_password: true,
         },
-      },
+
     );
     if (error) throw new Error(error.message);
     const clientId = invited.user?.id;
