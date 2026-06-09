@@ -76,6 +76,15 @@ export const resendClientInvite = createServerFn({ method: "POST" })
     const email = userRes.user?.email;
     if (!email) throw new Error("Client email not found");
 
+    // Re-flag the user so the set-password screen shows even if they navigate away from the hash
+    await supabaseAdmin.auth.admin.updateUserById(data.clientId, {
+      user_metadata: {
+        ...(userRes.user?.user_metadata ?? {}),
+        must_change_password: true,
+      },
+    });
+
+
     // Generate a fresh magic link (works whether or not the user already confirmed)
     const { error: linkGenErr } = await supabaseAdmin.auth.admin.generateLink({
       type: "magiclink",
