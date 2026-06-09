@@ -29,6 +29,7 @@ function TrainingDetail() {
 
   // add-exercise form
   const [exId, setExId] = useState("");
+  const [altExId, setAltExId] = useState("");
   const [sets, setSets] = useState(3);
   const [repsMin, setRepsMin] = useState(8);
   const [repsMax, setRepsMax] = useState(10);
