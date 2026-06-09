@@ -37,7 +37,7 @@ function LiveSession() {
 
     const { data: se } = await supabase
       .from("session_exercises")
-      .select("*, exercises(name, description, image_url, video_url, default_rest_seconds), alternative:exercises!session_exercises_alternative_exercise_id_fkey(name), set_logs(*)")
+      .select("*, exercises(name, description, image_url, video_url, default_rest_seconds), alternative:exercises!alternative_exercise_id(name), set_logs(*)")
       .eq("session_id", sessionId)
       .order("order_index");
     setSessionExercises(se ?? []);
