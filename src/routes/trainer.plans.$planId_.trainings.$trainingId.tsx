@@ -74,10 +74,12 @@ function TrainingDetail() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!exId) return toast.error("Pick an exercise first");
+    if (altExId && altExId === exId) return toast.error("Alternative must differ from the primary exercise");
     if (repsMax < repsMin) return toast.error("Max reps must be ≥ min reps");
     const { error } = await supabase.from("training_exercises").insert({
       training_id: trainingId,
       exercise_id: exId,
+      alternative_exercise_id: altExId || null,
       target_sets: sets,
       target_reps_min: repsMin,
       target_reps_max: repsMax,
@@ -85,10 +87,10 @@ function TrainingDetail() {
       rest_seconds: rest ? Number(rest) : null,
       coach_notes: coachNotes || null,
       order_index: items.length,
-    });
+    } as any);
     if (error) toast.error(error.message);
     else {
-      setExId(""); setWeight(""); setRest(""); setCoachNotes("");
+      setExId(""); setAltExId(""); setWeight(""); setRest(""); setCoachNotes("");
       toast.success("Added");
       load();
     }
