@@ -184,12 +184,17 @@ function TrainingDetail() {
             <p className="text-muted-foreground text-sm">No exercises yet.</p>
           ) : (
             <ul className="divide-y">
-              {items.map((it, i) => (
+              {items.map((it, i) => {
+                const altName = it.alternative_exercise_id ? exercises.find((e) => e.id === it.alternative_exercise_id)?.name : null;
+                return (
                 <li key={it.id} className="py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</div>
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{it.exercises?.name}</div>
+                      <div className="font-medium truncate">
+                        {it.exercises?.name}
+                        {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
                         {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
@@ -200,7 +205,8 @@ function TrainingDetail() {
                   </div>
                   <Button size="icon" variant="ghost" onClick={() => remove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </CardContent>
