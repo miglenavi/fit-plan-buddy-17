@@ -1,0 +1,2 @@
+ALTER TABLE public.training_exercises ADD COLUMN alternative_exercise_id uuid REFERENCES public.exercises(id) ON DELETE SET NULL;
+ALTER TABLE public.session_exercises ADD COLUMN alternative_exercise_id uuid REFERENCES public.exercises(id) ON DELETE SET NULL;
