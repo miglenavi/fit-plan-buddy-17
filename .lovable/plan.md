@@ -1,19 +1,26 @@
-## Problem
+## Goal
+Restore visibility of the existing plan **Liūtuks** by fixing the database access rule causing: “Infinite recursion detected in policy of relation plans”.
 
-When a trainer invites a client, the invite email link signs the user in via Supabase, but on first visit the "Set your password" form only appears when the URL hash still contains `type=invite`. If the hash gets consumed or the client navigates anywhere else (homepage, role redirect, refresh), they end up at `/auth` as a logged-out-looking screen with no password and can't sign in.
+## What I found
+- The plan row still exists.
+- The recursive loop is between these access rules:
+  - `plans`: “Client views assigned plans” checks `client_programs`
+  - `client_programs`: “Trainer manages own client programs” checks `plans`
+- When the app loads plans, the database can evaluate `plans -> client_programs -> plans`, which triggers the recursion error and prevents the trainer from seeing the plan.
 
-The codebase already has a `must_change_password` flag concept (`AuthPage` reads it, `clearMustChangePassword` clears it, `RoleGuard` redirects to `/auth` while it's true), but `inviteClient` never sets it.
+## Implementation plan
+1. Add two `SECURITY DEFINER` helper functions that bypass RLS internally:
+   - one to check whether a client is assigned to a plan
+   - one to check whether a plan belongs to a trainer
+2. Replace the recursive policies with policies that call those helper functions instead of querying tables directly inside RLS.
+3. Keep the same intended permissions:
+   - trainers manage only their own plans and programs
+   - clients can view only plans assigned to them
+4. Verify the affected policies and confirm the `plans` read no longer errors.
 
-## Fix
-
-1. **`src/lib/clients.functions.ts` — `inviteClient`**: include `must_change_password: true` in the invited user's `user_metadata`. This way, even after the invite hash is consumed and the user lands elsewhere, `AuthPage` shows the "Set your password" form, and `RoleGuard` keeps redirecting back there until they set one.
-
-2. **`src/lib/clients.functions.ts` — `resendClientInvite`**: before generating the new magic link, call `supabaseAdmin.auth.admin.updateUserById` to re-set `must_change_password: true`. Safe because the resend button is for clients who haven't activated; if they already chose a password they wouldn't need a resend, and even if they do, they'll set a fresh one through the same flow.
-
-3. **`src/routes/index.tsx`**: if `user.user_metadata.must_change_password` is true, render `<Navigate to="/auth" />` instead of routing to `/client`/`/trainer`. The homepage currently auto-routes authenticated users by role, which bypasses the password-set screen for invited clients who happen to land on `/`.
-
-## Out of scope
-
-- No change to `AuthPage`, `RoleGuard`, or `clearMustChangePassword` — they already do the right thing once the flag is set.
-- No change to the invite email template or Supabase redirect allow-list.
-- No change to the trainer-invite UI.
+## Technical details
+- Update policy on `public.plans`:
+  - replace `EXISTS (SELECT 1 FROM public.client_programs ...)` with a definer function.
+- Update policy on `public.client_programs`:
+  - replace `EXISTS (SELECT 1 FROM public.plans ...)` with a definer function.
+- No UI changes are needed.
