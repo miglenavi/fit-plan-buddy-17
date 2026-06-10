@@ -549,6 +549,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_plan_assigned_to_client: {
+        Args: { _client_id: string; _plan_id: string }
+        Returns: boolean
+      }
+      is_plan_owned_by_trainer: {
+        Args: { _plan_id: string; _trainer_id: string }
+        Returns: boolean
+      }
       is_trainer_of: {
         Args: { _client: string; _trainer: string }
         Returns: boolean
