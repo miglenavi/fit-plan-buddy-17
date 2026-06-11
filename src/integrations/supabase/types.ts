@@ -561,6 +561,10 @@ export type Database = {
         Args: { _client: string; _trainer: string }
         Returns: boolean
       }
+      is_training_assigned_to_client: {
+        Args: { _client_id: string; _training_id: string }
+        Returns: boolean
+      }
       link_client_by_email: { Args: { _email: string }; Returns: string }
       reapply_trainer: { Args: { _note: string }; Returns: undefined }
       reject_trainer: {
