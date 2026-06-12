@@ -3,17 +3,16 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { inviteClient, resendClientInvite } from "@/lib/clients.functions";
-import { RoleGuard } from "@/components/RoleGuard";
-import { AppShell } from "@/components/AppShell";
+import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { UserPlus, ChevronRight, Mail } from "lucide-react";
+import { UserPlus, ChevronRight, Mail, ClipboardList } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
-  component: () => <RoleGuard role="trainer"><AppShell><Clients /></AppShell></RoleGuard>,
+  component: Clients,
 });
 
 function Clients() {
@@ -103,9 +102,19 @@ function Clients() {
                 </div>
                 <ChevronRight className="size-5 text-muted-foreground" />
               </Link>
-              <Button type="button" size="sm" variant="outline" className="w-full" onClick={(e) => handleResend(c.client_id, e)}>
-                <Mail className="size-3.5 mr-1.5" /> Resend invite link
-              </Button>
+              <div className="flex gap-2">
+                <AssignPlanDialog
+                  clientId={c.client_id}
+                  trigger={
+                    <Button type="button" size="sm" variant="default" className="flex-1">
+                      <ClipboardList className="size-3.5 mr-1.5" /> Assign plan
+                    </Button>
+                  }
+                />
+                <Button type="button" size="sm" variant="outline" className="flex-1" onClick={(e) => handleResend(c.client_id, e)}>
+                  <Mail className="size-3.5 mr-1.5" /> Resend invite
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
