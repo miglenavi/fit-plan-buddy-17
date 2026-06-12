@@ -191,7 +191,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
 
       <div className="space-y-3">
         {sessionExercises.map((se, i) => {
-          const ex = exerciseMeta[se.id] ?? se.exercises ?? {};
+          const ex = exerciseMeta[se.id] ?? se.exercise ?? {};
           const sets = setLogsByEx[se.id] ?? [];
           const allDone = sets.length > 0 && sets.every((s) => s.completed);
           const isOpen = expandedId === se.id;
