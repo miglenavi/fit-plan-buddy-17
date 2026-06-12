@@ -32,7 +32,7 @@ function PlanDetail() {
       supabase.from("plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("trainings").select("id, name, description, order_index, training_exercises(id)").eq("plan_id", planId).order("order_index"),
       supabase.from("client_programs")
-        .select("id, status, start_date, end_date, client_id, profiles!client_programs_client_id_fkey(full_name)")
+        .select("id, status, start_date, end_date, client_id")
         .eq("plan_id", planId)
         .order("start_date", { ascending: false }),
     ]);
@@ -44,7 +44,14 @@ function PlanDetail() {
       loaded.current = true;
     }
     setTrainings(t ?? []);
-    setAssignments(a ?? []);
+
+    const ids = Array.from(new Set((a ?? []).map((r: any) => r.client_id)));
+    let names: Record<string, string> = {};
+    if (ids.length > 0) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+      names = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name ?? "Unnamed"]));
+    }
+    setAssignments((a ?? []).map((r: any) => ({ ...r, full_name: names[r.client_id] ?? "Unnamed" })));
   };
   useEffect(() => { load(); }, [planId]);
 
