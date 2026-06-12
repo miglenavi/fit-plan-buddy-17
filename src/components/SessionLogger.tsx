@@ -50,7 +50,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       const meta: Record<string, any> = {};
       const logs: Record<string, SetLog[]> = {};
       for (const row of se ?? []) {
-        meta[row.id] = row.exercises;
+        meta[row.id] = row.exercise;
         const existing: SetLog[] = (row.set_logs ?? []).map((l: any) => ({
           id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed,
         })).sort((a: SetLog, b: SetLog) => a.set_index - b.set_index);
