@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { UserPlus, ChevronRight, Mail } from "lucide-react";
 
-export const Route = createFileRoute("/trainer/clients")({
+export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
   component: () => <RoleGuard role="trainer"><AppShell><Clients /></AppShell></RoleGuard>,
 });
