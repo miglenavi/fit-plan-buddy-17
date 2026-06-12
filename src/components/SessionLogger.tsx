@@ -41,7 +41,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
 
       const { data: se, error: seErr } = await supabase
         .from("session_exercises")
-        .select("*, exercises(name, description, image_url, video_url, default_rest_seconds), alternative:exercises!alternative_exercise_id(name), set_logs(*)")
+        .select("*, exercise:exercises!exercise_id(name, description, image_url, video_url, default_rest_seconds), alternative:exercises!alternative_exercise_id(name), set_logs(*)")
         .eq("session_id", sessionId)
         .order("order_index");
       if (seErr) throw seErr;
@@ -50,7 +50,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       const meta: Record<string, any> = {};
       const logs: Record<string, SetLog[]> = {};
       for (const row of se ?? []) {
-        meta[row.id] = row.exercises;
+        meta[row.id] = row.exercise;
         const existing: SetLog[] = (row.set_logs ?? []).map((l: any) => ({
           id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed,
         })).sort((a: SetLog, b: SetLog) => a.set_index - b.set_index);
@@ -191,7 +191,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
 
       <div className="space-y-3">
         {sessionExercises.map((se, i) => {
-          const ex = exerciseMeta[se.id] ?? se.exercises ?? {};
+          const ex = exerciseMeta[se.id] ?? se.exercise ?? {};
           const sets = setLogsByEx[se.id] ?? [];
           const allDone = sets.length > 0 && sets.every((s) => s.completed);
           const isOpen = expandedId === se.id;
