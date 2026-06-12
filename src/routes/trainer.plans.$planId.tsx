@@ -21,15 +21,20 @@ function PlanDetail() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [trainings, setTrainings] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const loaded = useRef(false);
   const lastSaved = useRef("");
 
   const load = async () => {
-    const [{ data: p }, { data: t }] = await Promise.all([
+    const [{ data: p }, { data: t }, { data: a }] = await Promise.all([
       supabase.from("plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("trainings").select("id, name, description, order_index, training_exercises(id)").eq("plan_id", planId).order("order_index"),
+      supabase.from("client_programs")
+        .select("id, status, start_date, end_date, client_id, profiles!client_programs_client_id_fkey(full_name)")
+        .eq("plan_id", planId)
+        .order("start_date", { ascending: false }),
     ]);
     setPlan(p);
     if (p) {
@@ -39,6 +44,7 @@ function PlanDetail() {
       loaded.current = true;
     }
     setTrainings(t ?? []);
+    setAssignments(a ?? []);
   };
   useEffect(() => { load(); }, [planId]);
 
