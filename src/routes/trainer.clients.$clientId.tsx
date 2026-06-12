@@ -141,7 +141,7 @@ function ClientDetail() {
                       </div>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/client/sessions/$sessionId", params: { sessionId: s.id } })}>
+                  <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: s.id } })}>
                     Open
                   </Button>
                 </li>
