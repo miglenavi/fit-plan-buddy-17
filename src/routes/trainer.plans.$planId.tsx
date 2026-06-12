@@ -1,11 +1,12 @@
 import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Loader2, Check, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Loader2, Check, ChevronRight, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
