@@ -26,6 +26,7 @@ import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as TrainerPlansIndexRouteImport } from './routes/trainer.plans.index'
 import { Route as TrainerExercisesIndexRouteImport } from './routes/trainer.exercises.index'
+import { Route as TrainerClientsIndexRouteImport } from './routes/trainer.clients.index'
 import { Route as TrainerPlansPlanIdRouteImport } from './routes/trainer.plans.$planId'
 import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer.exercises.$exerciseId'
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
@@ -117,6 +118,11 @@ const TrainerExercisesIndexRoute = TrainerExercisesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TrainerExercisesRoute,
 } as any)
+const TrainerClientsIndexRoute = TrainerClientsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TrainerClientsRoute,
+} as any)
 const TrainerPlansPlanIdRoute = TrainerPlansPlanIdRouteImport.update({
   id: '/$planId',
   path: '/$planId',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
+  '/trainer/clients/': typeof TrainerClientsIndexRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
@@ -180,13 +187,13 @@ export interface FileRoutesByTo {
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
-  '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
+  '/trainer/clients': typeof TrainerClientsIndexRoute
   '/trainer/exercises': typeof TrainerExercisesIndexRoute
   '/trainer/plans': typeof TrainerPlansIndexRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
@@ -212,6 +219,7 @@ export interface FileRoutesById {
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
+  '/trainer/clients/': typeof TrainerClientsIndexRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
   '/trainer/plans/$planId_/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
@@ -238,6 +246,7 @@ export interface FileRouteTypes {
     | '/trainer/clients/$clientId'
     | '/trainer/exercises/$exerciseId'
     | '/trainer/plans/$planId'
+    | '/trainer/clients/'
     | '/trainer/exercises/'
     | '/trainer/plans/'
     | '/trainer/plans/$planId/trainings/$trainingId'
@@ -253,13 +262,13 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/client/history'
     | '/client/profile'
-    | '/trainer/clients'
     | '/client'
     | '/trainer'
     | '/client/sessions/$sessionId'
     | '/trainer/clients/$clientId'
     | '/trainer/exercises/$exerciseId'
     | '/trainer/plans/$planId'
+    | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
     | '/trainer/plans/$planId/trainings/$trainingId'
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/trainer/clients/$clientId'
     | '/trainer/exercises/$exerciseId'
     | '/trainer/plans/$planId'
+    | '/trainer/clients/'
     | '/trainer/exercises/'
     | '/trainer/plans/'
     | '/trainer/plans/$planId_/trainings/$trainingId'
@@ -429,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainerExercisesIndexRouteImport
       parentRoute: typeof TrainerExercisesRoute
     }
+    '/trainer/clients/': {
+      id: '/trainer/clients/'
+      path: '/'
+      fullPath: '/trainer/clients/'
+      preLoaderRoute: typeof TrainerClientsIndexRouteImport
+      parentRoute: typeof TrainerClientsRoute
+    }
     '/trainer/plans/$planId': {
       id: '/trainer/plans/$planId'
       path: '/$planId'
@@ -469,10 +486,12 @@ declare module '@tanstack/react-router' {
 
 interface TrainerClientsRouteChildren {
   TrainerClientsClientIdRoute: typeof TrainerClientsClientIdRoute
+  TrainerClientsIndexRoute: typeof TrainerClientsIndexRoute
 }
 
 const TrainerClientsRouteChildren: TrainerClientsRouteChildren = {
   TrainerClientsClientIdRoute: TrainerClientsClientIdRoute,
+  TrainerClientsIndexRoute: TrainerClientsIndexRoute,
 }
 
 const TrainerClientsRouteWithChildren = TrainerClientsRoute._addFileChildren(
@@ -530,13 +549,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

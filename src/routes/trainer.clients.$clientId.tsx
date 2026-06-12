@@ -2,21 +2,16 @@ import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { RoleGuard } from "@/components/RoleGuard";
-import { AppShell } from "@/components/AppShell";
+import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Play, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
 
 export const Route = createFileRoute("/trainer/clients/$clientId")({
   ssr: false,
-  component: () => <RoleGuard role="trainer"><AppShell><ClientDetail /></AppShell></RoleGuard>,
+  component: ClientDetail,
 });
 
 function ClientDetail() {
@@ -25,26 +20,20 @@ function ClientDetail() {
   const start = useServerFn(startSession);
   const [profile, setProfile] = useState<any>(null);
   const [programs, setPrograms] = useState<any[]>([]);
-  const [plans, setPlans] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [trainings, setTrainings] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [pickPlan, setPickPlan] = useState("");
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [endDate, setEndDate] = useState("");
 
   const load = async () => {
-    const [{ data: p }, { data: pr }, { data: pl }, { data: ss }] = await Promise.all([
+    const [{ data: p }, { data: pr }, { data: ss }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", clientId).maybeSingle(),
       supabase.from("client_programs").select("*, plans(id, name, description)").eq("client_id", clientId).order("start_date", { ascending: false }),
-      supabase.from("plans").select("id, name"),
       supabase.from("training_sessions")
         .select("id, started_at, completed_at, status, logged_by, trainings(name)")
         .eq("client_id", clientId)
         .order("started_at", { ascending: false })
         .limit(20),
     ]);
-    setProfile(p); setPrograms(pr ?? []); setPlans(pl ?? []); setSessions(ss ?? []);
+    setProfile(p); setPrograms(pr ?? []); setSessions(ss ?? []);
 
     // active program → trainings to start
     const active = (pr ?? []).find((x: any) => x.status === "active");
@@ -55,23 +44,7 @@ function ClientDetail() {
   };
   useEffect(() => { load(); }, [clientId]);
 
-  const assignPlan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pickPlan) return toast.error("Pick a plan");
-    const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("client_programs").insert({
-      trainer_id: u.user!.id,
-      client_id: clientId,
-      plan_id: pickPlan,
-      start_date: startDate,
-      end_date: endDate || null,
-      status: "active",
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Plan assigned");
-    setOpen(false); setPickPlan(""); setEndDate("");
-    load();
-  };
+
 
   const endProgram = async (id: string) => {
     if (!confirm("Mark this program as completed?")) return;
@@ -95,28 +68,12 @@ function ClientDetail() {
           <h1 className="text-3xl font-bold tracking-tight">{profile?.full_name ?? "Client"}</h1>
           <p className="text-muted-foreground mt-1">Plan & training history</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="size-4 mr-1" /> Assign plan</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Assign a plan</DialogTitle></DialogHeader>
-            <form onSubmit={assignPlan} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Plan</Label>
-                <Select value={pickPlan} onValueChange={setPickPlan}>
-                  <SelectTrigger><SelectValue placeholder="Pick a plan…" /></SelectTrigger>
-                  <SelectContent>
-                    {plans.map((pl) => <SelectItem key={pl.id} value={pl.id}>{pl.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2"><Label>Start date</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required /></div>
-                <div className="space-y-2"><Label>End date (optional)</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
-              </div>
-              <Button type="submit" className="w-full" disabled={!pickPlan}>Assign</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <AssignPlanDialog
+          clientId={clientId}
+          onAssigned={load}
+          trigger={<Button><Plus className="size-4 mr-1" /> Assign plan</Button>}
+        />
+
       </div>
 
       <Card>

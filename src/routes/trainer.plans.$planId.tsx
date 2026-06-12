@@ -1,11 +1,12 @@
 import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Loader2, Check, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Loader2, Check, ChevronRight, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
@@ -20,15 +21,20 @@ function PlanDetail() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [trainings, setTrainings] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const loaded = useRef(false);
   const lastSaved = useRef("");
 
   const load = async () => {
-    const [{ data: p }, { data: t }] = await Promise.all([
+    const [{ data: p }, { data: t }, { data: a }] = await Promise.all([
       supabase.from("plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("trainings").select("id, name, description, order_index, training_exercises(id)").eq("plan_id", planId).order("order_index"),
+      supabase.from("client_programs")
+        .select("id, status, start_date, end_date, client_id")
+        .eq("plan_id", planId)
+        .order("start_date", { ascending: false }),
     ]);
     setPlan(p);
     if (p) {
@@ -38,6 +44,14 @@ function PlanDetail() {
       loaded.current = true;
     }
     setTrainings(t ?? []);
+
+    const ids = Array.from(new Set((a ?? []).map((r: any) => r.client_id)));
+    let names: Record<string, string> = {};
+    if (ids.length > 0) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+      names = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name ?? "Unnamed"]));
+    }
+    setAssignments((a ?? []).map((r: any) => ({ ...r, full_name: names[r.client_id] ?? "Unnamed" })));
   };
   useEffect(() => { load(); }, [planId]);
 
@@ -91,7 +105,7 @@ function PlanDetail() {
             {status === "saving" && <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Saving…</span>}
             {status === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="size-3" />Saved</span>}
             {status === "error" && <span className="text-destructive">{!name.trim() ? "Name is required" : "Couldn't save"}</span>}
-            {status === "idle" && <span>Changes save automatically · Assign via client page</span>}
+            {status === "idle" && <span>Changes save automatically</span>}
           </div>
         </div>
         <Button asChild variant="outline"><Link to="/trainer/plans">Back to plans</Link></Button>
@@ -124,6 +138,41 @@ function PlanDetail() {
                   <Link to="/trainer/plans/$planId/trainings/$trainingId" params={{ planId, trainingId: t.id }}>
                     <ChevronRight className="size-5 text-muted-foreground" />
                   </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle>Assigned clients</CardTitle>
+          <AssignPlanDialog
+            planId={planId}
+            onAssigned={load}
+            trigger={<Button size="sm"><UserPlus className="size-4 mr-1" /> Assign to client</Button>}
+          />
+        </CardHeader>
+        <CardContent>
+          {assignments.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No clients assigned to this plan yet.</p>
+          ) : (
+            <ul className="divide-y">
+              {assignments.map((a) => (
+                <li key={a.id} className="py-3 flex items-center justify-between gap-3">
+                  <Link to="/trainer/clients/$clientId" params={{ clientId: a.client_id }} className="flex-1 min-w-0">
+                    <div className="font-medium truncate">
+                      {a.full_name}
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${a.status === "active" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {a.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(a.start_date).toLocaleDateString()}{a.end_date ? ` → ${new Date(a.end_date).toLocaleDateString()}` : " · ongoing"}
+                    </div>
+                  </Link>
+                  <ChevronRight className="size-5 text-muted-foreground" />
                 </li>
               ))}
             </ul>
