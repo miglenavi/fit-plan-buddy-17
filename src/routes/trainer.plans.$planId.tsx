@@ -144,6 +144,41 @@ function PlanDetail() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle>Assigned clients</CardTitle>
+          <AssignPlanDialog
+            planId={planId}
+            onAssigned={load}
+            trigger={<Button size="sm"><UserPlus className="size-4 mr-1" /> Assign to client</Button>}
+          />
+        </CardHeader>
+        <CardContent>
+          {assignments.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No clients assigned to this plan yet.</p>
+          ) : (
+            <ul className="divide-y">
+              {assignments.map((a) => (
+                <li key={a.id} className="py-3 flex items-center justify-between gap-3">
+                  <Link to="/trainer/clients/$clientId" params={{ clientId: a.client_id }} className="flex-1 min-w-0">
+                    <div className="font-medium truncate">
+                      {a.full_name}
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${a.status === "active" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {a.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(a.start_date).toLocaleDateString()}{a.end_date ? ` → ${new Date(a.end_date).toLocaleDateString()}` : " · ongoing"}
+                    </div>
+                  </Link>
+                  <ChevronRight className="size-5 text-muted-foreground" />
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
