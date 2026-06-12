@@ -68,28 +68,12 @@ function ClientDetail() {
           <h1 className="text-3xl font-bold tracking-tight">{profile?.full_name ?? "Client"}</h1>
           <p className="text-muted-foreground mt-1">Plan & training history</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="size-4 mr-1" /> Assign plan</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Assign a plan</DialogTitle></DialogHeader>
-            <form onSubmit={assignPlan} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Plan</Label>
-                <Select value={pickPlan} onValueChange={setPickPlan}>
-                  <SelectTrigger><SelectValue placeholder="Pick a plan…" /></SelectTrigger>
-                  <SelectContent>
-                    {plans.map((pl) => <SelectItem key={pl.id} value={pl.id}>{pl.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2"><Label>Start date</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required /></div>
-                <div className="space-y-2"><Label>End date (optional)</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
-              </div>
-              <Button type="submit" className="w-full" disabled={!pickPlan}>Assign</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <AssignPlanDialog
+          clientId={clientId}
+          onAssigned={load}
+          trigger={<Button><Plus className="size-4 mr-1" /> Assign plan</Button>}
+        />
+
       </div>
 
       <Card>
