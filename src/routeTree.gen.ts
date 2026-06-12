@@ -32,6 +32,7 @@ import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
 import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.sessions.$sessionId'
 import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
+import { Route as TrainerClientsClientIdSessionsSessionIdRouteImport } from './routes/trainer.clients.$clientId.sessions.$sessionId'
 
 const TrainersRoute = TrainersRouteImport.update({
   id: '/trainers',
@@ -150,6 +151,12 @@ const TrainerPlansPlanIdTrainingsTrainingIdRoute =
     path: '/$planId/trainings/$trainingId',
     getParentRoute: () => TrainerPlansRoute,
   } as any)
+const TrainerClientsClientIdSessionsSessionIdRoute =
+  TrainerClientsClientIdSessionsSessionIdRouteImport.update({
+    id: '/sessions/$sessionId',
+    path: '/sessions/$sessionId',
+    getParentRoute: () => TrainerClientsClientIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -168,12 +175,13 @@ export interface FileRoutesByFullPath {
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
-  '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
+  '/trainer/clients/$clientId': typeof TrainerClientsClientIdRouteWithChildren
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
   '/trainer/clients/': typeof TrainerClientsIndexRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
+  '/trainer/clients/$clientId/sessions/$sessionId': typeof TrainerClientsClientIdSessionsSessionIdRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
 export interface FileRoutesByTo {
@@ -190,12 +198,13 @@ export interface FileRoutesByTo {
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
-  '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
+  '/trainer/clients/$clientId': typeof TrainerClientsClientIdRouteWithChildren
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
   '/trainer/clients': typeof TrainerClientsIndexRoute
   '/trainer/exercises': typeof TrainerExercisesIndexRoute
   '/trainer/plans': typeof TrainerPlansIndexRoute
+  '/trainer/clients/$clientId/sessions/$sessionId': typeof TrainerClientsClientIdSessionsSessionIdRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
 export interface FileRoutesById {
@@ -216,12 +225,13 @@ export interface FileRoutesById {
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
-  '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
+  '/trainer/clients/$clientId': typeof TrainerClientsClientIdRouteWithChildren
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
   '/trainer/plans/$planId': typeof TrainerPlansPlanIdRoute
   '/trainer/clients/': typeof TrainerClientsIndexRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
+  '/trainer/clients/$clientId/sessions/$sessionId': typeof TrainerClientsClientIdSessionsSessionIdRoute
   '/trainer/plans/$planId_/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
 export interface FileRouteTypes {
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/trainer/clients/'
     | '/trainer/exercises/'
     | '/trainer/plans/'
+    | '/trainer/clients/$clientId/sessions/$sessionId'
     | '/trainer/plans/$planId/trainings/$trainingId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
+    | '/trainer/clients/$clientId/sessions/$sessionId'
     | '/trainer/plans/$planId/trainings/$trainingId'
   id:
     | '__root__'
@@ -296,6 +308,7 @@ export interface FileRouteTypes {
     | '/trainer/clients/'
     | '/trainer/exercises/'
     | '/trainer/plans/'
+    | '/trainer/clients/$clientId/sessions/$sessionId'
     | '/trainer/plans/$planId_/trainings/$trainingId'
   fileRoutesById: FileRoutesById
 }
@@ -481,16 +494,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainerPlansPlanIdTrainingsTrainingIdRouteImport
       parentRoute: typeof TrainerPlansRoute
     }
+    '/trainer/clients/$clientId/sessions/$sessionId': {
+      id: '/trainer/clients/$clientId/sessions/$sessionId'
+      path: '/sessions/$sessionId'
+      fullPath: '/trainer/clients/$clientId/sessions/$sessionId'
+      preLoaderRoute: typeof TrainerClientsClientIdSessionsSessionIdRouteImport
+      parentRoute: typeof TrainerClientsClientIdRoute
+    }
   }
 }
 
+interface TrainerClientsClientIdRouteChildren {
+  TrainerClientsClientIdSessionsSessionIdRoute: typeof TrainerClientsClientIdSessionsSessionIdRoute
+}
+
+const TrainerClientsClientIdRouteChildren: TrainerClientsClientIdRouteChildren =
+  {
+    TrainerClientsClientIdSessionsSessionIdRoute:
+      TrainerClientsClientIdSessionsSessionIdRoute,
+  }
+
+const TrainerClientsClientIdRouteWithChildren =
+  TrainerClientsClientIdRoute._addFileChildren(
+    TrainerClientsClientIdRouteChildren,
+  )
+
 interface TrainerClientsRouteChildren {
-  TrainerClientsClientIdRoute: typeof TrainerClientsClientIdRoute
+  TrainerClientsClientIdRoute: typeof TrainerClientsClientIdRouteWithChildren
   TrainerClientsIndexRoute: typeof TrainerClientsIndexRoute
 }
 
 const TrainerClientsRouteChildren: TrainerClientsRouteChildren = {
-  TrainerClientsClientIdRoute: TrainerClientsClientIdRoute,
+  TrainerClientsClientIdRoute: TrainerClientsClientIdRouteWithChildren,
   TrainerClientsIndexRoute: TrainerClientsIndexRoute,
 }
 

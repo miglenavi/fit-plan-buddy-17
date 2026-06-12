@@ -55,7 +55,7 @@ function ClientDetail() {
   const startFor = async (trainingId: string) => {
     try {
       const res = await start({ data: { trainingId, clientId } });
-      navigate({ to: "/client/sessions/$sessionId", params: { sessionId: res.sessionId } });
+      navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: res.sessionId } });
     } catch (e: any) {
       toast.error(e.message ?? "Couldn't start session");
     }
@@ -141,7 +141,7 @@ function ClientDetail() {
                       </div>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/client/sessions/$sessionId", params: { sessionId: s.id } })}>
+                  <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: s.id } })}>
                     Open
                   </Button>
                 </li>
