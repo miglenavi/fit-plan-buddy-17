@@ -2,21 +2,16 @@ import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { RoleGuard } from "@/components/RoleGuard";
-import { AppShell } from "@/components/AppShell";
+import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Play, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
 
 export const Route = createFileRoute("/trainer/clients/$clientId")({
   ssr: false,
-  component: () => <RoleGuard role="trainer"><AppShell><ClientDetail /></AppShell></RoleGuard>,
+  component: ClientDetail,
 });
 
 function ClientDetail() {
