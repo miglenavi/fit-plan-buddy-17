@@ -1,26 +1,38 @@
-## Bug: clicking a client does nothing
+# Fix: trainer can't fill in or finish a session started for a client
 
-`src/routes/trainer.clients.tsx` is registered at `/trainer/clients` and also acts as the parent layout for `/trainer/clients/$clientId` (flat-route naming). It renders the list UI directly instead of `<Outlet />`, so navigation to a client succeeds in the URL but the child never mounts. `trainer.plans.*` does the right thing already and is the template.
+## What's happening
 
-## Fix
+When the trainer clicks **Start training for client**, `startFor` creates the session correctly (server fn inserts `training_sessions` + snapshots 6 `session_exercises` — verified in DB) and then navigates the trainer to `/client/sessions/$sessionId`, which is the **client-facing** logger wrapped in `ClientShell`. On that screen:
 
-### 1. Split the clients route like plans
-- Rename `src/routes/trainer.clients.tsx` → `src/routes/trainer.clients.index.tsx` (this becomes the list page at `/trainer/clients`).
-- Create a new `src/routes/trainer.clients.tsx` as the layout, mirroring `trainer.plans.tsx`:
-  ```tsx
-  createFileRoute("/trainer/clients")({
-    ssr: false,
-    component: () => <RoleGuard role="trainer"><AppShell><Outlet /></AppShell></RoleGuard>,
-  })
-  ```
-- Remove the now-duplicate `RoleGuard`/`AppShell` wrappers from `trainer.clients.index.tsx` and `trainer.clients.$clientId.tsx` (the layout supplies them).
+- The header nav links go to `/client`, `/client/history`, `/client/profile` — wrong app section for a trainer.
+- The page sits at "Loading…" with no exercises and no working **Finish** button because the load query fails silently — `load()` catches no errors, never toasts, and the `session` state stays null forever. There is no surfaced reason in the UI.
+- The **Finish** button only renders when `session` is non-null, so it appears to "do nothing" because it isn't actually mounted.
 
-### 2. Assign Plan UX (carry over from the prior plan)
-- New `src/components/AssignPlanDialog.tsx` — one dialog used everywhere. Either `clientId` or `planId` is prefilled; the other is chosen in the dialog. Inserts into `client_programs` (`status: 'active'`, start/optional end date) then fires `onAssigned`.
-- **Clients list card** (`trainer.clients.index.tsx`): add an "Assign plan" button next to "Resend invite link" → opens dialog with `clientId` prefilled.
-- **Plan detail** (`trainer.plans.$planId.tsx`): add an "Assigned clients" card listing each client (name, status, dates, link to `/trainer/clients/$clientId`) + "Assign to client" button → opens dialog with `planId` prefilled.
-- **Client detail** (`trainer.clients.$clientId.tsx`): replace the inline assign dialog with `AssignPlanDialog` so behavior is identical everywhere.
+Schema, RLS, and data are all fine (verified: session row exists, 6 `session_exercises`, trainer is in `trainer_clients` for the client, policies allow trainer SELECT/UPDATE on all three tables). The bug is purely in routing/UX and error handling.
+
+## Plan
+
+### 1. Extract the session logger into a shared component
+File: `src/components/SessionLogger.tsx` (new)
+- Move the body of `LiveSession` from `src/routes/client.sessions.$sessionId.tsx` into a `SessionLogger` component that takes `sessionId` and an optional `onFinished` callback (defaults to `nav({ to: "/client" })`).
+- Add real error handling: capture `error` from each Supabase call, `toast.error(error.message)` and set an `errorMsg` state. Replace the silent `Loading…` with either a spinner, the loaded content, or an inline error card with a Retry button — so the trainer never sees a permanent blank "Loading…".
+- Keep all existing logic (set logging, last-time card, suggestion, finish button) unchanged.
+
+### 2. Trainer-facing session route
+File: `src/routes/trainer.clients.$clientId.sessions.$sessionId.tsx` (new)
+- `createFileRoute("/trainer/clients/$clientId/sessions/$sessionId")` under the existing `trainer.clients.tsx` layout (so `RoleGuard role="trainer"` + `AppShell` apply automatically).
+- Renders a header with client name + "Back to client" link, then `<SessionLogger sessionId={sessionId} onFinished={() => nav({ to: "/trainer/clients/$clientId", params: { clientId } })} />`.
+
+### 3. Route the trainer to the trainer logger
+File: `src/routes/trainer.clients.$clientId.tsx`
+- Change `startFor` to navigate to `/trainer/clients/$clientId/sessions/$sessionId` instead of `/client/sessions/$sessionId`.
+- Change the "Recent sessions → Open" button to the same trainer route.
+
+### 4. Existing client route keeps working
+File: `src/routes/client.sessions.$sessionId.tsx`
+- Reduce to a thin wrapper: `<RoleGuard anyOf={["client","trainer"]}><ClientShell title="Session"><SessionLogger sessionId={sessionId} /></ClientShell></RoleGuard>`. Clients still log their own sessions; nothing changes for them.
 
 ## Out of scope
-- No DB or RLS changes — `client_programs` policies already allow trainers to insert their own rows.
-- No data model changes.
+- No DB or RLS changes.
+- No changes to `startSession` server fn.
+- No new "add another training day to an in-progress session" feature (that was raised earlier and is separately tracked).
