@@ -1,38 +1,36 @@
-# Fix: trainer can't fill in or finish a session started for a client
+## The bug
 
-## What's happening
+When trainer or client opens an in-progress session, the page shows **"Day 1 — 0 / 0"** with no exercises and no working "Finish" button, even though the session was created correctly and `session_exercises` rows exist in the database (verified: 6 rows for the latest session).
 
-When the trainer clicks **Start training for client**, `startFor` creates the session correctly (server fn inserts `training_sessions` + snapshots 6 `session_exercises` — verified in DB) and then navigates the trainer to `/client/sessions/$sessionId`, which is the **client-facing** logger wrapped in `ClientShell`. On that screen:
+Root cause is in `src/components/SessionLogger.tsx`. The Supabase query embeds the `exercises` table twice:
 
-- The header nav links go to `/client`, `/client/history`, `/client/profile` — wrong app section for a trainer.
-- The page sits at "Loading…" with no exercises and no working **Finish** button because the load query fails silently — `load()` catches no errors, never toasts, and the `session` state stays null forever. There is no surfaced reason in the UI.
-- The **Finish** button only renders when `session` is non-null, so it appears to "do nothing" because it isn't actually mounted.
+```ts
+.select("*, exercises(name, description, image_url, video_url, default_rest_seconds), alternative:exercises!alternative_exercise_id(name), set_logs(*)")
+```
 
-Schema, RLS, and data are all fine (verified: session row exists, 6 `session_exercises`, trainer is in `trainer_clients` for the client, policies allow trainer SELECT/UPDATE on all three tables). The bug is purely in routing/UX and error handling.
+`session_exercises` has **two** foreign keys to `exercises` (`exercise_id` and `alternative_exercise_id`), so the bare `exercises(...)` embed is ambiguous. PostgREST returns error `PGRST201` ("Could not embed because more than one relationship was found"). Confirmed by hitting the REST endpoint directly.
 
-## Plan
+The `load()` catch block sets `errorMsg` and the component should render an error card, but on the trainer-branded route the error gets buried because the UI still shows the session header from the first successful query (the `trainings(name)` embed on `training_sessions` is fine — only one FK there). The result for the user: zero exercises rendered, nothing to log, "Finish" button effectively disabled because `sets.length === 0`.
 
-### 1. Extract the session logger into a shared component
-File: `src/components/SessionLogger.tsx` (new)
-- Move the body of `LiveSession` from `src/routes/client.sessions.$sessionId.tsx` into a `SessionLogger` component that takes `sessionId` and an optional `onFinished` callback (defaults to `nav({ to: "/client" })`).
-- Add real error handling: capture `error` from each Supabase call, `toast.error(error.message)` and set an `errorMsg` state. Replace the silent `Loading…` with either a spinner, the loaded content, or an inline error card with a Retry button — so the trainer never sees a permanent blank "Loading…".
-- Keep all existing logic (set logging, last-time card, suggestion, finish button) unchanged.
+## The fix
 
-### 2. Trainer-facing session route
-File: `src/routes/trainer.clients.$clientId.sessions.$sessionId.tsx` (new)
-- `createFileRoute("/trainer/clients/$clientId/sessions/$sessionId")` under the existing `trainer.clients.tsx` layout (so `RoleGuard role="trainer"` + `AppShell` apply automatically).
-- Renders a header with client name + "Back to client" link, then `<SessionLogger sessionId={sessionId} onFinished={() => nav({ to: "/trainer/clients/$clientId", params: { clientId } })} />`.
+Single small change in `src/components/SessionLogger.tsx`:
 
-### 3. Route the trainer to the trainer logger
-File: `src/routes/trainer.clients.$clientId.tsx`
-- Change `startFor` to navigate to `/trainer/clients/$clientId/sessions/$sessionId` instead of `/client/sessions/$sessionId`.
-- Change the "Recent sessions → Open" button to the same trainer route.
+1. Disambiguate the embed by naming the primary FK explicitly:
+   ```ts
+   .select("*, exercise:exercises!exercise_id(name, description, image_url, video_url, default_rest_seconds), alternative:exercises!alternative_exercise_id(name), set_logs(*)")
+   ```
+2. Update the two places that read `row.exercises` to read `row.exercise` instead (one in `exerciseMeta[row.id] = row.exercises` inside `load()`, one in the render fallback `se.exercises`).
 
-### 4. Existing client route keeps working
-File: `src/routes/client.sessions.$sessionId.tsx`
-- Reduce to a thin wrapper: `<RoleGuard anyOf={["client","trainer"]}><ClientShell title="Session"><SessionLogger sessionId={sessionId} /></ClientShell></RoleGuard>`. Clients still log their own sessions; nothing changes for them.
+That's it. The trainer-vs-client routing, RLS policies, `startSession` server fn, and grants are all correct — the only thing blocking the flow is this embed.
 
 ## Out of scope
-- No DB or RLS changes.
-- No changes to `startSession` server fn.
-- No new "add another training day to an in-progress session" feature (that was raised earlier and is separately tracked).
+
+- No DB / RLS / migration changes
+- No changes to `startSession`, the trainer route, the client route, or `AppShell`
+- No new UI
+
+## Verification after build
+
+- Trainer: `/trainer/clients/$clientId` → click "Start training" → land on `/trainer/clients/$clientId/sessions/$sessionId` → see all 6 exercises listed → log a set → click **Finish session** → returns to client profile.
+- Client: `/client` → tap an assigned training → land on `/client/sessions/$sessionId` → same flow.
