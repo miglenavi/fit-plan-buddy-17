@@ -20,26 +20,20 @@ function ClientDetail() {
   const start = useServerFn(startSession);
   const [profile, setProfile] = useState<any>(null);
   const [programs, setPrograms] = useState<any[]>([]);
-  const [plans, setPlans] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [trainings, setTrainings] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [pickPlan, setPickPlan] = useState("");
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [endDate, setEndDate] = useState("");
 
   const load = async () => {
-    const [{ data: p }, { data: pr }, { data: pl }, { data: ss }] = await Promise.all([
+    const [{ data: p }, { data: pr }, { data: ss }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", clientId).maybeSingle(),
       supabase.from("client_programs").select("*, plans(id, name, description)").eq("client_id", clientId).order("start_date", { ascending: false }),
-      supabase.from("plans").select("id, name"),
       supabase.from("training_sessions")
         .select("id, started_at, completed_at, status, logged_by, trainings(name)")
         .eq("client_id", clientId)
         .order("started_at", { ascending: false })
         .limit(20),
     ]);
-    setProfile(p); setPrograms(pr ?? []); setPlans(pl ?? []); setSessions(ss ?? []);
+    setProfile(p); setPrograms(pr ?? []); setSessions(ss ?? []);
 
     // active program → trainings to start
     const active = (pr ?? []).find((x: any) => x.status === "active");
@@ -50,23 +44,7 @@ function ClientDetail() {
   };
   useEffect(() => { load(); }, [clientId]);
 
-  const assignPlan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pickPlan) return toast.error("Pick a plan");
-    const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("client_programs").insert({
-      trainer_id: u.user!.id,
-      client_id: clientId,
-      plan_id: pickPlan,
-      start_date: startDate,
-      end_date: endDate || null,
-      status: "active",
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Plan assigned");
-    setOpen(false); setPickPlan(""); setEndDate("");
-    load();
-  };
+
 
   const endProgram = async (id: string) => {
     if (!confirm("Mark this program as completed?")) return;
