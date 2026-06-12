@@ -105,7 +105,7 @@ function PlanDetail() {
             {status === "saving" && <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Saving…</span>}
             {status === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="size-3" />Saved</span>}
             {status === "error" && <span className="text-destructive">{!name.trim() ? "Name is required" : "Couldn't save"}</span>}
-            {status === "idle" && <span>Changes save automatically · Assign via client page</span>}
+            {status === "idle" && <span>Changes save automatically</span>}
           </div>
         </div>
         <Button asChild variant="outline"><Link to="/trainer/plans">Back to plans</Link></Button>
