@@ -1,26 +1,26 @@
-## Goal
-Restore visibility of the existing plan **Liūtuks** by fixing the database access rule causing: “Infinite recursion detected in policy of relation plans”.
+## Bug: clicking a client does nothing
 
-## What I found
-- The plan row still exists.
-- The recursive loop is between these access rules:
-  - `plans`: “Client views assigned plans” checks `client_programs`
-  - `client_programs`: “Trainer manages own client programs” checks `plans`
-- When the app loads plans, the database can evaluate `plans -> client_programs -> plans`, which triggers the recursion error and prevents the trainer from seeing the plan.
+`src/routes/trainer.clients.tsx` is registered at `/trainer/clients` and also acts as the parent layout for `/trainer/clients/$clientId` (flat-route naming). It renders the list UI directly instead of `<Outlet />`, so navigation to a client succeeds in the URL but the child never mounts. `trainer.plans.*` does the right thing already and is the template.
 
-## Implementation plan
-1. Add two `SECURITY DEFINER` helper functions that bypass RLS internally:
-   - one to check whether a client is assigned to a plan
-   - one to check whether a plan belongs to a trainer
-2. Replace the recursive policies with policies that call those helper functions instead of querying tables directly inside RLS.
-3. Keep the same intended permissions:
-   - trainers manage only their own plans and programs
-   - clients can view only plans assigned to them
-4. Verify the affected policies and confirm the `plans` read no longer errors.
+## Fix
 
-## Technical details
-- Update policy on `public.plans`:
-  - replace `EXISTS (SELECT 1 FROM public.client_programs ...)` with a definer function.
-- Update policy on `public.client_programs`:
-  - replace `EXISTS (SELECT 1 FROM public.plans ...)` with a definer function.
-- No UI changes are needed.
+### 1. Split the clients route like plans
+- Rename `src/routes/trainer.clients.tsx` → `src/routes/trainer.clients.index.tsx` (this becomes the list page at `/trainer/clients`).
+- Create a new `src/routes/trainer.clients.tsx` as the layout, mirroring `trainer.plans.tsx`:
+  ```tsx
+  createFileRoute("/trainer/clients")({
+    ssr: false,
+    component: () => <RoleGuard role="trainer"><AppShell><Outlet /></AppShell></RoleGuard>,
+  })
+  ```
+- Remove the now-duplicate `RoleGuard`/`AppShell` wrappers from `trainer.clients.index.tsx` and `trainer.clients.$clientId.tsx` (the layout supplies them).
+
+### 2. Assign Plan UX (carry over from the prior plan)
+- New `src/components/AssignPlanDialog.tsx` — one dialog used everywhere. Either `clientId` or `planId` is prefilled; the other is chosen in the dialog. Inserts into `client_programs` (`status: 'active'`, start/optional end date) then fires `onAssigned`.
+- **Clients list card** (`trainer.clients.index.tsx`): add an "Assign plan" button next to "Resend invite link" → opens dialog with `clientId` prefilled.
+- **Plan detail** (`trainer.plans.$planId.tsx`): add an "Assigned clients" card listing each client (name, status, dates, link to `/trainer/clients/$clientId`) + "Assign to client" button → opens dialog with `planId` prefilled.
+- **Client detail** (`trainer.clients.$clientId.tsx`): replace the inline assign dialog with `AssignPlanDialog` so behavior is identical everywhere.
+
+## Out of scope
+- No DB or RLS changes — `client_programs` policies already allow trainers to insert their own rows.
+- No data model changes.
