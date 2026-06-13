@@ -10,7 +10,7 @@ export const Route = createFileRoute("/trainer/clients/$clientId_/sessions/$sess
 });
 
 function TrainerClientSessionPage() {
-  const { clientId, sessionId } = useParams({ from: "/trainer/clients/$clientId/sessions/$sessionId" });
+  const { clientId, sessionId } = useParams({ from: "/trainer/clients/$clientId_/sessions/$sessionId" });
   const nav = useNavigate();
   const [clientName, setClientName] = useState<string>("");
 
