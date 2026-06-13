@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Plus, Trash2 } from "lucide-react";
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
 
