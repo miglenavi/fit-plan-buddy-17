@@ -1,47 +1,22 @@
 
-# Trainer can fill in sessions for clients — audit + small polish
+# Fix: trainer Start session doesn't redirect (renders the wrong page)
 
-## Audit
+## Root cause
 
-I traced trainer → client → session and checked RLS:
+Replay + DB confirm: the session row and its 3 `session_exercises` exist, and the URL changes to `/trainer/clients/$clientId/sessions/$sessionId`. But the page shows the *client detail* UI (Resume card, "Day 1"/"Day 2", Open, End) — because the file `src/routes/trainer.clients.$clientId.sessions.$sessionId.tsx` is registered as a **child route** of `/trainer/clients/$clientId`, and the parent component never renders `<Outlet />`. The matched child has nowhere to mount, so the parent's body shows instead of `SessionLogger`.
 
-- `src/routes/trainer.clients.$clientId.tsx` — "Start a training for X" buttons call `startSession({ trainingId, clientId })`. After the previous fix, this server fn is idempotent, so multi-click no longer makes duplicate sessions.
-- Route lands on `src/routes/trainer.clients.$clientId.sessions.$sessionId.tsx`, which renders the shared `SessionLogger`.
-- `SessionLogger` loads `session_exercises` with the disambiguated `exercise:exercises!exercise_id(...)` embed (also fixed previously) — exercises render for trainer too.
-- Set entry: each input's `onBlur` upserts into `set_logs` with `onConflict: "session_exercise_id,set_index"`. Trainer RLS policy `Trainer manages client set logs` (`is_trainer_of`) permits this.
-- Finish: updates `training_sessions` to `completed`. Trainer RLS policy `Trainer manages client sessions` permits this. `onFinished` returns to the client detail page where the session shows up under Recent sessions as "completed · logged by you".
+The plans flow already handled this with a trailing-underscore "break nesting" segment (`trainer.plans.$planId_.trainings.$trainingId.tsx`). Apply the same pattern here.
 
-**Functionally the trainer CAN fully fill in a session today.** Two small UX gaps remain:
+## Fix (smallest safe change)
 
-1. If a trainer started a session and navigated away, there's no "Resume" affordance on the client page — they have to scroll Recent sessions and tap Open. Easy to miss.
-2. `startFor` has no in-flight disabled state. Idempotency makes this safe (no dup row), but a slow tap can still feel laggy.
+1. Rename `src/routes/trainer.clients.$clientId.sessions.$sessionId.tsx` → `src/routes/trainer.clients.$clientId_.sessions.$sessionId.tsx`.
+2. Update the file's `createFileRoute("/trainer/clients/$clientId/sessions/$sessionId")` → `createFileRoute("/trainer/clients/$clientId_/sessions/$sessionId")`.
+3. Update the `useParams({ from: "..." })` call inside the same file to the new path.
 
-## Plan (smallest safe change, trainer side only)
-
-Edit only `src/routes/trainer.clients.$clientId.tsx`:
-
-1. Add a query in `load()` for the client's current in-progress session:
-   ```ts
-   supabase.from("training_sessions")
-     .select("id, training_id, trainings(name)")
-     .eq("client_id", clientId)
-     .eq("status", "in_progress")
-     .order("started_at", { ascending: false })
-     .limit(1)
-   ```
-   Store as `inProgress` state.
-
-2. If `inProgress` exists, render a pinned "Session in progress — Resume" card above the "Start a training" card, linking to `/trainer/clients/$clientId/sessions/$sessionId`.
-
-3. On the matching training button inside "Start a training", swap label to "Resume" and link directly (no server call) when `inProgress?.training_id === t.id`.
-
-4. Add a `starting` state to `startFor` so the tapped button shows "Starting…" and is disabled while the server-fn is in flight.
-
-No DB / RLS / schema changes. No edits to `SessionLogger`, `startSession`, client routes, or the trainer session route.
+That's the entire fix. No DB / RLS / schema changes. No edits to `startSession`, `SessionLogger`, or `<Link>` / `navigate` call sites — `<Link to="/trainer/clients/$clientId/sessions/$sessionId" params={...}>` continues to work because the URL shape is unchanged (the underscore is stripped from the URL, exactly like `_authenticated/`).
 
 ## Out of scope
 
-- Discard/cancel an in-progress session.
-- Any visual redesign.
-- Editing already-completed sessions.
-- Trainer notes UI (column exists; not part of this fix).
+- No changes to the client-side flow (it uses a different route file already).
+- No design changes.
+- No new features.
