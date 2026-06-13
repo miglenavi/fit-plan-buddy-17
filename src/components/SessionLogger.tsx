@@ -21,6 +21,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -139,11 +140,13 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
   };
 
   const finish = async () => {
+    if (finishing) return;
+    setFinishing(true);
     const { error } = await supabase
       .from("training_sessions")
       .update({ status: "completed", completed_at: new Date().toISOString() })
       .eq("id", sessionId);
-    if (error) return toast.error(error.message);
+    if (error) { setFinishing(false); return toast.error(error.message); }
     toast.success("Session completed 🎉");
     if (onFinished) onFinished();
     else nav({ to: "/client" });
@@ -284,8 +287,8 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       {session.status !== "completed" && (
         <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-30">
           <div className="max-w-md mx-auto">
-            <Button onClick={finish} className="w-full" size="lg">
-              <CheckCircle2 className="size-5 mr-2" /> Finish session
+            <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
+              <CheckCircle2 className="size-5 mr-2" /> {finishing ? "Finishing…" : "Finish session"}
             </Button>
           </div>
         </div>

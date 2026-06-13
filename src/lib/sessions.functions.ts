@@ -23,6 +23,18 @@ export const startSession = createServerFn({ method: "POST" })
     const loggedBy: "client" | "trainer" = clientId === userId ? "client" : "trainer";
     const trainerId = loggedBy === "trainer" ? userId : null;
 
+    // If an in-progress session already exists for this client+training, resume it.
+    const { data: existing } = await supabase
+      .from("training_sessions")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("training_id", data.trainingId)
+      .eq("status", "in_progress")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existing?.id) return { sessionId: existing.id };
+
     // Load template exercises
     const { data: tplExs, error: tplErr } = await supabase
       .from("training_exercises")
