@@ -341,6 +341,43 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       </div>
 
       {session.status !== "completed" && (
+        <Button variant="outline" className="w-full" onClick={() => setPickerOpen(true)}>
+          <Plus className="size-4 mr-1.5" /> Add exercise
+        </Button>
+      )}
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add exercise to session</DialogTitle>
+          </DialogHeader>
+          <Input
+            autoFocus
+            placeholder="Search exercises…"
+            value={exerciseSearch}
+            onChange={(e) => setExerciseSearch(e.target.value)}
+          />
+          <div className="max-h-80 overflow-y-auto space-y-1">
+            {exerciseResults.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No exercises found.</p>
+            )}
+            {exerciseResults.map((ex) => (
+              <button
+                key={ex.id}
+                type="button"
+                disabled={adding}
+                onClick={() => addExercise(ex.id)}
+                className="w-full text-left p-3 rounded-md hover:bg-accent disabled:opacity-50"
+              >
+                <div className="font-medium text-sm">{ex.name}</div>
+                {ex.description && <div className="text-xs text-muted-foreground line-clamp-1">{ex.description}</div>}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {session.status !== "completed" && (
         <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-30">
           <div className="max-w-md mx-auto">
             <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
