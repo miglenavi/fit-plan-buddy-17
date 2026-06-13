@@ -135,7 +135,30 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       weight: s.weight === "" || s.weight == null ? null : Number(s.weight),
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
       completed: !!s.completed,
-    };
+  };
+
+  const addSet = (seId: string) => {
+    setSetLogsByEx((p) => {
+      const arr = [...(p[seId] ?? [])];
+      const nextIdx = arr.reduce((m, s) => Math.max(m, s.set_index), -1) + 1;
+      arr.push({ set_index: nextIdx, reps: null, weight: null, rpe: null, completed: false });
+      return { ...p, [seId]: arr };
+    });
+  };
+
+  const removeSet = async (seId: string, idx: number) => {
+    const s = setLogsByEx[seId]?.[idx];
+    if (!s) return;
+    if (s.id) {
+      const { error } = await supabase.from("set_logs").delete().eq("id", s.id);
+      if (error) return toast.error(error.message);
+    }
+    setSetLogsByEx((p) => {
+      const arr = [...(p[seId] ?? [])];
+      arr.splice(idx, 1);
+      return { ...p, [seId]: arr };
+    });
+  };
     const { data, error } = await supabase
       .from("set_logs")
       .upsert(payload, { onConflict: "session_exercise_id,set_index" })
@@ -315,14 +338,20 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
                         <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span>
                       </div>
                       {sets.map((s, idx) => (
-                        <div key={idx} className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem] gap-2 items-center">
+                        <div key={idx} className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
                           <Input type="number" inputMode="numeric" value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Input type="number" inputMode="decimal" step="0.5" value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Input type="number" inputMode="decimal" step="0.5" value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Checkbox checked={s.completed} onCheckedChange={(v) => { updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
+                          <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => removeSet(se.id, idx)} aria-label="Remove set">
+                            <Trash2 className="size-3.5" />
+                          </Button>
                         </div>
                       ))}
+                      <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => addSet(se.id)}>
+                        <Plus className="size-4 mr-1.5" /> Add set
+                      </Button>
                     </div>
 
                     {session.status !== "completed" && (
