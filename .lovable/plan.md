@@ -1,22 +1,35 @@
 
-# Fix: trainer Start session doesn't redirect (renders the wrong page)
+# Add & remove exercises during a session
 
-## Root cause
+Let both the client (logging their own session) and the trainer (logging for a client) tweak the exercise list mid-session — swap in something else, drop one that's not happening today, etc. The original training template is untouched; changes only affect this one session.
 
-Replay + DB confirm: the session row and its 3 `session_exercises` exist, and the URL changes to `/trainer/clients/$clientId/sessions/$sessionId`. But the page shows the *client detail* UI (Resume card, "Day 1"/"Day 2", Open, End) — because the file `src/routes/trainer.clients.$clientId.sessions.$sessionId.tsx` is registered as a **child route** of `/trainer/clients/$clientId`, and the parent component never renders `<Outlet />`. The matched child has nowhere to mount, so the parent's body shows instead of `SessionLogger`.
+## UX (in `SessionLogger`)
 
-The plans flow already handled this with a trailing-underscore "break nesting" segment (`trainer.plans.$planId_.trainings.$trainingId.tsx`). Apply the same pattern here.
+- **Remove**: each exercise card gets a small "Remove" action in its expanded view, with a confirm prompt ("Remove this exercise from today's session?"). Deletes the `session_exercises` row (and its `set_logs` via FK cascade). No undo.
+- **Add**: a "+ Add exercise" button at the bottom of the exercise list (above the Finish bar) opens a dialog with:
+  - search input over `exercises` (name contains)
+  - list of matches; tap one to add
+  - the new row is appended with `order_index = max+1`, `target_sets = 3`, `target_reps_min/max = 8/12`, no target weight, `training_exercise_id = null`
+- Reloads the session list after add/remove. Nothing else in the flow changes.
 
-## Fix (smallest safe change)
+## Backend
 
-1. Rename `src/routes/trainer.clients.$clientId.sessions.$sessionId.tsx` → `src/routes/trainer.clients.$clientId_.sessions.$sessionId.tsx`.
-2. Update the file's `createFileRoute("/trainer/clients/$clientId/sessions/$sessionId")` → `createFileRoute("/trainer/clients/$clientId_/sessions/$sessionId")`.
-3. Update the `useParams({ from: "..." })` call inside the same file to the new path.
+One migration to relax the client INSERT/UPDATE check on `session_exercises`. Today's `WITH CHECK` requires the new row's `exercise_id` to come from a `training_exercises` row in the client's assigned plan, which blocks ad-hoc additions. Replacement check: the session belongs to the caller (`s.client_id = auth.uid()`) — same as the USING clause. The exercise itself is still constrained by the existing SELECT policy on `exercises`.
 
-That's the entire fix. No DB / RLS / schema changes. No edits to `startSession`, `SessionLogger`, or `<Link>` / `navigate` call sites — `<Link to="/trainer/clients/$clientId/sessions/$sessionId" params={...}>` continues to work because the URL shape is unchanged (the underscore is stripped from the URL, exactly like `_authenticated/`).
+Trainer policy already permits add/remove for their clients' sessions; no change.
+
+No new tables, no new server functions — direct supabase calls from `SessionLogger` (consistent with how set logs are already saved).
+
+## Technical notes
+
+- File touched: `src/components/SessionLogger.tsx` (both `/client/sessions/$sessionId` and `/trainer/clients/$clientId_/sessions/$sessionId` render it, so both roles get the feature for free).
+- New shadcn `Dialog` for the picker; reuse existing `Input`/`Button`.
+- Delete: `supabase.from('session_exercises').delete().eq('id', se.id)`.
+- Insert: `supabase.from('session_exercises').insert({ session_id, exercise_id, order_index, target_sets: 3, target_reps_min: 8, target_reps_max: 12 })`.
+- `set_logs.session_exercise_id` already has `ON DELETE CASCADE` (verified at the FK level — if not, the migration adds it).
 
 ## Out of scope
 
-- No changes to the client-side flow (it uses a different route file already).
-- No design changes.
-- No new features.
+- Editing target sets/reps/weight on existing session exercises (separate request).
+- Reordering exercises.
+- Changing the underlying plan/training template.

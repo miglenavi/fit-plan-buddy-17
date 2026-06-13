@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Plus, Trash2 } from "lucide-react";
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
 
@@ -22,6 +23,11 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [exerciseSearch, setExerciseSearch] = useState("");
+  const [exerciseResults, setExerciseResults] = useState<any[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -137,6 +143,48 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       .single();
     if (error) toast.error(error.message);
     else if (data?.id) updateSet(seId, idx, "id", data.id);
+  };
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      let q = supabase.from("exercises").select("id, name, description").order("name").limit(30);
+      if (exerciseSearch.trim()) q = q.ilike("name", `%${exerciseSearch.trim()}%`);
+      const { data } = await q;
+      if (!cancelled) setExerciseResults(data ?? []);
+    }, 150);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [pickerOpen, exerciseSearch]);
+
+  const addExercise = async (exerciseId: string) => {
+    if (adding) return;
+    setAdding(true);
+    const nextOrder = sessionExercises.reduce((m, r) => Math.max(m, r.order_index ?? 0), -1) + 1;
+    const { error } = await supabase.from("session_exercises").insert({
+      session_id: sessionId,
+      exercise_id: exerciseId,
+      order_index: nextOrder,
+      target_sets: 3,
+      target_reps_min: 8,
+      target_reps_max: 12,
+    });
+    setAdding(false);
+    if (error) return toast.error(error.message);
+    setPickerOpen(false);
+    setExerciseSearch("");
+    toast.success("Exercise added");
+    await load();
+  };
+
+  const removeExercise = async (seId: string) => {
+    if (!confirm("Remove this exercise from today's session?")) return;
+    setRemovingId(seId);
+    const { error } = await supabase.from("session_exercises").delete().eq("id", seId);
+    setRemovingId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Exercise removed");
+    await load();
   };
 
   const finish = async () => {
@@ -276,6 +324,14 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
                         </div>
                       ))}
                     </div>
+
+                    {session.status !== "completed" && (
+                      <div className="pt-2 border-t">
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => removeExercise(se.id)} disabled={removingId === se.id}>
+                          <Trash2 className="size-4 mr-1.5" /> {removingId === se.id ? "Removing…" : "Remove from session"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -283,6 +339,43 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
           );
         })}
       </div>
+
+      {session.status !== "completed" && (
+        <Button variant="outline" className="w-full" onClick={() => setPickerOpen(true)}>
+          <Plus className="size-4 mr-1.5" /> Add exercise
+        </Button>
+      )}
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add exercise to session</DialogTitle>
+          </DialogHeader>
+          <Input
+            autoFocus
+            placeholder="Search exercises…"
+            value={exerciseSearch}
+            onChange={(e) => setExerciseSearch(e.target.value)}
+          />
+          <div className="max-h-80 overflow-y-auto space-y-1">
+            {exerciseResults.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No exercises found.</p>
+            )}
+            {exerciseResults.map((ex) => (
+              <button
+                key={ex.id}
+                type="button"
+                disabled={adding}
+                onClick={() => addExercise(ex.id)}
+                className="w-full text-left p-3 rounded-md hover:bg-accent disabled:opacity-50"
+              >
+                <div className="font-medium text-sm">{ex.name}</div>
+                {ex.description && <div className="text-xs text-muted-foreground line-clamp-1">{ex.description}</div>}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {session.status !== "completed" && (
         <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-30">
