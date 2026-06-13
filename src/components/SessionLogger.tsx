@@ -324,6 +324,14 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
                         </div>
                       ))}
                     </div>
+
+                    {session.status !== "completed" && (
+                      <div className="pt-2 border-t">
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => removeExercise(se.id)} disabled={removingId === se.id}>
+                          <Trash2 className="size-4 mr-1.5" /> {removingId === se.id ? "Removing…" : "Remove from session"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
