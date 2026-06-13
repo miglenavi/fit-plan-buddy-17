@@ -135,6 +135,14 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       weight: s.weight === "" || s.weight == null ? null : Number(s.weight),
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
       completed: !!s.completed,
+    };
+    const { data, error } = await supabase
+      .from("set_logs")
+      .upsert(payload, { onConflict: "session_exercise_id,set_index" })
+      .select("id")
+      .single();
+    if (error) toast.error(error.message);
+    else if (data?.id) updateSet(seId, idx, "id", data.id);
   };
 
   const addSet = (seId: string) => {
@@ -158,14 +166,6 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
       arr.splice(idx, 1);
       return { ...p, [seId]: arr };
     });
-  };
-    const { data, error } = await supabase
-      .from("set_logs")
-      .upsert(payload, { onConflict: "session_exercise_id,set_index" })
-      .select("id")
-      .single();
-    if (error) toast.error(error.message);
-    else if (data?.id) updateSet(seId, idx, "id", data.id);
   };
 
   useEffect(() => {
