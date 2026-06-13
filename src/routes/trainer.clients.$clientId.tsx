@@ -22,9 +22,11 @@ function ClientDetail() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [trainings, setTrainings] = useState<any[]>([]);
+  const [inProgress, setInProgress] = useState<{ id: string; training_id: string; trainings: { name: string } | null } | null>(null);
+  const [starting, setStarting] = useState<string | null>(null);
 
   const load = async () => {
-    const [{ data: p }, { data: pr }, { data: ss }] = await Promise.all([
+    const [{ data: p }, { data: pr }, { data: ss }, { data: ip }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", clientId).maybeSingle(),
       supabase.from("client_programs").select("*, plans(id, name, description)").eq("client_id", clientId).order("start_date", { ascending: false }),
       supabase.from("training_sessions")
@@ -32,8 +34,15 @@ function ClientDetail() {
         .eq("client_id", clientId)
         .order("started_at", { ascending: false })
         .limit(20),
+      supabase.from("training_sessions")
+        .select("id, training_id, trainings(name)")
+        .eq("client_id", clientId)
+        .eq("status", "in_progress")
+        .order("started_at", { ascending: false })
+        .limit(1),
     ]);
     setProfile(p); setPrograms(pr ?? []); setSessions(ss ?? []);
+    setInProgress((ip?.[0] as any) ?? null);
 
     // active program → trainings to start
     const active = (pr ?? []).find((x: any) => x.status === "active");
@@ -53,10 +62,13 @@ function ClientDetail() {
   };
 
   const startFor = async (trainingId: string) => {
+    if (starting) return;
+    setStarting(trainingId);
     try {
       const res = await start({ data: { trainingId, clientId } });
       navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: res.sessionId } });
     } catch (e: any) {
+      setStarting(null);
       toast.error(e.message ?? "Couldn't start session");
     }
   };
@@ -104,17 +116,43 @@ function ClientDetail() {
         </CardContent>
       </Card>
 
+      {inProgress && (
+        <Card className="border-primary/60 bg-primary/5">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-xs uppercase tracking-wider text-primary font-semibold">Session in progress</div>
+              <div className="font-semibold truncate">{inProgress.trainings?.name ?? "Training"}</div>
+            </div>
+            <Button onClick={() => navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: inProgress.id } })}>
+              Resume
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {trainings.length > 0 && (
         <Card>
           <CardHeader><CardTitle>Start a training for {profile?.full_name?.split(" ")[0] ?? "this client"}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-2">
-              {trainings.map((t) => (
-                <Button key={t.id} variant="outline" className="justify-between h-auto py-3" onClick={() => startFor(t.id)}>
-                  <span>{t.name}</span>
-                  <Play className="size-4" />
-                </Button>
-              ))}
+              {trainings.map((t) => {
+                const resumeHere = inProgress?.training_id === t.id;
+                const isStarting = starting === t.id;
+                return (
+                  <Button
+                    key={t.id}
+                    variant="outline"
+                    className="justify-between h-auto py-3"
+                    disabled={isStarting}
+                    onClick={() => resumeHere
+                      ? navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: inProgress!.id } })
+                      : startFor(t.id)}
+                  >
+                    <span>{t.name}{resumeHere ? " · resume" : ""}</span>
+                    <Play className="size-4" />
+                  </Button>
+                );
+              })}
             </div>
             <p className="text-xs text-muted-foreground mt-3">Log the session yourself during in-person coaching.</p>
           </CardContent>
