@@ -145,6 +145,48 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
     else if (data?.id) updateSet(seId, idx, "id", data.id);
   };
 
+  useEffect(() => {
+    if (!pickerOpen) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      let q = supabase.from("exercises").select("id, name, description").order("name").limit(30);
+      if (exerciseSearch.trim()) q = q.ilike("name", `%${exerciseSearch.trim()}%`);
+      const { data } = await q;
+      if (!cancelled) setExerciseResults(data ?? []);
+    }, 150);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [pickerOpen, exerciseSearch]);
+
+  const addExercise = async (exerciseId: string) => {
+    if (adding) return;
+    setAdding(true);
+    const nextOrder = sessionExercises.reduce((m, r) => Math.max(m, r.order_index ?? 0), -1) + 1;
+    const { error } = await supabase.from("session_exercises").insert({
+      session_id: sessionId,
+      exercise_id: exerciseId,
+      order_index: nextOrder,
+      target_sets: 3,
+      target_reps_min: 8,
+      target_reps_max: 12,
+    });
+    setAdding(false);
+    if (error) return toast.error(error.message);
+    setPickerOpen(false);
+    setExerciseSearch("");
+    toast.success("Exercise added");
+    await load();
+  };
+
+  const removeExercise = async (seId: string) => {
+    if (!confirm("Remove this exercise from today's session?")) return;
+    setRemovingId(seId);
+    const { error } = await supabase.from("session_exercises").delete().eq("id", seId);
+    setRemovingId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Exercise removed");
+    await load();
+  };
+
   const finish = async () => {
     if (finishing) return;
     setFinishing(true);
