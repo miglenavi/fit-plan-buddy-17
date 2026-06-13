@@ -22,6 +22,7 @@ function ClientToday() {
   const [program, setProgram] = useState<any>(null);
   const [trainings, setTrainings] = useState<any[]>([]);
   const [lastDone, setLastDone] = useState<string | null>(null);
+  const [inProgress, setInProgress] = useState<{ id: string; training_id: string } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,6 +50,14 @@ function ClientToday() {
         .order("completed_at", { ascending: false })
         .limit(1);
       setLastDone(last?.[0]?.training_id ?? null);
+
+      const { data: ip } = await supabase
+        .from("training_sessions")
+        .select("id, training_id")
+        .eq("status", "in_progress")
+        .order("started_at", { ascending: false })
+        .limit(1);
+      setInProgress(ip?.[0] ?? null);
     })();
   }, []);
 
@@ -92,12 +101,29 @@ function ClientToday() {
         </CardContent></Card>
       )}
 
+      {inProgress && (
+        <Card className="border-primary/60 bg-primary/5">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-xs uppercase tracking-wider text-primary font-semibold">In progress</div>
+              <div className="font-semibold truncate">
+                {trainings.find((t) => t.id === inProgress.training_id)?.name ?? "Your session"}
+              </div>
+            </div>
+            <Button onClick={() => navigate({ to: "/client/sessions/$sessionId", params: { sessionId: inProgress.id } })}>
+              Resume
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {trainings.length > 0 && (
         <section>
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1">Pick a training</h2>
           <div className="space-y-3">
             {trainings.map((t) => {
               const isNext = t.id === nextId;
+              const resumeHere = inProgress?.training_id === t.id;
               return (
                 <Card key={t.id} className={isNext ? "border-primary/60 bg-primary/5" : ""}>
                   <CardContent className="p-4">
@@ -105,15 +131,21 @@ function ClientToday() {
                       <div className="min-w-0">
                         <div className="font-semibold flex items-center gap-1.5">
                           {t.name}
-                          {isNext && <span className="text-[10px] font-medium uppercase tracking-wider text-primary bg-primary/15 px-1.5 py-0.5 rounded inline-flex items-center gap-1"><Sparkles className="size-3" />Next up</span>}
+                          {isNext && !resumeHere && <span className="text-[10px] font-medium uppercase tracking-wider text-primary bg-primary/15 px-1.5 py-0.5 rounded inline-flex items-center gap-1"><Sparkles className="size-3" />Next up</span>}
                         </div>
                         {t.description && <p className="text-xs text-muted-foreground mt-1">{t.description}</p>}
                         <div className="text-xs text-muted-foreground mt-1">{t.training_exercises?.length ?? 0} exercises</div>
                       </div>
                     </div>
-                    <Button className="w-full mt-3" disabled={starting === t.id} onClick={() => doStart(t.id)}>
-                      <Play className="size-4 mr-1.5" /> {starting === t.id ? "Starting…" : "Start training"}
-                    </Button>
+                    {resumeHere ? (
+                      <Button className="w-full mt-3" onClick={() => navigate({ to: "/client/sessions/$sessionId", params: { sessionId: inProgress!.id } })}>
+                        <Play className="size-4 mr-1.5" /> Resume session
+                      </Button>
+                    ) : (
+                      <Button className="w-full mt-3" disabled={starting === t.id} onClick={() => doStart(t.id)}>
+                        <Play className="size-4 mr-1.5" /> {starting === t.id ? "Starting…" : "Start training"}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
