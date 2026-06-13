@@ -23,6 +23,11 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [exerciseSearch, setExerciseSearch] = useState("");
+  const [exerciseResults, setExerciseResults] = useState<any[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
