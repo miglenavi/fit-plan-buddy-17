@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SessionLogger } from "@/components/SessionLogger";
 import { ArrowLeft } from "lucide-react";
 
-export const Route = createFileRoute("/trainer/clients/$clientId/sessions/$sessionId")({
+export const Route = createFileRoute("/trainer/clients/$clientId_/sessions/$sessionId")({
   ssr: false,
   component: TrainerClientSessionPage,
 });
