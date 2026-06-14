@@ -12,7 +12,7 @@ import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Plus, Tr
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
 
-export function SessionLogger({ sessionId, onFinished }: { sessionId: string; onFinished?: () => void }) {
+export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
   const [session, setSession] = useState<any>(null);
   const [sessionExercises, setSessionExercises] = useState<any[]>([]);
@@ -210,7 +210,9 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
     await load();
   };
 
-  const finish = async () => {
+  const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
+
+  const doFinish = async () => {
     if (finishing) return;
     setFinishing(true);
     const { error } = await supabase
@@ -221,6 +223,16 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
     toast.success("Session completed 🎉");
     if (onFinished) onFinished();
     else nav({ to: "/client" });
+  };
+
+  const finish = () => {
+    const totalSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.length, 0);
+    const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter((s) => s.completed).length, 0);
+    if (totalSets > 0 && doneSets < totalSets) {
+      setConfirmFinishOpen(true);
+      return;
+    }
+    doFinish();
   };
 
   if (loading) return <p className="text-muted-foreground">Loading…</p>;
@@ -245,12 +257,18 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
   const total = sessionExercises.length;
   const done = sessionExercises.filter((se) => (setLogsByEx[se.id] ?? []).every((s) => s.completed)).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
+  const canEdit = forceReadOnly ? false : session.status !== "completed";
 
   return (
     <div className="space-y-5 pb-24">
       <div>
         <h2 className="text-xl font-bold tracking-tight">{session.trainings?.name}</h2>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
+        {session.status === "completed" && (
+          <p className="text-xs text-primary mt-1 font-medium">
+            Completed{session.completed_at ? ` on ${new Date(session.completed_at).toLocaleDateString()}` : ""} · read-only
+          </p>
+        )}
         <div className="mt-2 flex items-center gap-3">
           <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
             <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
@@ -340,21 +358,25 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
                       {sets.map((s, idx) => (
                         <div key={idx} className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
-                          <Input type="number" inputMode="numeric" value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Input type="number" inputMode="decimal" step="0.5" value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Input type="number" inputMode="decimal" step="0.5" value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Checkbox checked={s.completed} onCheckedChange={(v) => { updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
-                          <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => removeSet(se.id, idx)} aria-label="Remove set">
-                            <Trash2 className="size-3.5" />
-                          </Button>
+                          <Input type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Checkbox checked={s.completed} disabled={!canEdit} onCheckedChange={(v) => { if (!canEdit) return; updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
+                          {canEdit ? (
+                            <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => removeSet(se.id, idx)} aria-label="Remove set">
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          ) : <span />}
                         </div>
                       ))}
-                      <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => addSet(se.id)}>
-                        <Plus className="size-4 mr-1.5" /> Add set
-                      </Button>
+                      {canEdit && (
+                        <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => addSet(se.id)}>
+                          <Plus className="size-4 mr-1.5" /> Add set
+                        </Button>
+                      )}
                     </div>
 
-                    {session.status !== "completed" && (
+                    {canEdit && (
                       <div className="pt-2 border-t">
                         <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => removeExercise(se.id)} disabled={removingId === se.id}>
                           <Trash2 className="size-4 mr-1.5" /> {removingId === se.id ? "Removing…" : "Remove from session"}
@@ -369,7 +391,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
         })}
       </div>
 
-      {session.status !== "completed" && (
+      {canEdit && (
         <Button variant="outline" className="w-full" onClick={() => setPickerOpen(true)}>
           <Plus className="size-4 mr-1.5" /> Add exercise
         </Button>
@@ -406,7 +428,7 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
         </DialogContent>
       </Dialog>
 
-      {session.status !== "completed" && (
+      {canEdit && (
         <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-30">
           <div className="max-w-md mx-auto">
             <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
@@ -415,6 +437,23 @@ export function SessionLogger({ sessionId, onFinished }: { sessionId: string; on
           </div>
         </div>
       )}
+
+      <Dialog open={confirmFinishOpen} onOpenChange={setConfirmFinishOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Finish with incomplete sets?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Some sets aren't marked complete. You can still finish — but completed sessions become read-only.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setConfirmFinishOpen(false)}>Keep logging</Button>
+            <Button onClick={() => { setConfirmFinishOpen(false); doFinish(); }} disabled={finishing}>
+              Finish anyway
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

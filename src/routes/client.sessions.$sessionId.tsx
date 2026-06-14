@@ -22,6 +22,7 @@ function ClientSessionPage() {
       <Link to="/client" className="inline-flex items-center gap-1 text-sm text-muted-foreground mb-3 -ml-1">
         <ArrowLeft className="size-4" /> Back
       </Link>
+      {/* Client view is always read-only for completed sessions (default behaviour). */}
       <SessionLogger sessionId={sessionId} />
     </>
   );

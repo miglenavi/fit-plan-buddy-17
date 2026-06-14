@@ -27,6 +27,7 @@ function Clients() {
     const { data } = await supabase
       .from("trainer_clients")
       .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
+      .is("archived_at", null)
       .order("created_at", { ascending: false });
     setClients(data ?? []);
   };
