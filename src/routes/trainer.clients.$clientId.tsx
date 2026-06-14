@@ -73,6 +73,17 @@ function ClientDetail() {
     }
   };
 
+  const archiveClient = async () => {
+    if (!confirm("Archive this client? They'll be hidden from your active list. Their workout history is kept.")) return;
+    const { error } = await supabase
+      .from("trainer_clients")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("client_id", clientId);
+    if (error) return toast.error(error.message);
+    toast.success("Client archived");
+    navigate({ to: "/trainer/clients" });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -80,12 +91,16 @@ function ClientDetail() {
           <h1 className="text-3xl font-bold tracking-tight">{profile?.full_name ?? "Client"}</h1>
           <p className="text-muted-foreground mt-1">Plan & training history</p>
         </div>
-        <AssignPlanDialog
-          clientId={clientId}
-          onAssigned={load}
-          trigger={<Button><Plus className="size-4 mr-1" /> Assign plan</Button>}
-        />
-
+        <div className="flex gap-2 flex-wrap">
+          <AssignPlanDialog
+            clientId={clientId}
+            onAssigned={load}
+            trigger={<Button><Plus className="size-4 mr-1" /> Assign plan</Button>}
+          />
+          <Button variant="outline" onClick={archiveClient}>
+            <Archive className="size-4 mr-1.5" /> Archive client
+          </Button>
+        </div>
       </div>
 
       <Card>
