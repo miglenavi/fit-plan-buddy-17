@@ -336,18 +336,21 @@ export type Database = {
       }
       trainer_clients: {
         Row: {
+          archived_at: string | null
           client_id: string
           created_at: string
           id: string
           trainer_id: string
         }
         Insert: {
+          archived_at?: string | null
           client_id: string
           created_at?: string
           id?: string
           trainer_id: string
         }
         Update: {
+          archived_at?: string | null
           client_id?: string
           created_at?: string
           id?: string
