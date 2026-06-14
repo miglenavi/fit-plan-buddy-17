@@ -35,6 +35,7 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
     if (!clientId) {
       supabase.from("trainer_clients")
         .select("client_id, profiles!trainer_clients_client_profile_fk(id, full_name)")
+        .is("archived_at", null)
         .order("created_at", { ascending: false })
         .then(({ data }) => {
           setClients((data ?? []).map((r: any) => ({
