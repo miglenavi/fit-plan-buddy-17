@@ -84,8 +84,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "ValhallaFit" },
       { name: "twitter:description", content: "Fit Coach Connect is a web app for personal trainers to manage clients, create workouts, and track progress." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f96d167e-e06d-478f-ac97-c887f72e69f9/id-preview-c5842a7c--bb4203ed-8d96-4c55-aaa8-677b9e0eeaf7.lovable.app-1779299280744.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f96d167e-e06d-478f-ac97-c887f72e69f9/id-preview-c5842a7c--bb4203ed-8d96-4c55-aaa8-677b9e0eeaf7.lovable.app-1779299280744.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/93972214-0742-42e0-90f4-6ef863a287cb" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/93972214-0742-42e0-90f4-6ef863a287cb" },
     ],
     links: [
       {
