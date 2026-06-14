@@ -12,7 +12,7 @@ import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Plus, Tr
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
 
-export function SessionLogger({ sessionId, onFinished }: { sessionId: string; onFinished?: () => void }) {
+export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
   const [session, setSession] = useState<any>(null);
   const [sessionExercises, setSessionExercises] = useState<any[]>([]);
