@@ -457,6 +457,3 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     </div>
   );
 }
-    </div>
-  );
-}
