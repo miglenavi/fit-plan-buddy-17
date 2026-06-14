@@ -257,12 +257,18 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const total = sessionExercises.length;
   const done = sessionExercises.filter((se) => (setLogsByEx[se.id] ?? []).every((s) => s.completed)).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
+  const canEdit = forceReadOnly ? false : session.status !== "completed";
 
   return (
     <div className="space-y-5 pb-24">
       <div>
         <h2 className="text-xl font-bold tracking-tight">{session.trainings?.name}</h2>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
+        {session.status === "completed" && (
+          <p className="text-xs text-primary mt-1 font-medium">
+            Completed{session.completed_at ? ` on ${new Date(session.completed_at).toLocaleDateString()}` : ""} · read-only
+          </p>
+        )}
         <div className="mt-2 flex items-center gap-3">
           <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
             <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
