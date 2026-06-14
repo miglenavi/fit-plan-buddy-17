@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Play, CheckCircle2, Clock } from "lucide-react";
+import { Plus, Play, CheckCircle2, Clock, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
 
