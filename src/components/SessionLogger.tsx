@@ -428,7 +428,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         </DialogContent>
       </Dialog>
 
-      {session.status !== "completed" && (
+      {canEdit && (
         <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-30">
           <div className="max-w-md mx-auto">
             <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
@@ -437,6 +437,26 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           </div>
         </div>
       )}
+
+      <Dialog open={confirmFinishOpen} onOpenChange={setConfirmFinishOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Finish with incomplete sets?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Some sets aren't marked complete. You can still finish — but completed sessions become read-only.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setConfirmFinishOpen(false)}>Keep logging</Button>
+            <Button onClick={() => { setConfirmFinishOpen(false); doFinish(); }} disabled={finishing}>
+              Finish anyway
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
     </div>
   );
 }
