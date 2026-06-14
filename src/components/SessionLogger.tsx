@@ -210,7 +210,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     await load();
   };
 
-  const finish = async () => {
+  const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
+
+  const doFinish = async () => {
     if (finishing) return;
     setFinishing(true);
     const { error } = await supabase
@@ -221,6 +223,16 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     toast.success("Session completed 🎉");
     if (onFinished) onFinished();
     else nav({ to: "/client" });
+  };
+
+  const finish = () => {
+    const totalSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.length, 0);
+    const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter((s) => s.completed).length, 0);
+    if (totalSets > 0 && doneSets < totalSets) {
+      setConfirmFinishOpen(true);
+      return;
+    }
+    doFinish();
   };
 
   if (loading) return <p className="text-muted-foreground">Loading…</p>;
