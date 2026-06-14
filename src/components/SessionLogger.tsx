@@ -358,21 +358,25 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       {sets.map((s, idx) => (
                         <div key={idx} className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
-                          <Input type="number" inputMode="numeric" value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Input type="number" inputMode="decimal" step="0.5" value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Input type="number" inputMode="decimal" step="0.5" value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Checkbox checked={s.completed} onCheckedChange={(v) => { updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
-                          <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => removeSet(se.id, idx)} aria-label="Remove set">
-                            <Trash2 className="size-3.5" />
-                          </Button>
+                          <Input type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Checkbox checked={s.completed} disabled={!canEdit} onCheckedChange={(v) => { if (!canEdit) return; updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
+                          {canEdit ? (
+                            <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => removeSet(se.id, idx)} aria-label="Remove set">
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          ) : <span />}
                         </div>
                       ))}
-                      <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => addSet(se.id)}>
-                        <Plus className="size-4 mr-1.5" /> Add set
-                      </Button>
+                      {canEdit && (
+                        <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => addSet(se.id)}>
+                          <Plus className="size-4 mr-1.5" /> Add set
+                        </Button>
+                      )}
                     </div>
 
-                    {session.status !== "completed" && (
+                    {canEdit && (
                       <div className="pt-2 border-t">
                         <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => removeExercise(se.id)} disabled={removingId === se.id}>
                           <Trash2 className="size-4 mr-1.5" /> {removingId === se.id ? "Removing…" : "Remove from session"}
@@ -387,7 +391,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         })}
       </div>
 
-      {session.status !== "completed" && (
+      {canEdit && (
         <Button variant="outline" className="w-full" onClick={() => setPickerOpen(true)}>
           <Plus className="size-4 mr-1.5" /> Add exercise
         </Button>
