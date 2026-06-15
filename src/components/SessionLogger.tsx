@@ -418,7 +418,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       </div>
                     )}
 
+                    {picked && (
                     <div className="space-y-2">
+
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Today's sets</Label>
                       <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem] gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
                         <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span>
