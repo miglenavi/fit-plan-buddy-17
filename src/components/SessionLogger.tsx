@@ -348,6 +348,13 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           const hasAlt = !!se.alternative_exercise_id && !!se.alternative?.name;
           const picked = pickedByEx[se.id] ?? !hasAlt;
           const needsChoice = hasAlt && !picked;
+          const altSetsV = se.alt_target_sets ?? se.target_sets;
+          const altMinV = se.alt_target_reps_min ?? se.target_reps_min;
+          const altMaxV = se.alt_target_reps_max ?? se.target_reps_max;
+          const altWV = se.alt_target_weight ?? se.target_weight;
+          const altTargetReps = altMinV === altMaxV ? `${altMinV}` : `${altMinV}–${altMaxV}`;
+          const primaryLine = `${se.target_sets} × ${targetReps}${se.target_weight ? ` @ ${se.target_weight}kg` : ""}`;
+          const altLine = `${altSetsV} × ${altTargetReps}${altWV ? ` @ ${altWV}kg` : ""}`;
 
           return (
             <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : needsChoice ? "border-amber-500/60" : ""}>
