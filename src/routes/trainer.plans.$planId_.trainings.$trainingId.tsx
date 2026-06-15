@@ -83,6 +83,13 @@ function TrainingDetail() {
     if (!exId) return toast.error("Pick an exercise first");
     if (altExId && altExId === exId) return toast.error("Alternative must differ from the primary exercise");
     if (repsMax < repsMin) return toast.error("Max reps must be ≥ min reps");
+    const hasAlt = !!altExId;
+    const altSetsNum = altSets ? Number(altSets) : null;
+    const altMinNum = altRepsMin ? Number(altRepsMin) : null;
+    const altMaxNum = altRepsMax ? Number(altRepsMax) : null;
+    if (hasAlt && altMinNum != null && altMaxNum != null && altMaxNum < altMinNum) {
+      return toast.error("Alt max reps must be ≥ min reps");
+    }
     const { error } = await supabase.from("training_exercises").insert({
       training_id: trainingId,
       exercise_id: exId,
@@ -93,11 +100,18 @@ function TrainingDetail() {
       target_weight: weight ? Number(weight) : null,
       rest_seconds: rest ? Number(rest) : null,
       coach_notes: coachNotes || null,
+      alt_target_sets: hasAlt ? altSetsNum : null,
+      alt_target_reps_min: hasAlt ? altMinNum : null,
+      alt_target_reps_max: hasAlt ? altMaxNum : null,
+      alt_target_weight: hasAlt && altWeight ? Number(altWeight) : null,
+      alt_rest_seconds: hasAlt && altRest ? Number(altRest) : null,
+      alt_coach_notes: hasAlt ? (altCoachNotes || null) : null,
       order_index: items.length,
     } as any);
     if (error) toast.error(error.message);
     else {
       setExId(""); setAltExId(""); setWeight(""); setRest(""); setCoachNotes("");
+      setAltSets(""); setAltRepsMin(""); setAltRepsMax(""); setAltWeight(""); setAltRest(""); setAltCoachNotes("");
       toast.success("Added");
       load();
     }
