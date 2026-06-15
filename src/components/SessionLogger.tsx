@@ -389,22 +389,22 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                           {picked ? "Doing today" : "Which exercise are you doing today?"}
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <Button
+                          <button
                             type="button"
-                            size="sm"
-                            variant={picked ? "default" : "outline"}
                             onClick={() => chooseExercise(se.id, false)}
+                            className={`rounded-md border p-3 text-left text-sm transition ${picked ? "border-primary bg-primary/5" : "hover:bg-accent"}`}
                           >
-                            {ex.name}
-                          </Button>
-                          <Button
+                            <div className="font-medium">{ex.name}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">{primaryLine}</div>
+                          </button>
+                          <button
                             type="button"
-                            size="sm"
-                            variant="outline"
                             onClick={() => chooseExercise(se.id, true)}
+                            className="rounded-md border p-3 text-left text-sm hover:bg-accent transition"
                           >
-                            {se.alternative.name}
-                          </Button>
+                            <div className="font-medium">{se.alternative.name}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">{altLine}</div>
+                          </button>
                         </div>
                         {picked && (
                           <p className="text-[11px] text-muted-foreground">
