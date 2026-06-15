@@ -193,6 +193,24 @@ function TrainingDetail() {
             <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
             <div className="space-y-2"><Label>Rest (sec)</Label><Input type="number" min="0" value={rest} onChange={(e) => setRest(e.target.value)} placeholder="optional" /></div>
             <div className="space-y-2 sm:col-span-4"><Label>Coach notes</Label><Input value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} placeholder="Cues, tempo, etc." /></div>
+            {altExId && (
+              <div className="sm:col-span-6 rounded-md border bg-muted/30 p-3 space-y-3">
+                <div className="text-sm font-medium">
+                  Targets for the alternative
+                  <span className="text-xs text-muted-foreground font-normal ml-2">
+                    (leave blank to reuse the primary targets above)
+                  </span>
+                </div>
+                <div className="grid sm:grid-cols-6 gap-3">
+                  <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={altSets} onChange={(e) => setAltSets(e.target.value)} placeholder={String(sets)} /></div>
+                  <div className="space-y-2"><Label>Reps min</Label><Input type="number" min="1" value={altRepsMin} onChange={(e) => setAltRepsMin(e.target.value)} placeholder={String(repsMin)} /></div>
+                  <div className="space-y-2"><Label>Reps max</Label><Input type="number" min="1" value={altRepsMax} onChange={(e) => setAltRepsMax(e.target.value)} placeholder={String(repsMax)} /></div>
+                  <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={altWeight} onChange={(e) => setAltWeight(e.target.value)} placeholder={weight || "optional"} /></div>
+                  <div className="space-y-2"><Label>Rest (sec)</Label><Input type="number" min="0" value={altRest} onChange={(e) => setAltRest(e.target.value)} placeholder={rest || "optional"} /></div>
+                  <div className="space-y-2 sm:col-span-6"><Label>Alt coach notes</Label><Input value={altCoachNotes} onChange={(e) => setAltCoachNotes(e.target.value)} placeholder="Cues for the alternative" /></div>
+                </div>
+              </div>
+            )}
             <Button type="submit" className="sm:col-span-6"><Plus className="size-4 mr-1" /> {exId ? "Add exercise to training" : "Select an exercise above to add"}</Button>
           </form>
         </CardContent>
