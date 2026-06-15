@@ -229,15 +229,27 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       return;
     }
     if (useAlternative && se.alternative_exercise_id) {
+      // Swap exercise IDs AND target prescriptions so target_* always reflects the performed exercise.
+      // Fall back to primary targets when alt_* is not set.
       const { error } = await supabase
         .from("session_exercises")
-        .update({ exercise_id: se.alternative_exercise_id, alternative_exercise_id: se.exercise_id })
+        .update({
+          exercise_id: se.alternative_exercise_id,
+          alternative_exercise_id: se.exercise_id,
+          target_sets: se.alt_target_sets ?? se.target_sets,
+          target_reps_min: se.alt_target_reps_min ?? se.target_reps_min,
+          target_reps_max: se.alt_target_reps_max ?? se.target_reps_max,
+          target_weight: se.alt_target_weight ?? se.target_weight,
+          alt_target_sets: se.target_sets,
+          alt_target_reps_min: se.target_reps_min,
+          alt_target_reps_max: se.target_reps_max,
+          alt_target_weight: se.target_weight,
+        })
         .eq("id", seId);
       if (error) return toast.error(error.message);
     }
     setPickedByEx((p) => ({ ...p, [seId]: true }));
     if (useAlternative) await load();
-    else setPickedByEx((p) => ({ ...p, [seId]: true }));
   };
 
 
