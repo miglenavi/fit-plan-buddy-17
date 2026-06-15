@@ -57,6 +57,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
       const meta: Record<string, any> = {};
       const logs: Record<string, SetLog[]> = {};
+      const picked: Record<string, boolean> = {};
       for (const row of se ?? []) {
         meta[row.id] = row.exercise;
         const existing: SetLog[] = (row.set_logs ?? []).map((l: any) => ({
@@ -65,9 +66,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         const target = row.target_sets ?? 3;
         while (existing.length < target) existing.push({ set_index: existing.length, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false });
         logs[row.id] = existing;
+        // If no alternative, the question doesn't apply. If any log has data, treat as picked.
+        const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null);
+        picked[row.id] = !row.alternative_exercise_id || hasAnyLogged;
       }
       setSetLogsByEx(logs);
       setExerciseMeta(meta);
+      setPickedByEx(picked);
+
 
       // "Last time"
       const exIds = (se ?? []).map((r: any) => r.exercise_id);
