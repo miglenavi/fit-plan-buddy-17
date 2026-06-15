@@ -370,7 +370,11 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       {hasAlt && !picked && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {needsChoice ? <span className="text-amber-600 font-medium">Choose one to start</span> : <>{se.target_sets} × {targetReps}{se.target_weight ? ` @ ${se.target_weight}kg` : ""}</>}
+                      {needsChoice ? (
+                        <span className="text-amber-600 font-medium">Choose one to start</span>
+                      ) : (
+                        <>{primaryLine}</>
+                      )}
                     </div>
                   </div>
                   {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
