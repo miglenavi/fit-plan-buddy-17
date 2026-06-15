@@ -19,6 +19,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const [exerciseMeta, setExerciseMeta] = useState<Record<string, any>>({});
   const [setLogsByEx, setSetLogsByEx] = useState<Record<string, SetLog[]>>({});
   const [lastTimeByEx, setLastTimeByEx] = useState<Record<string, { sets: SetLog[]; date: string } | null>>({});
+  const [pickedByEx, setPickedByEx] = useState<Record<string, boolean>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -56,6 +57,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
       const meta: Record<string, any> = {};
       const logs: Record<string, SetLog[]> = {};
+      const picked: Record<string, boolean> = {};
       for (const row of se ?? []) {
         meta[row.id] = row.exercise;
         const existing: SetLog[] = (row.set_logs ?? []).map((l: any) => ({
@@ -64,9 +66,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         const target = row.target_sets ?? 3;
         while (existing.length < target) existing.push({ set_index: existing.length, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false });
         logs[row.id] = existing;
+        // If no alternative, the question doesn't apply. If any log has data, treat as picked.
+        const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null);
+        picked[row.id] = !row.alternative_exercise_id || hasAnyLogged;
       }
       setSetLogsByEx(logs);
       setExerciseMeta(meta);
+      setPickedByEx(picked);
+
 
       // "Last time"
       const exIds = (se ?? []).map((r: any) => r.exercise_id);
@@ -210,6 +217,31 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     await load();
   };
 
+  // Pick which of the two options ("X or Y") the client is actually doing.
+  // Choosing "alternative" swaps the two IDs so exercise_id always = the performed exercise.
+  // Logged sets stay attached to this session_exercise, so reps/weight are specific to the chosen one.
+  const chooseExercise = async (seId: string, useAlternative: boolean) => {
+    const se = sessionExercises.find((r) => r.id === seId);
+    if (!se) return;
+    const hasAnyLog = (setLogsByEx[seId] ?? []).some((s) => s.completed || s.reps != null || s.weight != null || s.rpe != null);
+    if (hasAnyLog) {
+      toast.error("You've already logged sets — clear them before switching exercise.");
+      return;
+    }
+    if (useAlternative && se.alternative_exercise_id) {
+      const { error } = await supabase
+        .from("session_exercises")
+        .update({ exercise_id: se.alternative_exercise_id, alternative_exercise_id: se.exercise_id })
+        .eq("id", seId);
+      if (error) return toast.error(error.message);
+    }
+    setPickedByEx((p) => ({ ...p, [seId]: true }));
+    if (useAlternative) await load();
+    else setPickedByEx((p) => ({ ...p, [seId]: true }));
+  };
+
+
+
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
 
   const doFinish = async () => {
@@ -301,9 +333,12 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
             }
           }
           const targetReps = se.target_reps_min === se.target_reps_max ? `${se.target_reps_min}` : `${se.target_reps_min}–${se.target_reps_max}`;
+          const hasAlt = !!se.alternative_exercise_id && !!se.alternative?.name;
+          const picked = pickedByEx[se.id] ?? !hasAlt;
+          const needsChoice = hasAlt && !picked;
 
           return (
-            <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : ""}>
+            <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : needsChoice ? "border-amber-500/60" : ""}>
               <CardContent className="p-0">
                 <button type="button" onClick={() => setExpandedId(isOpen ? null : se.id)}
                   className="w-full flex items-center gap-3 p-4 text-left">
@@ -313,23 +348,56 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">
                       {ex.name}
-                      {se.alternative?.name && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
+                      {hasAlt && !picked && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {se.target_sets} × {targetReps}{se.target_weight ? ` @ ${se.target_weight}kg` : ""}
+                      {needsChoice ? <span className="text-amber-600 font-medium">Choose one to start</span> : <>{se.target_sets} × {targetReps}{se.target_weight ? ` @ ${se.target_weight}kg` : ""}</>}
                     </div>
                   </div>
                   {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                 </button>
 
+
                 {isOpen && (
                   <div className="px-4 pb-4 space-y-4 border-t pt-4">
+                    {hasAlt && canEdit && (
+                      <div className="rounded-md border bg-card p-3 space-y-2">
+                        <div className="text-xs font-semibold text-muted-foreground">
+                          {picked ? "Doing today" : "Which exercise are you doing today?"}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={picked ? "default" : "outline"}
+                            onClick={() => chooseExercise(se.id, false)}
+                          >
+                            {ex.name}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => chooseExercise(se.id, true)}
+                          >
+                            {se.alternative.name}
+                          </Button>
+                        </div>
+                        {picked && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Reps and weight below are tracked for <span className="font-medium">{ex.name}</span>. Tap the other option to switch (only available before you log any sets).
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {se.notes && (
                       <div className="rounded-md bg-accent/40 p-3 text-sm">
                         <div className="text-xs font-semibold text-muted-foreground mb-1">Coach note</div>
                         {se.notes}
                       </div>
                     )}
+
 
                     {last && (
                       <div className="rounded-md bg-muted/50 p-3 text-xs">
@@ -350,7 +418,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       </div>
                     )}
 
+                    {picked && (
                     <div className="space-y-2">
+
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Today's sets</Label>
                       <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem] gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
                         <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span>
@@ -375,6 +445,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         </Button>
                       )}
                     </div>
+                    )}
+
+
 
                     {canEdit && (
                       <div className="pt-2 border-t">
