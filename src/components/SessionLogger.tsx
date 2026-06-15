@@ -333,9 +333,12 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
             }
           }
           const targetReps = se.target_reps_min === se.target_reps_max ? `${se.target_reps_min}` : `${se.target_reps_min}–${se.target_reps_max}`;
+          const hasAlt = !!se.alternative_exercise_id && !!se.alternative?.name;
+          const picked = pickedByEx[se.id] ?? !hasAlt;
+          const needsChoice = hasAlt && !picked;
 
           return (
-            <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : ""}>
+            <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : needsChoice ? "border-amber-500/60" : ""}>
               <CardContent className="p-0">
                 <button type="button" onClick={() => setExpandedId(isOpen ? null : se.id)}
                   className="w-full flex items-center gap-3 p-4 text-left">
@@ -345,14 +348,15 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">
                       {ex.name}
-                      {se.alternative?.name && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
+                      {hasAlt && !picked && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {se.target_sets} × {targetReps}{se.target_weight ? ` @ ${se.target_weight}kg` : ""}
+                      {needsChoice ? <span className="text-amber-600 font-medium">Choose one to start</span> : <>{se.target_sets} × {targetReps}{se.target_weight ? ` @ ${se.target_weight}kg` : ""}</>}
                     </div>
                   </div>
                   {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                 </button>
+
 
                 {isOpen && (
                   <div className="px-4 pb-4 space-y-4 border-t pt-4">
