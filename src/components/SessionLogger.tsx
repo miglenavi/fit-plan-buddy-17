@@ -19,6 +19,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const [exerciseMeta, setExerciseMeta] = useState<Record<string, any>>({});
   const [setLogsByEx, setSetLogsByEx] = useState<Record<string, SetLog[]>>({});
   const [lastTimeByEx, setLastTimeByEx] = useState<Record<string, { sets: SetLog[]; date: string } | null>>({});
+  const [pickedByEx, setPickedByEx] = useState<Record<string, boolean>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
