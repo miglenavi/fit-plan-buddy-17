@@ -445,6 +445,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         </Button>
                       )}
                     </div>
+                    )}
+
+
 
                     {canEdit && (
                       <div className="pt-2 border-t">
