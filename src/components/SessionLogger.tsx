@@ -229,15 +229,27 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       return;
     }
     if (useAlternative && se.alternative_exercise_id) {
+      // Swap exercise IDs AND target prescriptions so target_* always reflects the performed exercise.
+      // Fall back to primary targets when alt_* is not set.
       const { error } = await supabase
         .from("session_exercises")
-        .update({ exercise_id: se.alternative_exercise_id, alternative_exercise_id: se.exercise_id })
+        .update({
+          exercise_id: se.alternative_exercise_id,
+          alternative_exercise_id: se.exercise_id,
+          target_sets: se.alt_target_sets ?? se.target_sets,
+          target_reps_min: se.alt_target_reps_min ?? se.target_reps_min,
+          target_reps_max: se.alt_target_reps_max ?? se.target_reps_max,
+          target_weight: se.alt_target_weight ?? se.target_weight,
+          alt_target_sets: se.target_sets,
+          alt_target_reps_min: se.target_reps_min,
+          alt_target_reps_max: se.target_reps_max,
+          alt_target_weight: se.target_weight,
+        })
         .eq("id", seId);
       if (error) return toast.error(error.message);
     }
     setPickedByEx((p) => ({ ...p, [seId]: true }));
     if (useAlternative) await load();
-    else setPickedByEx((p) => ({ ...p, [seId]: true }));
   };
 
 
@@ -336,6 +348,13 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           const hasAlt = !!se.alternative_exercise_id && !!se.alternative?.name;
           const picked = pickedByEx[se.id] ?? !hasAlt;
           const needsChoice = hasAlt && !picked;
+          const altSetsV = se.alt_target_sets ?? se.target_sets;
+          const altMinV = se.alt_target_reps_min ?? se.target_reps_min;
+          const altMaxV = se.alt_target_reps_max ?? se.target_reps_max;
+          const altWV = se.alt_target_weight ?? se.target_weight;
+          const altTargetReps = altMinV === altMaxV ? `${altMinV}` : `${altMinV}–${altMaxV}`;
+          const primaryLine = `${se.target_sets} × ${targetReps}${se.target_weight ? ` @ ${se.target_weight}kg` : ""}`;
+          const altLine = `${altSetsV} × ${altTargetReps}${altWV ? ` @ ${altWV}kg` : ""}`;
 
           return (
             <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : needsChoice ? "border-amber-500/60" : ""}>
@@ -351,7 +370,11 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       {hasAlt && !picked && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {needsChoice ? <span className="text-amber-600 font-medium">Choose one to start</span> : <>{se.target_sets} × {targetReps}{se.target_weight ? ` @ ${se.target_weight}kg` : ""}</>}
+                      {needsChoice ? (
+                        <span className="text-amber-600 font-medium">Choose one to start</span>
+                      ) : (
+                        <>{primaryLine}</>
+                      )}
                     </div>
                   </div>
                   {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
@@ -366,22 +389,22 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                           {picked ? "Doing today" : "Which exercise are you doing today?"}
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <Button
+                          <button
                             type="button"
-                            size="sm"
-                            variant={picked ? "default" : "outline"}
                             onClick={() => chooseExercise(se.id, false)}
+                            className={`rounded-md border p-3 text-left text-sm transition ${picked ? "border-primary bg-primary/5" : "hover:bg-accent"}`}
                           >
-                            {ex.name}
-                          </Button>
-                          <Button
+                            <div className="font-medium">{ex.name}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">{primaryLine}</div>
+                          </button>
+                          <button
                             type="button"
-                            size="sm"
-                            variant="outline"
                             onClick={() => chooseExercise(se.id, true)}
+                            className="rounded-md border p-3 text-left text-sm hover:bg-accent transition"
                           >
-                            {se.alternative.name}
-                          </Button>
+                            <div className="font-medium">{se.alternative.name}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">{altLine}</div>
+                          </button>
                         </div>
                         {picked && (
                           <p className="text-[11px] text-muted-foreground">

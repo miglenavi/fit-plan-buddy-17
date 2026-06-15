@@ -36,6 +36,13 @@ function TrainingDetail() {
   const [weight, setWeight] = useState("");
   const [rest, setRest] = useState("");
   const [coachNotes, setCoachNotes] = useState("");
+  // optional separate targets for the alternative
+  const [altSets, setAltSets] = useState<string>("");
+  const [altRepsMin, setAltRepsMin] = useState<string>("");
+  const [altRepsMax, setAltRepsMax] = useState<string>("");
+  const [altWeight, setAltWeight] = useState<string>("");
+  const [altRest, setAltRest] = useState<string>("");
+  const [altCoachNotes, setAltCoachNotes] = useState<string>("");
 
   const load = async () => {
     const [{ data: t }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
@@ -76,6 +83,13 @@ function TrainingDetail() {
     if (!exId) return toast.error("Pick an exercise first");
     if (altExId && altExId === exId) return toast.error("Alternative must differ from the primary exercise");
     if (repsMax < repsMin) return toast.error("Max reps must be ≥ min reps");
+    const hasAlt = !!altExId;
+    const altSetsNum = altSets ? Number(altSets) : null;
+    const altMinNum = altRepsMin ? Number(altRepsMin) : null;
+    const altMaxNum = altRepsMax ? Number(altRepsMax) : null;
+    if (hasAlt && altMinNum != null && altMaxNum != null && altMaxNum < altMinNum) {
+      return toast.error("Alt max reps must be ≥ min reps");
+    }
     const { error } = await supabase.from("training_exercises").insert({
       training_id: trainingId,
       exercise_id: exId,
@@ -86,11 +100,18 @@ function TrainingDetail() {
       target_weight: weight ? Number(weight) : null,
       rest_seconds: rest ? Number(rest) : null,
       coach_notes: coachNotes || null,
+      alt_target_sets: hasAlt ? altSetsNum : null,
+      alt_target_reps_min: hasAlt ? altMinNum : null,
+      alt_target_reps_max: hasAlt ? altMaxNum : null,
+      alt_target_weight: hasAlt && altWeight ? Number(altWeight) : null,
+      alt_rest_seconds: hasAlt && altRest ? Number(altRest) : null,
+      alt_coach_notes: hasAlt ? (altCoachNotes || null) : null,
       order_index: items.length,
     } as any);
     if (error) toast.error(error.message);
     else {
       setExId(""); setAltExId(""); setWeight(""); setRest(""); setCoachNotes("");
+      setAltSets(""); setAltRepsMin(""); setAltRepsMax(""); setAltWeight(""); setAltRest(""); setAltCoachNotes("");
       toast.success("Added");
       load();
     }
@@ -172,6 +193,24 @@ function TrainingDetail() {
             <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
             <div className="space-y-2"><Label>Rest (sec)</Label><Input type="number" min="0" value={rest} onChange={(e) => setRest(e.target.value)} placeholder="optional" /></div>
             <div className="space-y-2 sm:col-span-4"><Label>Coach notes</Label><Input value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} placeholder="Cues, tempo, etc." /></div>
+            {altExId && (
+              <div className="sm:col-span-6 rounded-md border bg-muted/30 p-3 space-y-3">
+                <div className="text-sm font-medium">
+                  Targets for the alternative
+                  <span className="text-xs text-muted-foreground font-normal ml-2">
+                    (leave blank to reuse the primary targets above)
+                  </span>
+                </div>
+                <div className="grid sm:grid-cols-6 gap-3">
+                  <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={altSets} onChange={(e) => setAltSets(e.target.value)} placeholder={String(sets)} /></div>
+                  <div className="space-y-2"><Label>Reps min</Label><Input type="number" min="1" value={altRepsMin} onChange={(e) => setAltRepsMin(e.target.value)} placeholder={String(repsMin)} /></div>
+                  <div className="space-y-2"><Label>Reps max</Label><Input type="number" min="1" value={altRepsMax} onChange={(e) => setAltRepsMax(e.target.value)} placeholder={String(repsMax)} /></div>
+                  <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={altWeight} onChange={(e) => setAltWeight(e.target.value)} placeholder={weight || "optional"} /></div>
+                  <div className="space-y-2"><Label>Rest (sec)</Label><Input type="number" min="0" value={altRest} onChange={(e) => setAltRest(e.target.value)} placeholder={rest || "optional"} /></div>
+                  <div className="space-y-2 sm:col-span-6"><Label>Alt coach notes</Label><Input value={altCoachNotes} onChange={(e) => setAltCoachNotes(e.target.value)} placeholder="Cues for the alternative" /></div>
+                </div>
+              </div>
+            )}
             <Button type="submit" className="sm:col-span-6"><Plus className="size-4 mr-1" /> {exId ? "Add exercise to training" : "Select an exercise above to add"}</Button>
           </form>
         </CardContent>
@@ -186,6 +225,12 @@ function TrainingDetail() {
             <ul className="divide-y">
               {items.map((it, i) => {
                 const altName = it.alternative_exercise_id ? exercises.find((e) => e.id === it.alternative_exercise_id)?.name : null;
+                const hasAltTargets = altName && (it.alt_target_sets != null || it.alt_target_reps_min != null || it.alt_target_reps_max != null || it.alt_target_weight != null || it.alt_rest_seconds != null || it.alt_coach_notes);
+                const altSetsV = it.alt_target_sets ?? it.target_sets;
+                const altMinV = it.alt_target_reps_min ?? it.target_reps_min;
+                const altMaxV = it.alt_target_reps_max ?? it.target_reps_max;
+                const altWV = it.alt_target_weight ?? it.target_weight;
+                const altRestV = it.alt_rest_seconds ?? it.rest_seconds;
                 return (
                 <li key={it.id} className="py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -196,11 +241,22 @@ function TrainingDetail() {
                         {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
                       </div>
                       <div className="text-xs text-muted-foreground">
+                        {altName && <span className="font-medium text-foreground/70">{it.exercises?.name}: </span>}
                         {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
                         {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
                         {it.rest_seconds ? ` · rest ${it.rest_seconds}s` : ""}
                         {it.coach_notes ? ` · ${it.coach_notes}` : ""}
                       </div>
+                      {altName && (
+                        <div className="text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground/70">{altName}: </span>
+                          {altSetsV} × {altMinV === altMaxV ? altMinV : `${altMinV}–${altMaxV}`}
+                          {altWV ? ` @ ${altWV}kg` : ""}
+                          {altRestV ? ` · rest ${altRestV}s` : ""}
+                          {it.alt_coach_notes ? ` · ${it.alt_coach_notes}` : ""}
+                          {!hasAltTargets && <span className="italic"> (same as primary)</span>}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <Button size="icon" variant="ghost" onClick={() => remove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>

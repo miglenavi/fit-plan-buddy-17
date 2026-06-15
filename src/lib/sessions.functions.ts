@@ -38,7 +38,7 @@ export const startSession = createServerFn({ method: "POST" })
     // Load template exercises
     const { data: tplExs, error: tplErr } = await supabase
       .from("training_exercises")
-      .select("id, exercise_id, alternative_exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes")
+      .select("id, exercise_id, alternative_exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes, alt_target_sets, alt_target_reps_min, alt_target_reps_max, alt_target_weight")
       .eq("training_id", data.trainingId)
       .order("order_index");
     if (tplErr) throw new Error(tplErr.message);
@@ -68,6 +68,10 @@ export const startSession = createServerFn({ method: "POST" })
         target_reps_min: t.target_reps_min,
         target_reps_max: t.target_reps_max,
         target_weight: t.target_weight,
+        alt_target_sets: t.alt_target_sets,
+        alt_target_reps_min: t.alt_target_reps_min,
+        alt_target_reps_max: t.alt_target_reps_max,
+        alt_target_weight: t.alt_target_weight,
         notes: t.coach_notes,
       }));
       const { error: seErr } = await supabase.from("session_exercises").insert(seRows);
