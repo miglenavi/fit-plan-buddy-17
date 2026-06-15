@@ -182,6 +182,10 @@ export type Database = {
       }
       session_exercises: {
         Row: {
+          alt_target_reps_max: number | null
+          alt_target_reps_min: number | null
+          alt_target_sets: number | null
+          alt_target_weight: number | null
           alternative_exercise_id: string | null
           exercise_id: string
           id: string
@@ -195,6 +199,10 @@ export type Database = {
           training_exercise_id: string | null
         }
         Insert: {
+          alt_target_reps_max?: number | null
+          alt_target_reps_min?: number | null
+          alt_target_sets?: number | null
+          alt_target_weight?: number | null
           alternative_exercise_id?: string | null
           exercise_id: string
           id?: string
@@ -208,6 +216,10 @@ export type Database = {
           training_exercise_id?: string | null
         }
         Update: {
+          alt_target_reps_max?: number | null
+          alt_target_reps_min?: number | null
+          alt_target_sets?: number | null
+          alt_target_weight?: number | null
           alternative_exercise_id?: string | null
           exercise_id?: string
           id?: string
@@ -368,6 +380,12 @@ export type Database = {
       }
       training_exercises: {
         Row: {
+          alt_coach_notes: string | null
+          alt_rest_seconds: number | null
+          alt_target_reps_max: number | null
+          alt_target_reps_min: number | null
+          alt_target_sets: number | null
+          alt_target_weight: number | null
           alternative_exercise_id: string | null
           coach_notes: string | null
           exercise_id: string
@@ -381,6 +399,12 @@ export type Database = {
           training_id: string
         }
         Insert: {
+          alt_coach_notes?: string | null
+          alt_rest_seconds?: number | null
+          alt_target_reps_max?: number | null
+          alt_target_reps_min?: number | null
+          alt_target_sets?: number | null
+          alt_target_weight?: number | null
           alternative_exercise_id?: string | null
           coach_notes?: string | null
           exercise_id: string
@@ -394,6 +418,12 @@ export type Database = {
           training_id: string
         }
         Update: {
+          alt_coach_notes?: string | null
+          alt_rest_seconds?: number | null
+          alt_target_reps_max?: number | null
+          alt_target_reps_min?: number | null
+          alt_target_sets?: number | null
+          alt_target_weight?: number | null
           alternative_exercise_id?: string | null
           coach_notes?: string | null
           exercise_id?: string
