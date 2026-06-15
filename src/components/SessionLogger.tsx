@@ -360,12 +360,44 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
                 {isOpen && (
                   <div className="px-4 pb-4 space-y-4 border-t pt-4">
+                    {hasAlt && canEdit && (
+                      <div className="rounded-md border bg-card p-3 space-y-2">
+                        <div className="text-xs font-semibold text-muted-foreground">
+                          {picked ? "Doing today" : "Which exercise are you doing today?"}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={picked ? "default" : "outline"}
+                            onClick={() => chooseExercise(se.id, false)}
+                          >
+                            {ex.name}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => chooseExercise(se.id, true)}
+                          >
+                            {se.alternative.name}
+                          </Button>
+                        </div>
+                        {picked && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Reps and weight below are tracked for <span className="font-medium">{ex.name}</span>. Tap the other option to switch (only available before you log any sets).
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {se.notes && (
                       <div className="rounded-md bg-accent/40 p-3 text-sm">
                         <div className="text-xs font-semibold text-muted-foreground mb-1">Coach note</div>
                         {se.notes}
                       </div>
                     )}
+
 
                     {last && (
                       <div className="rounded-md bg-muted/50 p-3 text-xs">
