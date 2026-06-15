@@ -36,6 +36,13 @@ function TrainingDetail() {
   const [weight, setWeight] = useState("");
   const [rest, setRest] = useState("");
   const [coachNotes, setCoachNotes] = useState("");
+  // optional separate targets for the alternative
+  const [altSets, setAltSets] = useState<string>("");
+  const [altRepsMin, setAltRepsMin] = useState<string>("");
+  const [altRepsMax, setAltRepsMax] = useState<string>("");
+  const [altWeight, setAltWeight] = useState<string>("");
+  const [altRest, setAltRest] = useState<string>("");
+  const [altCoachNotes, setAltCoachNotes] = useState<string>("");
 
   const load = async () => {
     const [{ data: t }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
