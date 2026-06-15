@@ -217,6 +217,31 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     await load();
   };
 
+  // Pick which of the two options ("X or Y") the client is actually doing.
+  // Choosing "alternative" swaps the two IDs so exercise_id always = the performed exercise.
+  // Logged sets stay attached to this session_exercise, so reps/weight are specific to the chosen one.
+  const chooseExercise = async (seId: string, useAlternative: boolean) => {
+    const se = sessionExercises.find((r) => r.id === seId);
+    if (!se) return;
+    const hasAnyLog = (setLogsByEx[seId] ?? []).some((s) => s.completed || s.reps != null || s.weight != null || s.rpe != null);
+    if (hasAnyLog) {
+      toast.error("You've already logged sets — clear them before switching exercise.");
+      return;
+    }
+    if (useAlternative && se.alternative_exercise_id) {
+      const { error } = await supabase
+        .from("session_exercises")
+        .update({ exercise_id: se.alternative_exercise_id, alternative_exercise_id: se.exercise_id })
+        .eq("id", seId);
+      if (error) return toast.error(error.message);
+    }
+    setPickedByEx((p) => ({ ...p, [seId]: true }));
+    if (useAlternative) await load();
+    else setPickedByEx((p) => ({ ...p, [seId]: true }));
+  };
+
+
+
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
 
   const doFinish = async () => {
