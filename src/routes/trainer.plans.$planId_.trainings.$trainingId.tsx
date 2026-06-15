@@ -225,6 +225,12 @@ function TrainingDetail() {
             <ul className="divide-y">
               {items.map((it, i) => {
                 const altName = it.alternative_exercise_id ? exercises.find((e) => e.id === it.alternative_exercise_id)?.name : null;
+                const hasAltTargets = altName && (it.alt_target_sets != null || it.alt_target_reps_min != null || it.alt_target_reps_max != null || it.alt_target_weight != null || it.alt_rest_seconds != null || it.alt_coach_notes);
+                const altSetsV = it.alt_target_sets ?? it.target_sets;
+                const altMinV = it.alt_target_reps_min ?? it.target_reps_min;
+                const altMaxV = it.alt_target_reps_max ?? it.target_reps_max;
+                const altWV = it.alt_target_weight ?? it.target_weight;
+                const altRestV = it.alt_rest_seconds ?? it.rest_seconds;
                 return (
                 <li key={it.id} className="py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -235,11 +241,22 @@ function TrainingDetail() {
                         {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
                       </div>
                       <div className="text-xs text-muted-foreground">
+                        {altName && <span className="font-medium text-foreground/70">{it.exercises?.name}: </span>}
                         {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
                         {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
                         {it.rest_seconds ? ` · rest ${it.rest_seconds}s` : ""}
                         {it.coach_notes ? ` · ${it.coach_notes}` : ""}
                       </div>
+                      {altName && (
+                        <div className="text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground/70">{altName}: </span>
+                          {altSetsV} × {altMinV === altMaxV ? altMinV : `${altMinV}–${altMaxV}`}
+                          {altWV ? ` @ ${altWV}kg` : ""}
+                          {altRestV ? ` · rest ${altRestV}s` : ""}
+                          {it.alt_coach_notes ? ` · ${it.alt_coach_notes}` : ""}
+                          {!hasAltTargets && <span className="italic"> (same as primary)</span>}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <Button size="icon" variant="ghost" onClick={() => remove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
