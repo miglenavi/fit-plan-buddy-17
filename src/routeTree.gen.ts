@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.ses
 import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
 import { Route as TrainerClientsClientIdSessionsSessionIdRouteImport } from './routes/trainer.clients.$clientId_.sessions.$sessionId'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PendingRoute = PendingRouteImport.update({
   id: '/pending',
   path: '/pending',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/pending': typeof PendingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/pending': typeof PendingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/pending': typeof PendingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/pending'
+    | '/sitemap.xml'
     | '/admin/applications'
     | '/admin/categories'
     | '/admin/trainers'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/pending'
+    | '/sitemap.xml'
     | '/admin/applications'
     | '/admin/categories'
     | '/admin/trainers'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/pending'
+    | '/sitemap.xml'
     | '/admin/applications'
     | '/admin/categories'
     | '/admin/trainers'
@@ -292,6 +304,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   PendingRoute: typeof PendingRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
@@ -307,6 +320,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pending': {
       id: '/pending'
       path: '/pending'
@@ -515,6 +535,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   PendingRoute: PendingRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminTrainersRoute: AdminTrainersRoute,

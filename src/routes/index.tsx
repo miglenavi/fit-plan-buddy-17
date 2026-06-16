@@ -43,9 +43,31 @@ export const Route = createFileRoute("/")({
         content:
           "Manage clients, build progressive workout plans, and track performance from one platform.",
       },
-      { property: "og:url", content: "https://fit-plan-buddy-17.lovable.app/" },
+      { property: "og:url", content: "https://valhallafit.app/" },
     ],
-    links: [{ rel: "canonical", href: "https://fit-plan-buddy-17.lovable.app/" }],
+    links: [{ rel: "canonical", href: "https://valhallafit.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "ValhallaFit",
+          url: "https://valhallafit.app/",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "ValhallaFit",
+          url: "https://valhallafit.app/",
+          description:
+            "Coaching platform for personal trainers to manage clients, build progressive workout plans, and track performance.",
+        }),
+      },
+    ],
   }),
   component: Index,
 });
