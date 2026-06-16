@@ -91,7 +91,7 @@ function AuthPage() {
             <Swords className="size-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">ValhallaFit</h1>
+            <h1 className="text-2xl font-bold">ValhallaFit — Log in</h1>
             <p className="text-sm text-muted-foreground">Train like a Viking.</p>
           </div>
         </div>
