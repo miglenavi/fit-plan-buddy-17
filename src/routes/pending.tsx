@@ -68,7 +68,7 @@ function PendingPage() {
           <div className="size-12 rounded-2xl bg-primary flex items-center justify-center">
             <Swords className="size-6 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold">ValhallaFit</h1>
+          <h1 className="text-2xl font-bold">ValhallaFit — Application status</h1>
         </div>
 
         <Card>

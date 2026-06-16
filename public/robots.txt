@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /pending
+Disallow: /admin
+Disallow: /trainer
+Disallow: /client
+
+Sitemap: https://valhallafit.app/sitemap.xml
