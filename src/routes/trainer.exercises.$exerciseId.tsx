@@ -17,6 +17,13 @@ export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
 
 type Category = { id: string; name: string };
 
+const MUSCLE_GROUPS = [
+  "chest", "back", "shoulders", "biceps", "triceps",
+  "quads", "hamstrings", "glutes", "calves", "core", "full_body",
+] as const;
+type MuscleGroup = typeof MUSCLE_GROUPS[number];
+const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 function ExerciseDetail() {
   const { exerciseId } = useParams({ from: "/trainer/exercises/$exerciseId" });
   const navigate = useNavigate();
