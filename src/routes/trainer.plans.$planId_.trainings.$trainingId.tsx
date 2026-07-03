@@ -272,3 +272,65 @@ function TrainingDetail() {
     </div>
   );
 }
+
+function SortableExerciseRow({
+  it,
+  i,
+  exercises,
+  onRemove,
+}: {
+  it: any;
+  i: number;
+  exercises: any[];
+  onRemove: (id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: it.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  const altName = it.alternative_exercise_id ? exercises.find((e) => e.id === it.alternative_exercise_id)?.name : null;
+  const hasAltTargets = altName && (it.alt_target_sets != null || it.alt_target_reps_min != null || it.alt_target_reps_max != null || it.alt_target_weight != null || it.alt_rest_seconds != null || it.alt_coach_notes);
+  const altSetsV = it.alt_target_sets ?? it.target_sets;
+  const altMinV = it.alt_target_reps_min ?? it.target_reps_min;
+  const altMaxV = it.alt_target_reps_max ?? it.target_reps_max;
+  const altWV = it.alt_target_weight ?? it.target_weight;
+  const altRestV = it.alt_rest_seconds ?? it.rest_seconds;
+  return (
+    <li ref={setNodeRef} style={style} className="py-3 flex items-center justify-between gap-3 bg-background">
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          aria-label="Drag to reorder"
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-1 -ml-1"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+        <div className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</div>
+        <div className="min-w-0">
+          <div className="font-medium truncate">
+            {it.exercises?.name}
+            {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {altName && <span className="font-medium text-foreground/70">{it.exercises?.name}: </span>}
+            {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
+            {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
+            {it.rest_seconds ? ` · rest ${it.rest_seconds}s` : ""}
+            {it.coach_notes ? ` · ${it.coach_notes}` : ""}
+          </div>
+          {altName && (
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/70">{altName}: </span>
+              {altSetsV} × {altMinV === altMaxV ? altMinV : `${altMinV}–${altMaxV}`}
+              {altWV ? ` @ ${altWV}kg` : ""}
+              {altRestV ? ` · rest ${altRestV}s` : ""}
+              {it.alt_coach_notes ? ` · ${it.alt_coach_notes}` : ""}
+              {!hasAltTargets && <span className="italic"> (same as primary)</span>}
+            </div>
+          )}
+        </div>
+      </div>
+      <Button size="icon" variant="ghost" onClick={() => onRemove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
+    </li>
+  );
+}
