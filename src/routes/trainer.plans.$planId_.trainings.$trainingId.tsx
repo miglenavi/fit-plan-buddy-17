@@ -295,11 +295,13 @@ function SortableExerciseRow({
   i,
   exercises,
   onRemove,
+  onEdit,
 }: {
   it: any;
   i: number;
   exercises: any[];
   onRemove: (id: string) => void;
+  onEdit: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: it.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
