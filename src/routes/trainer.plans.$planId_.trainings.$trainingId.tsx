@@ -125,6 +125,32 @@ function TrainingDetail() {
     load();
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((it) => it.id === active.id);
+    const newIndex = items.findIndex((it) => it.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(items, oldIndex, newIndex);
+    setItems(reordered); // optimistic
+    const updates = reordered.map((it, idx) =>
+      supabase.from("training_exercises").update({ order_index: idx }).eq("id", it.id)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      toast.error("Couldn't save order");
+      load();
+    }
+  };
+
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
