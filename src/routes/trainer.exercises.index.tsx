@@ -32,6 +32,8 @@ function ExercisesList() {
   const [desc, setDesc] = useState("");
   const [primary, setPrimary] = useState<string>("none");
   const [filter, setFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+
 
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
