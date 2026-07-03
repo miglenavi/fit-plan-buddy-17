@@ -192,16 +192,6 @@ function ExerciseDetail() {
           <div className="space-y-4">
             <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Uncategorized</SelectItem>
-                  {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Primary muscle group</Label>
               <Select value={primary} onValueChange={setPrimary}>
                 <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
