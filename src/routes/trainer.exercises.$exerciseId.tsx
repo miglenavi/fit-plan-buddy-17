@@ -197,6 +197,36 @@ function ExerciseDetail() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Primary muscle group</Label>
+              <Select value={primary} onValueChange={setPrimary}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {MUSCLE_GROUPS.map((m) => <SelectItem key={m} value={m}>{prettyMuscle(m)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Secondary muscle groups <span className="text-xs text-muted-foreground font-normal">(up to 3)</span></Label>
+              <div className="flex flex-wrap gap-2">
+                {MUSCLE_GROUPS.filter((m) => m !== primary).map((m) => {
+                  const active = secondary.includes(m);
+                  const disabled = !active && secondary.length >= 3;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => toggleSecondary(m)}
+                      disabled={disabled}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                    >
+                      {prettyMuscle(m)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
           </div>
         </CardContent>
