@@ -48,11 +48,10 @@ function TrainingDetail() {
   const [altCoachNotes, setAltCoachNotes] = useState<string>("");
 
   const load = async () => {
-    const [{ data: t }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
+    const [{ data: t }, { data: it }, { data: ex }] = await Promise.all([
       supabase.from("trainings").select("*").eq("id", trainingId).maybeSingle(),
-      supabase.from("training_exercises").select("*, exercises!exercise_id(name, category_id, muscle_groups)").eq("training_id", trainingId).order("order_index"),
-      supabase.from("exercises").select("id, name, category_id").order("name"),
-      supabase.from("exercise_categories" as any).select("id, name").order("name"),
+      supabase.from("training_exercises").select("*, exercises!exercise_id(name, primary_muscle_group, secondary_muscle_groups)").eq("training_id", trainingId).order("order_index"),
+      supabase.from("exercises").select("id, name, primary_muscle_group").order("name"),
     ]);
     setTraining(t);
     if (t) {
@@ -63,7 +62,6 @@ function TrainingDetail() {
     }
     setItems(it ?? []);
     setExercises(ex ?? []);
-    setCats(((c as any) ?? []) as { id: string; name: string }[]);
   };
   useEffect(() => { load(); }, [trainingId]);
 
