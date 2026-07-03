@@ -21,7 +21,6 @@ import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
 import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
-import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as TrainerPlansIndexRouteImport } from './routes/trainer.plans.index'
 import { Route as TrainerExercisesIndexRouteImport } from './routes/trainer.exercises.index'
@@ -93,11 +92,6 @@ const AdminTrainersRoute = AdminTrainersRouteImport.update({
   path: '/admin/trainers',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
-  id: '/admin/categories',
-  path: '/admin/categories',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
   id: '/admin/applications',
   path: '/admin/applications',
@@ -158,7 +152,6 @@ export interface FileRoutesByFullPath {
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/applications': typeof AdminApplicationsRoute
-  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
@@ -183,7 +176,6 @@ export interface FileRoutesByTo {
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/applications': typeof AdminApplicationsRoute
-  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
@@ -206,7 +198,6 @@ export interface FileRoutesById {
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/applications': typeof AdminApplicationsRoute
-  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
@@ -233,7 +224,6 @@ export interface FileRouteTypes {
     | '/pending'
     | '/sitemap.xml'
     | '/admin/applications'
-    | '/admin/categories'
     | '/admin/trainers'
     | '/client/history'
     | '/client/profile'
@@ -258,7 +248,6 @@ export interface FileRouteTypes {
     | '/pending'
     | '/sitemap.xml'
     | '/admin/applications'
-    | '/admin/categories'
     | '/admin/trainers'
     | '/client/history'
     | '/client/profile'
@@ -280,7 +269,6 @@ export interface FileRouteTypes {
     | '/pending'
     | '/sitemap.xml'
     | '/admin/applications'
-    | '/admin/categories'
     | '/admin/trainers'
     | '/client/history'
     | '/client/profile'
@@ -306,7 +294,6 @@ export interface RootRouteChildren {
   PendingRoute: typeof PendingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
-  AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
   ClientProfileRoute: typeof ClientProfileRoute
@@ -402,13 +389,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/trainers'
       fullPath: '/admin/trainers'
       preLoaderRoute: typeof AdminTrainersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/categories': {
-      id: '/admin/categories'
-      path: '/admin/categories'
-      fullPath: '/admin/categories'
-      preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/applications': {
@@ -537,7 +517,6 @@ const rootRouteChildren: RootRouteChildren = {
   PendingRoute: PendingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
-  AdminCategoriesRoute: AdminCategoriesRoute,
   AdminTrainersRoute: AdminTrainersRoute,
   ClientHistoryRoute: ClientHistoryRoute,
   ClientProfileRoute: ClientProfileRoute,
