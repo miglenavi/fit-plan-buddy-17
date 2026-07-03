@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Video, ImageIcon, Search, X } from "lucide-react";
+import { Plus, Trash2, Video, ImageIcon, Search, X, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/exercises/")({
@@ -31,8 +31,14 @@ function ExercisesList() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [primary, setPrimary] = useState<string>("none");
+  const [secondary, setSecondary] = useState<MuscleGroup[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+
 
 
   const load = async () => {
@@ -51,13 +57,56 @@ function ExercisesList() {
       name,
       description: desc || null,
       primary_muscle_group: primary === "none" ? null : primary,
+      secondary_muscle_groups: secondary,
+      video_url: videoUrl || null,
+      image_url: imageUrl || null,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Exercise added");
-      setName(""); setDesc(""); setPrimary("none"); setOpen(false); load();
+      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
     }
   };
+
+  const toggleSecondary = (m: MuscleGroup) => {
+    setSecondary((prev) => {
+      if (prev.includes(m)) return prev.filter((x) => x !== m);
+      if (prev.length >= 3) { toast.error("Max 3 secondary muscle groups"); return prev; }
+      return [...prev, m];
+    });
+  };
+
+  const uploadFile = async (file: File, kind: "image" | "video") => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { toast.error("Not signed in"); return null; }
+    const ext = file.name.split(".").pop();
+    const path = `${u.user.id}/new-${kind}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("exercise-media").upload(path, file, { upsert: true });
+    if (error) { toast.error(error.message); return null; }
+    const { data: pub } = supabase.storage.from("exercise-media").getPublicUrl(path);
+    return pub.publicUrl;
+  };
+
+  const onImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingImage(true);
+    const url = await uploadFile(file, "image");
+    if (url) { setImageUrl(url); toast.success("Image uploaded"); }
+    setUploadingImage(false);
+    e.target.value = "";
+  };
+
+  const onVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingVideo(true);
+    const url = await uploadFile(file, "video");
+    if (url) { setVideoUrl(url); toast.success("Video uploaded"); }
+    setUploadingVideo(false);
+    e.target.value = "";
+  };
+
+  const clearImage = () => setImageUrl("");
+
 
   const remove = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -109,7 +158,7 @@ function ExercisesList() {
           <DialogContent>
 
             <DialogHeader><DialogTitle>Create exercise</DialogTitle></DialogHeader>
-            <form onSubmit={create} className="space-y-4">
+            <form onSubmit={create} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
               <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div className="space-y-2">
                 <Label>Primary muscle group</Label>
@@ -121,9 +170,66 @@ function ExercisesList() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Secondary muscle groups <span className="text-xs text-muted-foreground font-normal">(up to 3)</span></Label>
+                <div className="flex flex-wrap gap-2">
+                  {MUSCLE_GROUPS.filter((m) => m !== primary).map((m) => {
+                    const active = secondary.includes(m);
+                    const disabled = !active && secondary.length >= 3;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => toggleSecondary(m)}
+                        disabled={disabled}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                      >
+                        {prettyMuscle(m)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="space-y-2"><Label>Description</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>Video URL (YouTube or direct link)</Label>
+                <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://youtu.be/..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Video file</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="cursor-pointer">
+                    <div className="inline-flex items-center justify-center gap-2 rounded-md border border-dashed px-4 py-2 text-sm hover:bg-muted">
+                      {uploadingVideo ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                      Upload video
+                    </div>
+                    <input type="file" accept="video/*" className="hidden" onChange={onVideo} disabled={uploadingVideo} />
+                  </Label>
+                  {videoUrl && <span className="text-xs text-muted-foreground truncate max-w-[200px]">{videoUrl.split("/").pop()}</span>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Image</Label>
+                {imageUrl ? (
+                  <div className="relative w-fit">
+                    <img src={imageUrl} alt="Preview" className="h-32 rounded-md border object-cover" />
+                    <Button type="button" size="icon" variant="secondary" className="absolute -top-2 -right-2 size-7" onClick={clearImage}>
+                      <X className="size-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Label className="cursor-pointer">
+                    <div className="inline-flex items-center justify-center gap-2 rounded-md border border-dashed px-4 py-2 text-sm hover:bg-muted">
+                      {uploadingImage ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                      Upload image
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={onImage} disabled={uploadingImage} />
+                  </Label>
+                )}
+              </div>
               <Button type="submit" className="w-full">Save</Button>
             </form>
+
           </DialogContent>
         </Dialog>
       </div>
