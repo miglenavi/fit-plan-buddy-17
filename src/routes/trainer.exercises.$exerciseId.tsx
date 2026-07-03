@@ -15,7 +15,7 @@ export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
   component: ExerciseDetail,
 });
 
-type Category = { id: string; name: string };
+
 
 const MUSCLE_GROUPS = [
   "chest", "back", "shoulders", "biceps", "triceps",
