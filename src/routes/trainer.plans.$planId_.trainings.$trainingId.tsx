@@ -171,17 +171,17 @@ function TrainingDetail() {
         <CardContent>
           <form onSubmit={add} className="grid sm:grid-cols-6 gap-3 items-end">
             {(() => {
-              const byCat = new Map<string, any[]>();
+              const byGroup = new Map<string, any[]>();
               for (const e of exercises) {
-                const key = (e as any).category_id ?? "__none__";
-                if (!byCat.has(key)) byCat.set(key, []);
-                byCat.get(key)!.push(e);
+                const key = (e as any).primary_muscle_group ?? "__none__";
+                if (!byGroup.has(key)) byGroup.set(key, []);
+                byGroup.get(key)!.push(e);
               }
-              const groups = Array.from(byCat.entries()).map(([id, items]) => ({
+              const groups = Array.from(byGroup.entries()).map(([id, items]) => ({
                 id,
-                name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
+                name: id === "__none__" ? "Unassigned" : prettyMuscle(id),
                 items,
-              })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
+              })).sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
               const renderGroups = (excludeId?: string) => groups.map((g) => {
                 const filtered = excludeId ? g.items.filter((e) => e.id !== excludeId) : g.items;
                 if (filtered.length === 0) return null;
