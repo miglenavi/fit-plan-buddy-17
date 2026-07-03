@@ -158,7 +158,7 @@ function ExercisesList() {
           <DialogContent>
 
             <DialogHeader><DialogTitle>Create exercise</DialogTitle></DialogHeader>
-            <form onSubmit={create} className="space-y-4">
+            <form onSubmit={create} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
               <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div className="space-y-2">
                 <Label>Primary muscle group</Label>
@@ -170,9 +170,66 @@ function ExercisesList() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Secondary muscle groups <span className="text-xs text-muted-foreground font-normal">(up to 3)</span></Label>
+                <div className="flex flex-wrap gap-2">
+                  {MUSCLE_GROUPS.filter((m) => m !== primary).map((m) => {
+                    const active = secondary.includes(m);
+                    const disabled = !active && secondary.length >= 3;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => toggleSecondary(m)}
+                        disabled={disabled}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                      >
+                        {prettyMuscle(m)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="space-y-2"><Label>Description</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>Video URL (YouTube or direct link)</Label>
+                <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://youtu.be/..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Video file</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="cursor-pointer">
+                    <div className="inline-flex items-center justify-center gap-2 rounded-md border border-dashed px-4 py-2 text-sm hover:bg-muted">
+                      {uploadingVideo ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                      Upload video
+                    </div>
+                    <input type="file" accept="video/*" className="hidden" onChange={onVideo} disabled={uploadingVideo} />
+                  </Label>
+                  {videoUrl && <span className="text-xs text-muted-foreground truncate max-w-[200px]">{videoUrl.split("/").pop()}</span>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Image</Label>
+                {imageUrl ? (
+                  <div className="relative w-fit">
+                    <img src={imageUrl} alt="Preview" className="h-32 rounded-md border object-cover" />
+                    <Button type="button" size="icon" variant="secondary" className="absolute -top-2 -right-2 size-7" onClick={clearImage}>
+                      <X className="size-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Label className="cursor-pointer">
+                    <div className="inline-flex items-center justify-center gap-2 rounded-md border border-dashed px-4 py-2 text-sm hover:bg-muted">
+                      {uploadingImage ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                      Upload image
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={onImage} disabled={uploadingImage} />
+                  </Label>
+                )}
+              </div>
               <Button type="submit" className="w-full">Save</Button>
             </form>
+
           </DialogContent>
         </Dialog>
       </div>
