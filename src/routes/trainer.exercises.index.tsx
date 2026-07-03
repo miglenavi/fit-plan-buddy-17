@@ -31,8 +31,14 @@ function ExercisesList() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [primary, setPrimary] = useState<string>("none");
+  const [secondary, setSecondary] = useState<MuscleGroup[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+
 
 
   const load = async () => {
