@@ -124,6 +124,15 @@ function TrainingDetail() {
     load();
   };
 
+  const [editing, setEditing] = useState<any>(null);
+  const saveEdit = async (patch: any) => {
+    const { error } = await supabase.from("training_exercises").update(patch).eq("id", editing.id);
+    if (error) { toast.error(error.message); return; }
+    setEditing(null);
+    toast.success("Updated");
+    load();
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
