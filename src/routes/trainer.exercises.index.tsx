@@ -17,28 +17,27 @@ export const Route = createFileRoute("/trainer/exercises/")({
   component: ExercisesList,
 });
 
-type Category = { id: string; name: string };
+const MUSCLE_GROUPS = [
+  "chest", "back", "shoulders", "biceps", "triceps",
+  "quads", "hamstrings", "glutes", "calves", "core", "full_body",
+] as const;
+type MuscleGroup = typeof MUSCLE_GROUPS[number];
+const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function ExercisesList() {
   const [list, setList] = useState<any[]>([]);
-  const [cats, setCats] = useState<Category[]>([]);
   const [uid, setUid] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  
   const [desc, setDesc] = useState("");
-  const [categoryId, setCategoryId] = useState<string>("none");
+  const [primary, setPrimary] = useState<string>("none");
   const [filter, setFilter] = useState<string>("all");
 
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
     setUid(u.user?.id ?? null);
-    const [{ data: ex }, { data: c }] = await Promise.all([
-      supabase.from("exercises").select("*").order("name"),
-      supabase.from("exercise_categories" as any).select("id, name").order("name"),
-    ]);
+    const { data: ex } = await supabase.from("exercises").select("*").order("name");
     setList(ex ?? []);
-    setCats(((c as any) ?? []) as Category[]);
   };
   useEffect(() => { load(); }, []);
 
@@ -49,12 +48,12 @@ function ExercisesList() {
       trainer_id: u.user!.id,
       name,
       description: desc || null,
-      category_id: categoryId === "none" ? null : categoryId,
+      primary_muscle_group: primary === "none" ? null : primary,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Exercise added");
-      setName(""); setDesc(""); setCategoryId("none"); setOpen(false); load();
+      setName(""); setDesc(""); setPrimary("none"); setOpen(false); load();
     }
   };
 
@@ -66,27 +65,29 @@ function ExercisesList() {
     if (error) toast.error(error.message); else { toast.success("Deleted"); load(); }
   };
 
-  // Group by category
+  // Group by primary muscle group
   const grouped = useMemo(() => {
-    const filtered = filter === "all" ? list : filter === "uncat" ? list.filter((e) => !e.category_id) : list.filter((e) => e.category_id === filter);
-    const byCat = new Map<string, any[]>();
+    const filtered =
+      filter === "all" ? list :
+      filter === "unset" ? list.filter((e) => !e.primary_muscle_group) :
+      list.filter((e) => e.primary_muscle_group === filter);
+    const byGroup = new Map<string, any[]>();
     for (const ex of filtered) {
-      const key = ex.category_id ?? "__none__";
-      if (!byCat.has(key)) byCat.set(key, []);
-      byCat.get(key)!.push(ex);
+      const key = (ex.primary_muscle_group as string) ?? "__none__";
+      if (!byGroup.has(key)) byGroup.set(key, []);
+      byGroup.get(key)!.push(ex);
     }
-    const catName = (id: string) => cats.find((c) => c.id === id)?.name ?? "Uncategorized";
-    return Array.from(byCat.entries())
-      .map(([id, items]) => ({ id, name: id === "__none__" ? "Uncategorized" : catName(id), items }))
-      .sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
-  }, [list, cats, filter]);
+    return Array.from(byGroup.entries())
+      .map(([id, items]) => ({ id, name: id === "__none__" ? "Unassigned" : prettyMuscle(id), items }))
+      .sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
+  }, [list, filter]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Exercises</h1>
-          <p className="text-muted-foreground mt-1">Your exercise library, organized by category</p>
+          <p className="text-muted-foreground mt-1">Your exercise library, organized by primary muscle group</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="size-4 mr-1" /> New exercise</Button></DialogTrigger>
@@ -95,16 +96,15 @@ function ExercisesList() {
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div className="space-y-2">
-                <Label>Category</Label>
-                <Select value={categoryId} onValueChange={setCategoryId}>
-                  <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                <Label>Primary muscle group</Label>
+                <Select value={primary} onValueChange={setPrimary}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Uncategorized</SelectItem>
-                    {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    <SelectItem value="none">None</SelectItem>
+                    {MUSCLE_GROUPS.map((m) => <SelectItem key={m} value={m}>{prettyMuscle(m)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              
               <div className="space-y-2"><Label>Description</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
               <Button type="submit" className="w-full">Save</Button>
             </form>
@@ -112,7 +112,7 @@ function ExercisesList() {
         </Dialog>
       </div>
 
-      {/* Category filter chips */}
+      {/* Muscle-group filter chips */}
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setFilter("all")}
@@ -120,20 +120,20 @@ function ExercisesList() {
         >
           All
         </button>
-        {cats.map((c) => (
+        {MUSCLE_GROUPS.map((m) => (
           <button
-            key={c.id}
-            onClick={() => setFilter(c.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${filter === c.id ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+            key={m}
+            onClick={() => setFilter(m)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${filter === m ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
           >
-            {c.name}
+            {prettyMuscle(m)}
           </button>
         ))}
         <button
-          onClick={() => setFilter("uncat")}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${filter === "uncat" ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+          onClick={() => setFilter("unset")}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${filter === "unset" ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
         >
-          Uncategorized
+          Unassigned
         </button>
       </div>
 
@@ -157,18 +157,17 @@ function ExercisesList() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold truncate">{ex.name}</div>
-                        {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <div className="text-xs text-muted-foreground mt-0.5">{cn}</div> : null; })()}
                         {!ex.trainer_id && <Badge variant="secondary" className="mt-1 text-[10px]">Built-in</Badge>}
                         {(ex.primary_muscle_group || (ex.secondary_muscle_groups?.length ?? 0) > 0) && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {ex.primary_muscle_group && (
                               <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/15 text-primary border border-primary/30">
-                                {ex.primary_muscle_group.replace("_", " ")}
+                                {prettyMuscle(ex.primary_muscle_group)}
                               </span>
                             )}
                             {(ex.secondary_muscle_groups ?? []).map((m: string) => (
                               <span key={m} className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border">
-                                {m.replace("_", " ")}
+                                {prettyMuscle(m)}
                               </span>
                             ))}
                           </div>

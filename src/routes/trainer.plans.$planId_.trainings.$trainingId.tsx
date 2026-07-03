@@ -25,7 +25,7 @@ function TrainingDetail() {
   const [desc, setDesc] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
-  const [cats, setCats] = useState<{ id: string; name: string }[]>([]);
+  const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const loaded = useRef(false);
   const lastSaved = useRef("");
@@ -48,11 +48,10 @@ function TrainingDetail() {
   const [altCoachNotes, setAltCoachNotes] = useState<string>("");
 
   const load = async () => {
-    const [{ data: t }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
+    const [{ data: t }, { data: it }, { data: ex }] = await Promise.all([
       supabase.from("trainings").select("*").eq("id", trainingId).maybeSingle(),
-      supabase.from("training_exercises").select("*, exercises!exercise_id(name, category_id, muscle_groups)").eq("training_id", trainingId).order("order_index"),
-      supabase.from("exercises").select("id, name, category_id").order("name"),
-      supabase.from("exercise_categories" as any).select("id, name").order("name"),
+      supabase.from("training_exercises").select("*, exercises!exercise_id(name, primary_muscle_group, secondary_muscle_groups)").eq("training_id", trainingId).order("order_index"),
+      supabase.from("exercises").select("id, name, primary_muscle_group").order("name"),
     ]);
     setTraining(t);
     if (t) {
@@ -63,7 +62,6 @@ function TrainingDetail() {
     }
     setItems(it ?? []);
     setExercises(ex ?? []);
-    setCats(((c as any) ?? []) as { id: string; name: string }[]);
   };
   useEffect(() => { load(); }, [trainingId]);
 
@@ -173,17 +171,17 @@ function TrainingDetail() {
         <CardContent>
           <form onSubmit={add} className="grid sm:grid-cols-6 gap-3 items-end">
             {(() => {
-              const byCat = new Map<string, any[]>();
+              const byGroup = new Map<string, any[]>();
               for (const e of exercises) {
-                const key = (e as any).category_id ?? "__none__";
-                if (!byCat.has(key)) byCat.set(key, []);
-                byCat.get(key)!.push(e);
+                const key = (e as any).primary_muscle_group ?? "__none__";
+                if (!byGroup.has(key)) byGroup.set(key, []);
+                byGroup.get(key)!.push(e);
               }
-              const groups = Array.from(byCat.entries()).map(([id, items]) => ({
+              const groups = Array.from(byGroup.entries()).map(([id, items]) => ({
                 id,
-                name: id === "__none__" ? "Uncategorized" : (cats.find((c) => c.id === id)?.name ?? "Uncategorized"),
+                name: id === "__none__" ? "Unassigned" : prettyMuscle(id),
                 items,
-              })).sort((a, b) => (a.name === "Uncategorized" ? 1 : b.name === "Uncategorized" ? -1 : a.name.localeCompare(b.name)));
+              })).sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
               const renderGroups = (excludeId?: string) => groups.map((g) => {
                 const filtered = excludeId ? g.items.filter((e) => e.id !== excludeId) : g.items;
                 if (filtered.length === 0) return null;
