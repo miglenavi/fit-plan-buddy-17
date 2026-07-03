@@ -40,6 +40,11 @@ function ExerciseDetail() {
   const hasLoaded = useRef(false);
   const lastSaved = useRef<string>("");
 
+  const [primary, setPrimary] = useState<string>("none");
+  const [secondary, setSecondary] = useState<MuscleGroup[]>([]);
+  const hasLoaded = useRef(false);
+  const lastSaved = useRef<string>("");
+
   const load = async () => {
     const [{ data, error }, { data: c }] = await Promise.all([
       supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle(),
@@ -47,17 +52,22 @@ function ExerciseDetail() {
     ]);
     if (error) { toast.error(error.message); return; }
     if (!data) return;
+    const d = data as any;
     setEx(data);
     setName(data.name);
     setDesc(data.description ?? "");
     setVideoUrl(data.video_url ?? "");
-    setCategoryId((data as any).category_id ?? "none");
+    setCategoryId(d.category_id ?? "none");
+    setPrimary(d.primary_muscle_group ?? "none");
+    setSecondary(((d.secondary_muscle_groups ?? []) as MuscleGroup[]));
     setCats(((c as any) ?? []) as Category[]);
     lastSaved.current = JSON.stringify({
       name: data.name,
       description: data.description ?? "",
       video_url: data.video_url ?? "",
-      category_id: (data as any).category_id ?? "none",
+      category_id: d.category_id ?? "none",
+      primary_muscle_group: d.primary_muscle_group ?? "none",
+      secondary_muscle_groups: (d.secondary_muscle_groups ?? []),
     });
     hasLoaded.current = true;
   };
@@ -67,23 +77,33 @@ function ExerciseDetail() {
     const { error } = await supabase.from("exercises").update({
       name, description: desc || null, video_url: videoUrl || null,
       category_id: categoryId === "none" ? null : categoryId,
+      primary_muscle_group: primary === "none" ? null : primary,
+      secondary_muscle_groups: secondary,
     } as any).eq("id", exerciseId);
     if (error) { setStatus("error"); return; }
-    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId, primary_muscle_group: primary, secondary_muscle_groups: secondary });
     setStatus("saved");
     setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
   };
 
   useEffect(() => {
     if (!hasLoaded.current) return;
-    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId, primary_muscle_group: primary, secondary_muscle_groups: secondary });
     if (current === lastSaved.current) return;
     if (!name.trim()) { setStatus("error"); return; }
     setStatus("saving");
     const t = setTimeout(() => { doSave(); }, 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, desc, videoUrl, categoryId]);
+  }, [name, desc, videoUrl, categoryId, primary, secondary]);
+
+  const toggleSecondary = (m: MuscleGroup) => {
+    setSecondary((prev) => {
+      if (prev.includes(m)) return prev.filter((x) => x !== m);
+      if (prev.length >= 3) { toast.error("Max 3 secondary muscle groups"); return prev; }
+      return [...prev, m];
+    });
+  };
 
   const uploadFile = async (file: File, kind: "image" | "video") => {
     const { data: u } = await supabase.auth.getUser();
