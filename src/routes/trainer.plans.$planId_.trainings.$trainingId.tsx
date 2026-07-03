@@ -25,7 +25,7 @@ function TrainingDetail() {
   const [desc, setDesc] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
-  const [cats, setCats] = useState<{ id: string; name: string }[]>([]);
+  const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const loaded = useRef(false);
   const lastSaved = useRef("");
