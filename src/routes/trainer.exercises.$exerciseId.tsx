@@ -167,6 +167,20 @@ function ExerciseDetail() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{ex.name}</h1>
           {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <p className="text-muted-foreground mt-1">{cn}</p> : null; })()}
+          {(primary !== "none" || secondary.length > 0) && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {primary !== "none" && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/15 text-primary border border-primary/30">
+                  {prettyMuscle(primary)}
+                </span>
+              )}
+              {secondary.map((m) => (
+                <span key={m} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border">
+                  {prettyMuscle(m)}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="text-xs text-muted-foreground min-w-[90px] text-right">
