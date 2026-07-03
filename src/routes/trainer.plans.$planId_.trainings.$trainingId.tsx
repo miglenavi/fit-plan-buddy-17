@@ -7,8 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Loader2, Check } from "lucide-react";
+import { Trash2, Plus, Loader2, Check, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export const Route = createFileRoute("/trainer/plans/$planId_/trainings/$trainingId")({
   ssr: false,
@@ -122,6 +125,32 @@ function TrainingDetail() {
     load();
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((it) => it.id === active.id);
+    const newIndex = items.findIndex((it) => it.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(items, oldIndex, newIndex);
+    setItems(reordered); // optimistic
+    const updates = reordered.map((it, idx) =>
+      supabase.from("training_exercises").update({ order_index: idx }).eq("id", it.id)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      toast.error("Couldn't save order");
+      load();
+    }
+  };
+
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
@@ -222,51 +251,86 @@ function TrainingDetail() {
           {items.length === 0 ? (
             <p className="text-muted-foreground text-sm">No exercises yet.</p>
           ) : (
-            <ul className="divide-y">
-              {items.map((it, i) => {
-                const altName = it.alternative_exercise_id ? exercises.find((e) => e.id === it.alternative_exercise_id)?.name : null;
-                const hasAltTargets = altName && (it.alt_target_sets != null || it.alt_target_reps_min != null || it.alt_target_reps_max != null || it.alt_target_weight != null || it.alt_rest_seconds != null || it.alt_coach_notes);
-                const altSetsV = it.alt_target_sets ?? it.target_sets;
-                const altMinV = it.alt_target_reps_min ?? it.target_reps_min;
-                const altMaxV = it.alt_target_reps_max ?? it.target_reps_max;
-                const altWV = it.alt_target_weight ?? it.target_weight;
-                const altRestV = it.alt_rest_seconds ?? it.rest_seconds;
-                return (
-                <li key={it.id} className="py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</div>
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">
-                        {it.exercises?.name}
-                        {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {altName && <span className="font-medium text-foreground/70">{it.exercises?.name}: </span>}
-                        {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
-                        {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
-                        {it.rest_seconds ? ` · rest ${it.rest_seconds}s` : ""}
-                        {it.coach_notes ? ` · ${it.coach_notes}` : ""}
-                      </div>
-                      {altName && (
-                        <div className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground/70">{altName}: </span>
-                          {altSetsV} × {altMinV === altMaxV ? altMinV : `${altMinV}–${altMaxV}`}
-                          {altWV ? ` @ ${altWV}kg` : ""}
-                          {altRestV ? ` · rest ${altRestV}s` : ""}
-                          {it.alt_coach_notes ? ` · ${it.alt_coach_notes}` : ""}
-                          {!hasAltTargets && <span className="italic"> (same as primary)</span>}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <Button size="icon" variant="ghost" onClick={() => remove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
-                </li>
-                );
-              })}
-            </ul>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext items={items.map((it) => it.id)} strategy={verticalListSortingStrategy}>
+                <ul className="divide-y">
+                  {items.map((it, i) => (
+                    <SortableExerciseRow
+                      key={it.id}
+                      it={it}
+                      i={i}
+                      exercises={exercises}
+                      onRemove={remove}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function SortableExerciseRow({
+  it,
+  i,
+  exercises,
+  onRemove,
+}: {
+  it: any;
+  i: number;
+  exercises: any[];
+  onRemove: (id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: it.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  const altName = it.alternative_exercise_id ? exercises.find((e) => e.id === it.alternative_exercise_id)?.name : null;
+  const hasAltTargets = altName && (it.alt_target_sets != null || it.alt_target_reps_min != null || it.alt_target_reps_max != null || it.alt_target_weight != null || it.alt_rest_seconds != null || it.alt_coach_notes);
+  const altSetsV = it.alt_target_sets ?? it.target_sets;
+  const altMinV = it.alt_target_reps_min ?? it.target_reps_min;
+  const altMaxV = it.alt_target_reps_max ?? it.target_reps_max;
+  const altWV = it.alt_target_weight ?? it.target_weight;
+  const altRestV = it.alt_rest_seconds ?? it.rest_seconds;
+  return (
+    <li ref={setNodeRef} style={style} className="py-3 flex items-center justify-between gap-3 bg-background">
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          aria-label="Drag to reorder"
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-1 -ml-1"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+        <div className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</div>
+        <div className="min-w-0">
+          <div className="font-medium truncate">
+            {it.exercises?.name}
+            {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {altName && <span className="font-medium text-foreground/70">{it.exercises?.name}: </span>}
+            {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
+            {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
+            {it.rest_seconds ? ` · rest ${it.rest_seconds}s` : ""}
+            {it.coach_notes ? ` · ${it.coach_notes}` : ""}
+          </div>
+          {altName && (
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/70">{altName}: </span>
+              {altSetsV} × {altMinV === altMaxV ? altMinV : `${altMinV}–${altMaxV}`}
+              {altWV ? ` @ ${altWV}kg` : ""}
+              {altRestV ? ` · rest ${altRestV}s` : ""}
+              {it.alt_coach_notes ? ` · ${it.alt_coach_notes}` : ""}
+              {!hasAltTargets && <span className="italic"> (same as primary)</span>}
+            </div>
+          )}
+        </div>
+      </div>
+      <Button size="icon" variant="ghost" onClick={() => onRemove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
+    </li>
   );
 }
