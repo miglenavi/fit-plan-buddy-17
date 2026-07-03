@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Loader2, Check, GripVertical } from "lucide-react";
+import { Trash2, Plus, Loader2, Check, GripVertical, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -120,6 +121,15 @@ function TrainingDetail() {
 
   const remove = async (id: string) => {
     await supabase.from("training_exercises").delete().eq("id", id);
+    load();
+  };
+
+  const [editing, setEditing] = useState<any>(null);
+  const saveEdit = async (patch: any) => {
+    const { error } = await supabase.from("training_exercises").update(patch).eq("id", editing.id);
+    if (error) { toast.error(error.message); return; }
+    setEditing(null);
+    toast.success("Updated");
     load();
   };
 
@@ -259,6 +269,7 @@ function TrainingDetail() {
                       i={i}
                       exercises={exercises}
                       onRemove={remove}
+                      onEdit={() => setEditing(it)}
                     />
                   ))}
                 </ul>
@@ -267,6 +278,14 @@ function TrainingDetail() {
           )}
         </CardContent>
       </Card>
+
+      <EditExerciseDialog
+        item={editing}
+        exercises={exercises}
+        prettyMuscle={prettyMuscle}
+        onClose={() => setEditing(null)}
+        onSave={saveEdit}
+      />
     </div>
   );
 }
@@ -276,11 +295,13 @@ function SortableExerciseRow({
   i,
   exercises,
   onRemove,
+  onEdit,
 }: {
   it: any;
   i: number;
   exercises: any[];
   onRemove: (id: string) => void;
+  onEdit: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: it.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
@@ -328,7 +349,160 @@ function SortableExerciseRow({
           )}
         </div>
       </div>
-      <Button size="icon" variant="ghost" onClick={() => onRemove(it.id)}><Trash2 className="size-4 text-muted-foreground" /></Button>
+      <div className="flex items-center gap-1">
+        <Button size="icon" variant="ghost" onClick={onEdit} aria-label="Edit"><Pencil className="size-4 text-muted-foreground" /></Button>
+        <Button size="icon" variant="ghost" onClick={() => onRemove(it.id)} aria-label="Remove"><Trash2 className="size-4 text-muted-foreground" /></Button>
+      </div>
     </li>
+  );
+}
+
+function EditExerciseDialog({
+  item,
+  exercises,
+  prettyMuscle,
+  onClose,
+  onSave,
+}: {
+  item: any;
+  exercises: any[];
+  prettyMuscle: (m: string) => string;
+  onClose: () => void;
+  onSave: (patch: any) => void;
+}) {
+  const [exId, setExId] = useState("");
+  const [altExId, setAltExId] = useState("");
+  const [sets, setSets] = useState(3);
+  const [repsMin, setRepsMin] = useState(8);
+  const [repsMax, setRepsMax] = useState(10);
+  const [weight, setWeight] = useState("");
+  const [rest, setRest] = useState("");
+  const [coachNotes, setCoachNotes] = useState("");
+  const [altSets, setAltSets] = useState("");
+  const [altRepsMin, setAltRepsMin] = useState("");
+  const [altRepsMax, setAltRepsMax] = useState("");
+  const [altWeight, setAltWeight] = useState("");
+  const [altRest, setAltRest] = useState("");
+  const [altCoachNotes, setAltCoachNotes] = useState("");
+
+  useEffect(() => {
+    if (!item) return;
+    setExId(item.exercise_id ?? "");
+    setAltExId(item.alternative_exercise_id ?? "");
+    setSets(item.target_sets ?? 3);
+    setRepsMin(item.target_reps_min ?? 8);
+    setRepsMax(item.target_reps_max ?? 10);
+    setWeight(item.target_weight != null ? String(item.target_weight) : "");
+    setRest(item.rest_seconds != null ? String(item.rest_seconds) : "");
+    setCoachNotes(item.coach_notes ?? "");
+    setAltSets(item.alt_target_sets != null ? String(item.alt_target_sets) : "");
+    setAltRepsMin(item.alt_target_reps_min != null ? String(item.alt_target_reps_min) : "");
+    setAltRepsMax(item.alt_target_reps_max != null ? String(item.alt_target_reps_max) : "");
+    setAltWeight(item.alt_target_weight != null ? String(item.alt_target_weight) : "");
+    setAltRest(item.alt_rest_seconds != null ? String(item.alt_rest_seconds) : "");
+    setAltCoachNotes(item.alt_coach_notes ?? "");
+  }, [item]);
+
+  const byGroup = new Map<string, any[]>();
+  for (const e of exercises) {
+    const key = (e as any).primary_muscle_group ?? "__none__";
+    if (!byGroup.has(key)) byGroup.set(key, []);
+    byGroup.get(key)!.push(e);
+  }
+  const groups = Array.from(byGroup.entries()).map(([id, gitems]) => ({
+    id,
+    name: id === "__none__" ? "Unassigned" : prettyMuscle(id),
+    items: gitems,
+  })).sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
+  const renderGroups = (excludeId?: string) => groups.map((g) => {
+    const filtered = excludeId ? g.items.filter((e) => e.id !== excludeId) : g.items;
+    if (filtered.length === 0) return null;
+    return (
+      <SelectGroup key={g.id}>
+        <SelectLabel>{g.name}</SelectLabel>
+        {filtered.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+      </SelectGroup>
+    );
+  });
+
+  const submit = () => {
+    if (!exId) return toast.error("Pick an exercise");
+    if (altExId && altExId === exId) return toast.error("Alternative must differ from the primary exercise");
+    if (repsMax < repsMin) return toast.error("Max reps must be ≥ min reps");
+    const hasAlt = !!altExId;
+    const altMinNum = altRepsMin ? Number(altRepsMin) : null;
+    const altMaxNum = altRepsMax ? Number(altRepsMax) : null;
+    if (hasAlt && altMinNum != null && altMaxNum != null && altMaxNum < altMinNum) {
+      return toast.error("Alt max reps must be ≥ min reps");
+    }
+    onSave({
+      exercise_id: exId,
+      alternative_exercise_id: altExId || null,
+      target_sets: sets,
+      target_reps_min: repsMin,
+      target_reps_max: repsMax,
+      target_weight: weight ? Number(weight) : null,
+      rest_seconds: rest ? Number(rest) : null,
+      coach_notes: coachNotes || null,
+      alt_target_sets: hasAlt && altSets ? Number(altSets) : null,
+      alt_target_reps_min: hasAlt ? altMinNum : null,
+      alt_target_reps_max: hasAlt ? altMaxNum : null,
+      alt_target_weight: hasAlt && altWeight ? Number(altWeight) : null,
+      alt_rest_seconds: hasAlt && altRest ? Number(altRest) : null,
+      alt_coach_notes: hasAlt ? (altCoachNotes || null) : null,
+    });
+  };
+
+  return (
+    <Dialog open={!!item} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Edit exercise</DialogTitle></DialogHeader>
+        <div className="grid sm:grid-cols-6 gap-3">
+          <div className="space-y-2 sm:col-span-3">
+            <Label>Exercise</Label>
+            <Select value={exId} onValueChange={setExId}>
+              <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
+              <SelectContent>{renderGroups()}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2 sm:col-span-3">
+            <Label className="text-muted-foreground font-normal">Or alternative <span className="text-xs">(optional)</span></Label>
+            <Select value={altExId || "__none__"} onValueChange={(v) => setAltExId(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">None</SelectItem>
+                {renderGroups(exId)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2 sm:col-span-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
+          <div className="space-y-2 sm:col-span-2"><Label>Reps min</Label><Input type="number" min="1" value={repsMin} onChange={(e) => setRepsMin(+e.target.value)} /></div>
+          <div className="space-y-2 sm:col-span-2"><Label>Reps max</Label><Input type="number" min="1" value={repsMax} onChange={(e) => setRepsMax(+e.target.value)} /></div>
+          <div className="space-y-2 sm:col-span-3"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
+          <div className="space-y-2 sm:col-span-3"><Label>Rest (sec)</Label><Input type="number" min="0" value={rest} onChange={(e) => setRest(e.target.value)} placeholder="optional" /></div>
+          <div className="space-y-2 sm:col-span-6"><Label>Coach notes</Label><Input value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} placeholder="Cues, tempo, etc." /></div>
+          {altExId && (
+            <div className="sm:col-span-6 rounded-md border bg-muted/30 p-3 space-y-3">
+              <div className="text-sm font-medium">
+                Targets for the alternative
+                <span className="text-xs text-muted-foreground font-normal ml-2">(leave blank to reuse the primary targets)</span>
+              </div>
+              <div className="grid sm:grid-cols-6 gap-3">
+                <div className="space-y-2 sm:col-span-2"><Label>Sets</Label><Input type="number" min="1" value={altSets} onChange={(e) => setAltSets(e.target.value)} placeholder={String(sets)} /></div>
+                <div className="space-y-2 sm:col-span-2"><Label>Reps min</Label><Input type="number" min="1" value={altRepsMin} onChange={(e) => setAltRepsMin(e.target.value)} placeholder={String(repsMin)} /></div>
+                <div className="space-y-2 sm:col-span-2"><Label>Reps max</Label><Input type="number" min="1" value={altRepsMax} onChange={(e) => setAltRepsMax(e.target.value)} placeholder={String(repsMax)} /></div>
+                <div className="space-y-2 sm:col-span-3"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={altWeight} onChange={(e) => setAltWeight(e.target.value)} placeholder={weight || "optional"} /></div>
+                <div className="space-y-2 sm:col-span-3"><Label>Rest (sec)</Label><Input type="number" min="0" value={altRest} onChange={(e) => setAltRest(e.target.value)} placeholder={rest || "optional"} /></div>
+                <div className="space-y-2 sm:col-span-6"><Label>Alt coach notes</Label><Input value={altCoachNotes} onChange={(e) => setAltCoachNotes(e.target.value)} placeholder="Cues for the alternative" /></div>
+              </div>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
