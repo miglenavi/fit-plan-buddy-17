@@ -47,7 +47,7 @@ function TrainingDetail() {
   const load = async () => {
     const [{ data: t }, { data: it }, { data: ex }, { data: c }] = await Promise.all([
       supabase.from("trainings").select("*").eq("id", trainingId).maybeSingle(),
-      supabase.from("training_exercises").select("*, alternative_exercise_id, exercises(name, category_id, muscle_groups)").eq("training_id", trainingId).order("order_index"),
+      supabase.from("training_exercises").select("*, exercises!exercise_id(name, category_id, muscle_groups)").eq("training_id", trainingId).order("order_index"),
       supabase.from("exercises").select("id, name, category_id").order("name"),
       supabase.from("exercise_categories" as any).select("id, name").order("name"),
     ]);

@@ -1,49 +1,29 @@
-## Goal
-When a training exercise has an alternative, the trainer should be able to prescribe **different targets (sets, reps min/max, weight, rest)** for the alternative exercise. The client's chosen exercise determines which target block is shown and which target sets get prefilled into `set_logs`.
+## Bug
 
-## Schema changes (migration)
+On the trainer's training-detail page, adding an exercise succeeds in the database and shows the "Added" toast, but the "Exercises in this training" list stays empty (and existing exercises also don't render).
 
-Add nullable "alt_*" columns to `training_exercises`:
-- `alt_target_sets int`
-- `alt_target_reps_min int`
-- `alt_target_reps_max int`
-- `alt_target_weight numeric`
-- `alt_rest_seconds int`
-- `alt_coach_notes text`
+## Root cause
 
-Add the same set (nullable) to `session_exercises` so the snapshot preserves both prescriptions at assignment time:
-- `alt_target_sets`, `alt_target_reps_min`, `alt_target_reps_max`, `alt_target_weight`
+`training_exercises` now has two foreign keys to `exercises` (`exercise_id` and the new `alternative_exercise_id`). PostgREST returns HTTP 300 "Could not embed because more than one relationship was found for 'training_exercises' and 'exercises'" for the ambiguous embed used in `load()`:
 
-All nullable, no backfill needed (existing rows keep a single target block; alt block stays NULL meaning "same as primary").
+```
+.select("*, alternative_exercise_id, exercises(name, category_id, muscle_groups)")
+```
 
-## Backend behavior
-- Session creation snapshot copies both primary and alt target columns from `training_exercises` into `session_exercises`.
-- When the client picks the alternative in `SessionLogger` (existing swap of `exercise_id` ↔ `alternative_exercise_id`), also swap the target columns with their `alt_*` counterparts on that `session_exercises` row, so downstream code keeps reading `target_*` for the performed exercise. Fallback: if `alt_*` is NULL, copy primary values.
+Confirmed live: the request returns 300 and `data` is null, so `items` is set to `[]`. Insert path is unaffected, which is why the toast shows success.
 
-## UI changes
+## Fix
 
-### Trainer — training detail (`trainer.plans.$planId.trainings.$trainingId`)
-For exercise rows that have an `alternative_exercise_id`:
-- Show a tabbed/two-column "Primary" / "Alternative" target editor.
-- Each side edits its own sets / reps / weight / rest / notes.
-- If trainer leaves the alt block empty, show hint "Uses same targets as primary".
+In `src/routes/trainer.plans.$planId_.trainings.$trainingId.tsx`, disambiguate the embed by naming the FK column:
 
-### Client — SessionLogger
-- Header chooser unchanged.
-- When unpicked, show both target lines ("Primary: 4×8–10 @ 60kg" / "Alternative: 3×12 @ 40kg").
-- After pick, only the chosen exercise's targets are shown and used to seed set rows.
+```
+.select("*, exercises!exercise_id(name, category_id, muscle_groups)")
+```
 
-## Out of scope
-- No changes to `set_logs` schema.
-- No reordering / duplication / charts.
-- No change to one-active-plan trigger or RLS.
+(The redundant `alternative_exercise_id` in the select list can be dropped — it's already covered by `*`.)
 
-## Files touched
-- New migration: add alt target columns to `training_exercises` and `session_exercises`.
-- `src/components/AssignPlanDialog.tsx` (or wherever sessions are materialized) — include alt cols in the snapshot insert.
-- `src/components/SessionLogger.tsx` — swap target cols when choosing alternative; render the right target block.
-- Trainer training-detail page — add alt target inputs.
-- `src/integrations/supabase/types.ts` is auto-regenerated after migration.
+No other files or schema changes are needed. Existing rows will render again and newly added ones will appear immediately after `load()` reruns.
 
-## Doc update
-Update `/mnt/documents/ValhallaFit_Plans_and_Sessions.md` to describe the dual-target model and the swap-on-pick behavior.
+## Verification
+
+Reload the training page — the previously "missing" exercises appear. Add a new exercise — it appears in the list without a manual refresh.
