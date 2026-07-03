@@ -37,9 +37,6 @@ function ExerciseDetail() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const hasLoaded = useRef(false);
-  const lastSaved = useRef<string>("");
-
   const [primary, setPrimary] = useState<string>("none");
   const [secondary, setSecondary] = useState<MuscleGroup[]>([]);
   const hasLoaded = useRef(false);
