@@ -159,6 +159,20 @@ function ExercisesList() {
                         <div className="font-semibold truncate">{ex.name}</div>
                         {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <div className="text-xs text-muted-foreground mt-0.5">{cn}</div> : null; })()}
                         {!ex.trainer_id && <Badge variant="secondary" className="mt-1 text-[10px]">Built-in</Badge>}
+                        {(ex.primary_muscle_group || (ex.secondary_muscle_groups?.length ?? 0) > 0) && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {ex.primary_muscle_group && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/15 text-primary border border-primary/30">
+                                {ex.primary_muscle_group.replace("_", " ")}
+                              </span>
+                            )}
+                            {(ex.secondary_muscle_groups ?? []).map((m: string) => (
+                              <span key={m} className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border">
+                                {m.replace("_", " ")}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {ex.description && <p className="text-sm mt-2 text-muted-foreground line-clamp-2">{ex.description}</p>}
                         <div className="flex gap-2 mt-2 text-muted-foreground">
                           {ex.image_url && <ImageIcon className="size-3.5" />}

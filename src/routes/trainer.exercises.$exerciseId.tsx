@@ -17,6 +17,13 @@ export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
 
 type Category = { id: string; name: string };
 
+const MUSCLE_GROUPS = [
+  "chest", "back", "shoulders", "biceps", "triceps",
+  "quads", "hamstrings", "glutes", "calves", "core", "full_body",
+] as const;
+type MuscleGroup = typeof MUSCLE_GROUPS[number];
+const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 function ExerciseDetail() {
   const { exerciseId } = useParams({ from: "/trainer/exercises/$exerciseId" });
   const navigate = useNavigate();
@@ -30,6 +37,8 @@ function ExerciseDetail() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [primary, setPrimary] = useState<string>("none");
+  const [secondary, setSecondary] = useState<MuscleGroup[]>([]);
   const hasLoaded = useRef(false);
   const lastSaved = useRef<string>("");
 
@@ -40,17 +49,22 @@ function ExerciseDetail() {
     ]);
     if (error) { toast.error(error.message); return; }
     if (!data) return;
+    const d = data as any;
     setEx(data);
     setName(data.name);
     setDesc(data.description ?? "");
     setVideoUrl(data.video_url ?? "");
-    setCategoryId((data as any).category_id ?? "none");
+    setCategoryId(d.category_id ?? "none");
+    setPrimary(d.primary_muscle_group ?? "none");
+    setSecondary(((d.secondary_muscle_groups ?? []) as MuscleGroup[]));
     setCats(((c as any) ?? []) as Category[]);
     lastSaved.current = JSON.stringify({
       name: data.name,
       description: data.description ?? "",
       video_url: data.video_url ?? "",
-      category_id: (data as any).category_id ?? "none",
+      category_id: d.category_id ?? "none",
+      primary_muscle_group: d.primary_muscle_group ?? "none",
+      secondary_muscle_groups: (d.secondary_muscle_groups ?? []),
     });
     hasLoaded.current = true;
   };
@@ -60,23 +74,33 @@ function ExerciseDetail() {
     const { error } = await supabase.from("exercises").update({
       name, description: desc || null, video_url: videoUrl || null,
       category_id: categoryId === "none" ? null : categoryId,
+      primary_muscle_group: primary === "none" ? null : primary,
+      secondary_muscle_groups: secondary,
     } as any).eq("id", exerciseId);
     if (error) { setStatus("error"); return; }
-    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId, primary_muscle_group: primary, secondary_muscle_groups: secondary });
     setStatus("saved");
     setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
   };
 
   useEffect(() => {
     if (!hasLoaded.current) return;
-    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId });
+    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, category_id: categoryId, primary_muscle_group: primary, secondary_muscle_groups: secondary });
     if (current === lastSaved.current) return;
     if (!name.trim()) { setStatus("error"); return; }
     setStatus("saving");
     const t = setTimeout(() => { doSave(); }, 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, desc, videoUrl, categoryId]);
+  }, [name, desc, videoUrl, categoryId, primary, secondary]);
+
+  const toggleSecondary = (m: MuscleGroup) => {
+    setSecondary((prev) => {
+      if (prev.includes(m)) return prev.filter((x) => x !== m);
+      if (prev.length >= 3) { toast.error("Max 3 secondary muscle groups"); return prev; }
+      return [...prev, m];
+    });
+  };
 
   const uploadFile = async (file: File, kind: "image" | "video") => {
     const { data: u } = await supabase.auth.getUser();
@@ -143,6 +167,20 @@ function ExerciseDetail() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{ex.name}</h1>
           {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <p className="text-muted-foreground mt-1">{cn}</p> : null; })()}
+          {(primary !== "none" || secondary.length > 0) && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {primary !== "none" && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/15 text-primary border border-primary/30">
+                  {prettyMuscle(primary)}
+                </span>
+              )}
+              {secondary.map((m) => (
+                <span key={m} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border">
+                  {prettyMuscle(m)}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="text-xs text-muted-foreground min-w-[90px] text-right">
@@ -172,6 +210,36 @@ function ExerciseDetail() {
                   {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Primary muscle group</Label>
+              <Select value={primary} onValueChange={setPrimary}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {MUSCLE_GROUPS.map((m) => <SelectItem key={m} value={m}>{prettyMuscle(m)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Secondary muscle groups <span className="text-xs text-muted-foreground font-normal">(up to 3)</span></Label>
+              <div className="flex flex-wrap gap-2">
+                {MUSCLE_GROUPS.filter((m) => m !== primary).map((m) => {
+                  const active = secondary.includes(m);
+                  const disabled = !active && secondary.length >= 3;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => toggleSecondary(m)}
+                      disabled={disabled}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                    >
+                      {prettyMuscle(m)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="space-y-2"><Label>Description</Label><Textarea rows={6} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="How to perform this exercise, tips, cues..." /></div>
           </div>
