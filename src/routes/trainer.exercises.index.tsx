@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Video, ImageIcon } from "lucide-react";
+import { Plus, Trash2, Video, ImageIcon, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/trainer/exercises/")({
@@ -32,6 +32,8 @@ function ExercisesList() {
   const [desc, setDesc] = useState("");
   const [primary, setPrimary] = useState<string>("none");
   const [filter, setFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+
 
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -67,10 +69,22 @@ function ExercisesList() {
 
   // Group by primary muscle group
   const grouped = useMemo(() => {
-    const filtered =
-      filter === "all" ? list :
-      filter === "unset" ? list.filter((e) => !e.primary_muscle_group) :
-      list.filter((e) => e.primary_muscle_group === filter);
+    const q = search.trim().toLowerCase();
+    const filtered = list.filter((ex) => {
+      const matchesFilter =
+        filter === "all" ? true :
+        filter === "unset" ? !ex.primary_muscle_group :
+        ex.primary_muscle_group === filter;
+      if (!matchesFilter) return false;
+      if (!q) return true;
+      const haystack = [
+        ex.name,
+        ex.description,
+        ex.primary_muscle_group ? prettyMuscle(ex.primary_muscle_group) : "",
+        ...(ex.secondary_muscle_groups ?? []).map((m: string) => prettyMuscle(m)),
+      ].join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
     const byGroup = new Map<string, any[]>();
     for (const ex of filtered) {
       const key = (ex.primary_muscle_group as string) ?? "__none__";
@@ -80,7 +94,8 @@ function ExercisesList() {
     return Array.from(byGroup.entries())
       .map(([id, items]) => ({ id, name: id === "__none__" ? "Unassigned" : prettyMuscle(id), items }))
       .sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
-  }, [list, filter]);
+  }, [list, filter, search]);
+
 
   return (
     <div className="space-y-6">
@@ -92,6 +107,7 @@ function ExercisesList() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="size-4 mr-1" /> New exercise</Button></DialogTrigger>
           <DialogContent>
+
             <DialogHeader><DialogTitle>Create exercise</DialogTitle></DialogHeader>
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
@@ -112,7 +128,28 @@ function ExercisesList() {
         </Dialog>
       </div>
 
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+          placeholder="Search exercises by name, muscle group, or description..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9 pr-9"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Clear search"
+          >
+            <X className="size-4" />
+          </button>
+        )}
+      </div>
+
       {/* Muscle-group filter chips */}
+
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setFilter("all")}
