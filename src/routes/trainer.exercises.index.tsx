@@ -69,10 +69,22 @@ function ExercisesList() {
 
   // Group by primary muscle group
   const grouped = useMemo(() => {
-    const filtered =
-      filter === "all" ? list :
-      filter === "unset" ? list.filter((e) => !e.primary_muscle_group) :
-      list.filter((e) => e.primary_muscle_group === filter);
+    const q = search.trim().toLowerCase();
+    const filtered = list.filter((ex) => {
+      const matchesFilter =
+        filter === "all" ? true :
+        filter === "unset" ? !ex.primary_muscle_group :
+        ex.primary_muscle_group === filter;
+      if (!matchesFilter) return false;
+      if (!q) return true;
+      const haystack = [
+        ex.name,
+        ex.description,
+        ex.primary_muscle_group ? prettyMuscle(ex.primary_muscle_group) : "",
+        ...(ex.secondary_muscle_groups ?? []).map((m: string) => prettyMuscle(m)),
+      ].join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
     const byGroup = new Map<string, any[]>();
     for (const ex of filtered) {
       const key = (ex.primary_muscle_group as string) ?? "__none__";
@@ -82,7 +94,8 @@ function ExercisesList() {
     return Array.from(byGroup.entries())
       .map(([id, items]) => ({ id, name: id === "__none__" ? "Unassigned" : prettyMuscle(id), items }))
       .sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
-  }, [list, filter]);
+  }, [list, filter, search]);
+
 
   return (
     <div className="space-y-6">
