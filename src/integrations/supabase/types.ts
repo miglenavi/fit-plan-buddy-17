@@ -92,6 +92,10 @@ export type Database = {
           image_url: string | null
           muscle_groups: Database["public"]["Enums"]["muscle_group"][]
           name: string
+          primary_muscle_group:
+            | Database["public"]["Enums"]["muscle_group"]
+            | null
+          secondary_muscle_groups: Database["public"]["Enums"]["muscle_group"][]
           trainer_id: string | null
           video_url: string | null
         }
@@ -104,6 +108,10 @@ export type Database = {
           image_url?: string | null
           muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
           name: string
+          primary_muscle_group?:
+            | Database["public"]["Enums"]["muscle_group"]
+            | null
+          secondary_muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
           trainer_id?: string | null
           video_url?: string | null
         }
@@ -116,6 +124,10 @@ export type Database = {
           image_url?: string | null
           muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
           name?: string
+          primary_muscle_group?:
+            | Database["public"]["Enums"]["muscle_group"]
+            | null
+          secondary_muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
           trainer_id?: string | null
           video_url?: string | null
         }
