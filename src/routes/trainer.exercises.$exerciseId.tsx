@@ -156,7 +156,7 @@ function ExerciseDetail() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{ex.name}</h1>
-          {(() => { const cn = cats.find(c => c.id === ex.category_id)?.name; return cn ? <p className="text-muted-foreground mt-1">{cn}</p> : null; })()}
+          
           {(primary !== "none" || secondary.length > 0) && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {primary !== "none" && (
