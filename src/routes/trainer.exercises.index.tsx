@@ -57,13 +57,56 @@ function ExercisesList() {
       name,
       description: desc || null,
       primary_muscle_group: primary === "none" ? null : primary,
+      secondary_muscle_groups: secondary,
+      video_url: videoUrl || null,
+      image_url: imageUrl || null,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Exercise added");
-      setName(""); setDesc(""); setPrimary("none"); setOpen(false); load();
+      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
     }
   };
+
+  const toggleSecondary = (m: MuscleGroup) => {
+    setSecondary((prev) => {
+      if (prev.includes(m)) return prev.filter((x) => x !== m);
+      if (prev.length >= 3) { toast.error("Max 3 secondary muscle groups"); return prev; }
+      return [...prev, m];
+    });
+  };
+
+  const uploadFile = async (file: File, kind: "image" | "video") => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { toast.error("Not signed in"); return null; }
+    const ext = file.name.split(".").pop();
+    const path = `${u.user.id}/new-${kind}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("exercise-media").upload(path, file, { upsert: true });
+    if (error) { toast.error(error.message); return null; }
+    const { data: pub } = supabase.storage.from("exercise-media").getPublicUrl(path);
+    return pub.publicUrl;
+  };
+
+  const onImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingImage(true);
+    const url = await uploadFile(file, "image");
+    if (url) { setImageUrl(url); toast.success("Image uploaded"); }
+    setUploadingImage(false);
+    e.target.value = "";
+  };
+
+  const onVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploadingVideo(true);
+    const url = await uploadFile(file, "video");
+    if (url) { setVideoUrl(url); toast.success("Video uploaded"); }
+    setUploadingVideo(false);
+    e.target.value = "";
+  };
+
+  const clearImage = () => setImageUrl("");
+
 
   const remove = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
