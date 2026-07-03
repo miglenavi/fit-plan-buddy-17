@@ -58,33 +58,8 @@ export type Database = {
           },
         ]
       }
-      exercise_categories: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       exercises: {
         Row: {
-          category_id: string | null
           created_at: string
           default_rest_seconds: number | null
           description: string | null
@@ -100,7 +75,6 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
-          category_id?: string | null
           created_at?: string
           default_rest_seconds?: number | null
           description?: string | null
@@ -116,7 +90,6 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
-          category_id?: string | null
           created_at?: string
           default_rest_seconds?: number | null
           description?: string | null
@@ -131,15 +104,7 @@ export type Database = {
           trainer_id?: string | null
           video_url?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "exercises_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "exercise_categories"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       plans: {
         Row: {
