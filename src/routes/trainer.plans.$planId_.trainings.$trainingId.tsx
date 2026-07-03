@@ -269,6 +269,7 @@ function TrainingDetail() {
                       i={i}
                       exercises={exercises}
                       onRemove={remove}
+                      onEdit={() => setEditing(it)}
                     />
                   ))}
                 </ul>
@@ -277,6 +278,14 @@ function TrainingDetail() {
           )}
         </CardContent>
       </Card>
+
+      <EditExerciseDialog
+        item={editing}
+        exercises={exercises}
+        prettyMuscle={prettyMuscle}
+        onClose={() => setEditing(null)}
+        onSave={saveEdit}
+      />
     </div>
   );
 }
