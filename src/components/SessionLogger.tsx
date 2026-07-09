@@ -160,7 +160,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       reps: s.reps === "" || s.reps == null ? null : Number(s.reps),
       weight: weightVal,
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
-      completed: !!s.completed,
+      completed: !!s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0),
     };
     const { data, error } = await supabase
       .from("set_logs")
