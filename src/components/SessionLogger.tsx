@@ -290,7 +290,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
   const finish = () => {
     const totalSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.length, 0);
-    const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter((s) => s.completed).length, 0);
+    const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter(isSetDone).length, 0);
     if (totalSets > 0 && doneSets < totalSets) {
       setConfirmFinishOpen(true);
       return;
