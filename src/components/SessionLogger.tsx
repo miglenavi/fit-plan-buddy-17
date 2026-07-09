@@ -41,6 +41,7 @@ function DeltaChip({ label, value, unit = "" }: { label: string; value: number |
 
 export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
+  const { isTrainer } = useAuth();
   const [session, setSession] = useState<any>(null);
   const [sessionExercises, setSessionExercises] = useState<any[]>([]);
   const [exerciseMeta, setExerciseMeta] = useState<Record<string, any>>({});
