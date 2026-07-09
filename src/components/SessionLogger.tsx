@@ -135,11 +135,27 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const saveSet = async (seId: string, idx: number) => {
     const s = setLogsByEx[seId]?.[idx];
     if (!s) return;
+
+    let weightVal: number | null = null;
+    if (s.weight !== "" && s.weight != null) {
+      const raw = String(s.weight).trim().replace(",", ".");
+      if (!/^\d+(\.\d+)?$/.test(raw)) {
+        toast.error("Weight must be a number (e.g. 20 or 0.5)");
+        return;
+      }
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n < 0 || n > 10000) {
+        toast.error("Enter a weight between 0 and 10000");
+        return;
+      }
+      weightVal = n;
+    }
+
     const payload: any = {
       session_exercise_id: seId,
       set_index: s.set_index,
       reps: s.reps === "" || s.reps == null ? null : Number(s.reps),
-      weight: s.weight === "" || s.weight == null ? null : Number(String(s.weight).replace(",", ".")),
+      weight: weightVal,
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
       completed: !!s.completed,
     };
