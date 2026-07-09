@@ -390,6 +390,34 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         </div>
       </div>
 
+      {showSummary && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="p-4 space-y-2">
+            <div className="text-xs uppercase tracking-wider font-semibold text-primary">Trainer summary — target vs actual</div>
+            <div className="flex flex-wrap gap-2 items-center text-xs">
+              {durationMin != null && (
+                <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border">
+                  <Clock className="size-3.5" /> Duration: <b className="tabular-nums">{durationMin} min</b>
+                </span>
+              )}
+              {deltaSetCount > 0 ? (
+                <>
+                  <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border tabular-nums">
+                    Reps vs range: <b className={repsUnder < 0 ? "text-amber-600" : ""}>{repsUnder}</b> / <b className={repsOver > 0 ? "text-emerald-600" : ""}>+{repsOver}</b>
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border tabular-nums">
+                    Weight vs plan: <b className={kgUnder < 0 ? "text-amber-600" : ""}>{kgUnder.toFixed(1)}kg</b> / <b className={kgOver > 0 ? "text-emerald-600" : ""}>+{kgOver.toFixed(1)}kg</b>
+                  </span>
+                  <span className="text-muted-foreground">across {deltaSetCount} sets</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">No completed sets yet.</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {sessionExercises.length === 0 && (
         <Card><CardContent className="p-6 text-sm text-muted-foreground">This session has no exercises yet.</CardContent></Card>
       )}
