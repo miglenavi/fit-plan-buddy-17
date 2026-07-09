@@ -318,7 +318,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   }
 
   const total = sessionExercises.length;
-  const done = sessionExercises.filter((se) => (setLogsByEx[se.id] ?? []).every((s) => s.completed)).length;
+  const done = sessionExercises.filter((se) => (setLogsByEx[se.id] ?? []).length > 0 && (setLogsByEx[se.id] ?? []).every(isSetDone)).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const canEdit = forceReadOnly ? false : session.status !== "completed";
 
