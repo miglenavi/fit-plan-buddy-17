@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { useViewAs } from "@/lib/viewAs";
 
 export type AppRole = "trainer" | "client" | "super_admin";
 
@@ -15,6 +16,10 @@ interface AuthCtx {
   isClient: boolean;
   fullName: string | null;
   loading: boolean;
+  /** True when a super admin is previewing another user. */
+  isImpersonating: boolean;
+  /** The real signed-in super admin, when impersonating. */
+  realUser: User | null;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -33,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [fullName, setFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { target } = useViewAs();
 
   const loadProfile = async (uid: string) => {
     const [{ data: roleRows }, { data: profile }] = await Promise.all([
@@ -67,18 +73,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const role = pickPrimary(roles);
+  const realUser = session?.user ?? null;
+  const realIsSuperAdmin = roles.includes("super_admin");
+  const impersonating = realIsSuperAdmin && !!target;
+
+  const effectiveUser: User | null = impersonating
+    ? ({
+        ...(realUser as User),
+        id: target!.userId,
+        email: target!.email ?? undefined,
+        user_metadata: {},
+      } as User)
+    : realUser;
+
+  const effectiveRoles: AppRole[] = impersonating ? target!.roles : roles;
+  const effectiveFullName = impersonating ? target!.fullName : fullName;
+  const role = pickPrimary(effectiveRoles);
 
   const value: AuthCtx = {
-    user: session?.user ?? null,
+    user: effectiveUser,
     session,
-    roles,
+    roles: effectiveRoles,
     role,
-    isSuperAdmin: roles.includes("super_admin"),
-    isTrainer: roles.includes("trainer") || roles.includes("super_admin"),
-    isClient: roles.includes("client"),
-    fullName,
+    isSuperAdmin: effectiveRoles.includes("super_admin"),
+    isTrainer: effectiveRoles.includes("trainer") || effectiveRoles.includes("super_admin"),
+    isClient: effectiveRoles.includes("client"),
+    fullName: effectiveFullName,
     loading,
+    isImpersonating: impersonating,
+    realUser,
     signOut: async () => { await supabase.auth.signOut(); },
     refresh: async () => { if (session?.user) await loadProfile(session.user.id); },
   };
