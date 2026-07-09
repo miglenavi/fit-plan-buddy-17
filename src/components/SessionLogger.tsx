@@ -347,6 +347,31 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const pct = total ? Math.round((done / total) * 100) : 0;
   const canEdit = forceReadOnly ? false : session.status !== "completed";
 
+  // Trainer-facing summary: duration + aggregate target-vs-actual deltas.
+  const durationMin = session.started_at && session.completed_at
+    ? Math.max(0, Math.round((new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 60000))
+    : null;
+  let repsOver = 0, repsUnder = 0, kgOver = 0, kgUnder = 0, deltaSetCount = 0;
+  for (const se of sessionExercises) {
+    const usingAlt = !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
+    const tMin = usingAlt ? se.alt_target_reps_min : se.target_reps_min;
+    const tMax = usingAlt ? se.alt_target_reps_max : se.target_reps_max;
+    const tW = usingAlt ? se.alt_target_weight : se.target_weight;
+    for (const s of setLogsByEx[se.id] ?? []) {
+      if (!isSetDone(s)) continue;
+      const r = s.reps == null || s.reps === "" ? null : Number(s.reps);
+      const rd = repsDelta(r, tMin ?? null, tMax ?? null);
+      if (rd != null) { if (rd > 0) repsOver += rd; else if (rd < 0) repsUnder += rd; }
+      const w = s.weight == null || s.weight === "" ? null : Number(String(s.weight).replace(",", "."));
+      if (w != null && tW != null) {
+        const wd = w - Number(tW);
+        if (wd > 0) kgOver += wd; else if (wd < 0) kgUnder += wd;
+      }
+      deltaSetCount++;
+    }
+  }
+  const showSummary = isTrainer && (durationMin != null || deltaSetCount > 0);
+
   return (
     <div className="space-y-5 pb-24">
       <div>
