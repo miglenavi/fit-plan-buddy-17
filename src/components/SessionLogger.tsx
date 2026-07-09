@@ -139,7 +139,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       session_exercise_id: seId,
       set_index: s.set_index,
       reps: s.reps === "" || s.reps == null ? null : Number(s.reps),
-      weight: s.weight === "" || s.weight == null ? null : Number(s.weight),
+      weight: s.weight === "" || s.weight == null ? null : Number(String(s.weight).replace(",", ".")),
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
       completed: !!s.completed,
     };
@@ -452,7 +452,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         <div key={idx} className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
                           <Input type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Input type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
                           <Input type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Checkbox checked={s.completed} disabled={!canEdit} onCheckedChange={(v) => { if (!canEdit) return; updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
                           {canEdit ? (
