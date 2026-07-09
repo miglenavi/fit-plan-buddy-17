@@ -348,7 +348,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         {sessionExercises.map((se, i) => {
           const ex = exerciseMeta[se.id] ?? se.exercise ?? {};
           const sets = setLogsByEx[se.id] ?? [];
-          const allDone = sets.length > 0 && sets.every((s) => s.completed);
+          const allDone = sets.length > 0 && sets.every(isSetDone);
           const isOpen = expandedId === se.id;
           const last = lastTimeByEx[se.id];
           let suggestion: string | null = null;
