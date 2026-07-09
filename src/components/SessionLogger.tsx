@@ -12,6 +12,9 @@ import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Plus, Tr
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
 
+const isSetDone = (s: { completed: boolean; reps: string | number | null }) =>
+  s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0);
+
 export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
   const [session, setSession] = useState<any>(null);
@@ -157,7 +160,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       reps: s.reps === "" || s.reps == null ? null : Number(s.reps),
       weight: weightVal,
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
-      completed: !!s.completed,
+      completed: !!s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0),
     };
     const { data, error } = await supabase
       .from("set_logs")
@@ -287,7 +290,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
   const finish = () => {
     const totalSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.length, 0);
-    const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter((s) => s.completed).length, 0);
+    const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter(isSetDone).length, 0);
     if (totalSets > 0 && doneSets < totalSets) {
       setConfirmFinishOpen(true);
       return;
@@ -315,7 +318,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   }
 
   const total = sessionExercises.length;
-  const done = sessionExercises.filter((se) => (setLogsByEx[se.id] ?? []).every((s) => s.completed)).length;
+  const done = sessionExercises.filter((se) => (setLogsByEx[se.id] ?? []).length > 0 && (setLogsByEx[se.id] ?? []).every(isSetDone)).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const canEdit = forceReadOnly ? false : session.status !== "completed";
 
@@ -345,7 +348,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         {sessionExercises.map((se, i) => {
           const ex = exerciseMeta[se.id] ?? se.exercise ?? {};
           const sets = setLogsByEx[se.id] ?? [];
-          const allDone = sets.length > 0 && sets.every((s) => s.completed);
+          const allDone = sets.length > 0 && sets.every(isSetDone);
           const isOpen = expandedId === se.id;
           const last = lastTimeByEx[se.id];
           let suggestion: string | null = null;
