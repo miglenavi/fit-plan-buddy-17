@@ -76,7 +76,8 @@ function NavGroup({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { role, isSuperAdmin, isTrainer, isClient, fullName, signOut, user } = useAuth();
+  const { role, isSuperAdmin, isTrainer, isClient, fullName, signOut, user, isImpersonating, realUser } = useAuth();
+  const { target, setTarget } = useViewAs();
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
@@ -85,9 +86,27 @@ export function AppShell({ children }: { children: ReactNode }) {
   const clientItems = isClient ? clientNav : [];
   const allMobile = [...adminItems, ...trainerItems, ...clientItems];
 
+  const exitViewAs = () => {
+    setTarget(null);
+    nav({ to: "/admin/trainers" });
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      <aside className="md:w-64 bg-sidebar text-sidebar-foreground md:min-h-screen flex md:flex-col">
+      {isImpersonating && (
+        <div className="fixed top-0 inset-x-0 z-[60] bg-amber-500 text-black text-xs md:text-sm px-4 py-2 flex items-center justify-between gap-3 shadow">
+          <div className="flex items-center gap-2 min-w-0">
+            <Eye className="size-4 shrink-0" />
+            <span className="truncate">
+              Viewing as <b>{target?.fullName ?? target?.userId}</b> (read-only preview) · signed in as {realUser?.email}
+            </span>
+          </div>
+          <button onClick={exitViewAs} className="flex items-center gap-1 rounded bg-black/10 hover:bg-black/20 px-2 py-1 font-medium">
+            <X className="size-3.5" /> Exit
+          </button>
+        </div>
+      )}
+      <aside className={`md:w-64 bg-sidebar text-sidebar-foreground md:min-h-screen flex md:flex-col ${isImpersonating ? "md:pt-9" : ""}`}>
         <div className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border flex-1 md:flex-none">
           <div className="size-10 rounded-2xl bg-primary flex items-center justify-center shadow-[0_0_24px_-4px_oklch(0.72_0.18_145/0.55)]">
             <Swords className="size-5 text-primary-foreground" />
