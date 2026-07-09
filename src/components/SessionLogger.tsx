@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,15 +9,39 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock } from "lucide-react";
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
 
 const isSetDone = (s: { completed: boolean; reps: string | number | null }) =>
   s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0);
 
+/** Delta vs target: returns null when either side missing. */
+function repsDelta(actual: number | null, min: number | null, max: number | null): number | null {
+  if (actual == null || (min == null && max == null)) return null;
+  if (min != null && actual < min) return actual - min;
+  if (max != null && actual > max) return actual - max;
+  return 0;
+}
+function fmtSigned(n: number, unit = ""): string {
+  if (n === 0) return `on target${unit ? "" : ""}`;
+  return `${n > 0 ? "+" : ""}${Number.isInteger(n) ? n : n.toFixed(1)}${unit}`;
+}
+function DeltaChip({ label, value, unit = "" }: { label: string; value: number | null; unit?: string }) {
+  if (value == null) return null;
+  const tone = value === 0 ? "bg-muted text-muted-foreground" : value > 0 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-amber-500/15 text-amber-700 dark:text-amber-500";
+  const Icon = value === 0 ? Minus : value > 0 ? TrendingUp : TrendingDown;
+  return (
+    <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums ${tone}`}>
+      <Icon className="size-3" />
+      {label}: {fmtSigned(value, unit)}
+    </span>
+  );
+}
+
 export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
+  const { isTrainer } = useAuth();
   const [session, setSession] = useState<any>(null);
   const [sessionExercises, setSessionExercises] = useState<any[]>([]);
   const [exerciseMeta, setExerciseMeta] = useState<Record<string, any>>({});
@@ -322,6 +347,31 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const pct = total ? Math.round((done / total) * 100) : 0;
   const canEdit = forceReadOnly ? false : session.status !== "completed";
 
+  // Trainer-facing summary: duration + aggregate target-vs-actual deltas.
+  const durationMin = session.started_at && session.completed_at
+    ? Math.max(0, Math.round((new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 60000))
+    : null;
+  let repsOver = 0, repsUnder = 0, kgOver = 0, kgUnder = 0, deltaSetCount = 0;
+  for (const se of sessionExercises) {
+    const usingAlt = !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
+    const tMin = usingAlt ? se.alt_target_reps_min : se.target_reps_min;
+    const tMax = usingAlt ? se.alt_target_reps_max : se.target_reps_max;
+    const tW = usingAlt ? se.alt_target_weight : se.target_weight;
+    for (const s of setLogsByEx[se.id] ?? []) {
+      if (!isSetDone(s)) continue;
+      const r = s.reps == null || s.reps === "" ? null : Number(s.reps);
+      const rd = repsDelta(r, tMin ?? null, tMax ?? null);
+      if (rd != null) { if (rd > 0) repsOver += rd; else if (rd < 0) repsUnder += rd; }
+      const w = s.weight == null || s.weight === "" ? null : Number(String(s.weight).replace(",", "."));
+      if (w != null && tW != null) {
+        const wd = w - Number(tW);
+        if (wd > 0) kgOver += wd; else if (wd < 0) kgUnder += wd;
+      }
+      deltaSetCount++;
+    }
+  }
+  const showSummary = isTrainer && (durationMin != null || deltaSetCount > 0);
+
   return (
     <div className="space-y-5 pb-24">
       <div>
@@ -339,6 +389,34 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           <span className="text-xs text-muted-foreground tabular-nums">{done} / {total}</span>
         </div>
       </div>
+
+      {showSummary && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="p-4 space-y-2">
+            <div className="text-xs uppercase tracking-wider font-semibold text-primary">Trainer summary — target vs actual</div>
+            <div className="flex flex-wrap gap-2 items-center text-xs">
+              {durationMin != null && (
+                <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border">
+                  <Clock className="size-3.5" /> Duration: <b className="tabular-nums">{durationMin} min</b>
+                </span>
+              )}
+              {deltaSetCount > 0 ? (
+                <>
+                  <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border tabular-nums">
+                    Reps vs range: <b className={repsUnder < 0 ? "text-amber-600" : ""}>{repsUnder}</b> / <b className={repsOver > 0 ? "text-emerald-600" : ""}>+{repsOver}</b>
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border tabular-nums">
+                    Weight vs plan: <b className={kgUnder < 0 ? "text-amber-600" : ""}>{kgUnder.toFixed(1)}kg</b> / <b className={kgOver > 0 ? "text-emerald-600" : ""}>+{kgOver.toFixed(1)}kg</b>
+                  </span>
+                  <span className="text-muted-foreground">across {deltaSetCount} sets</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">No completed sets yet.</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {sessionExercises.length === 0 && (
         <Card><CardContent className="p-6 text-sm text-muted-foreground">This session has no exercises yet.</CardContent></Card>
@@ -467,8 +545,18 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem] gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
                         <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span>
                       </div>
-                      {sets.map((s, idx) => (
-                        <div key={idx} className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
+                      {sets.map((s, idx) => {
+                        const usingAlt = hasAlt && picked && pickedByEx[se.id] && !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
+                        const tMin = usingAlt ? altMinV : se.target_reps_min;
+                        const tMax = usingAlt ? altMaxV : se.target_reps_max;
+                        const tW = usingAlt ? altWV : se.target_weight;
+                        const actualReps = s.reps == null || s.reps === "" ? null : Number(s.reps);
+                        const actualW = s.weight == null || s.weight === "" ? null : Number(String(s.weight).replace(",", "."));
+                        const rd = isSetDone(s) ? repsDelta(actualReps, tMin ?? null, tMax ?? null) : null;
+                        const wd = isSetDone(s) && actualW != null && tW != null ? actualW - Number(tW) : null;
+                        return (
+                        <div key={idx} className="space-y-1">
+                        <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
                           <Input type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
@@ -480,7 +568,15 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                             </Button>
                           ) : <span />}
                         </div>
-                      ))}
+                        {isTrainer && (rd != null || wd != null) && (
+                          <div className="pl-10 flex flex-wrap gap-1.5">
+                            <DeltaChip label="reps" value={rd} />
+                            <DeltaChip label="kg" value={wd} unit="kg" />
+                          </div>
+                        )}
+                        </div>
+                        );
+                      })}
                       {canEdit && (
                         <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => addSet(se.id)}>
                           <Plus className="size-4 mr-1.5" /> Add set
