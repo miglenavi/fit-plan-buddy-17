@@ -139,7 +139,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       session_exercise_id: seId,
       set_index: s.set_index,
       reps: s.reps === "" || s.reps == null ? null : Number(s.reps),
-      weight: s.weight === "" || s.weight == null ? null : Number(s.weight),
+      weight: s.weight === "" || s.weight == null ? null : Number(String(s.weight).replace(",", ".")),
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
       completed: !!s.completed,
     };
