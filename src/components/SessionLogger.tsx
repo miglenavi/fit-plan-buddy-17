@@ -545,8 +545,18 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem] gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
                         <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span>
                       </div>
-                      {sets.map((s, idx) => (
-                        <div key={idx} className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
+                      {sets.map((s, idx) => {
+                        const usingAlt = hasAlt && picked && pickedByEx[se.id] && !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
+                        const tMin = usingAlt ? altMinV : se.target_reps_min;
+                        const tMax = usingAlt ? altMaxV : se.target_reps_max;
+                        const tW = usingAlt ? altWV : se.target_weight;
+                        const actualReps = s.reps == null || s.reps === "" ? null : Number(s.reps);
+                        const actualW = s.weight == null || s.weight === "" ? null : Number(String(s.weight).replace(",", "."));
+                        const rd = isSetDone(s) ? repsDelta(actualReps, tMin ?? null, tMax ?? null) : null;
+                        const wd = isSetDone(s) && actualW != null && tW != null ? actualW - Number(tW) : null;
+                        return (
+                        <div key={idx} className="space-y-1">
+                        <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
                           <Input type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
@@ -558,7 +568,15 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                             </Button>
                           ) : <span />}
                         </div>
-                      ))}
+                        {isTrainer && (rd != null || wd != null) && (
+                          <div className="pl-10 flex flex-wrap gap-1.5">
+                            <DeltaChip label="reps" value={rd} />
+                            <DeltaChip label="kg" value={wd} unit="kg" />
+                          </div>
+                        )}
+                        </div>
+                        );
+                      })}
                       {canEdit && (
                         <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => addSet(se.id)}>
                           <Plus className="size-4 mr-1.5" /> Add set
