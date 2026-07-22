@@ -33,6 +33,7 @@ import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
 import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.sessions.$sessionId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
 import { Route as TrainerClientsClientIdSessionsSessionIdRouteImport } from './routes/trainer.clients.$clientId_.sessions.$sessionId'
 
@@ -160,6 +161,11 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrainerPlansPlanIdTrainingsTrainingIdRoute =
   TrainerPlansPlanIdTrainingsTrainingIdRouteImport.update({
     id: '/$planId_/trainings/$trainingId',
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/client/profile': typeof ClientProfileRoute
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/trainer/plans'
     | '/client/'
     | '/trainer/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/client/sessions/$sessionId'
     | '/trainer/clients/$clientId'
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/client/profile'
     | '/client'
     | '/trainer'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/client/sessions/$sessionId'
     | '/trainer/clients/$clientId'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/trainer/plans'
     | '/client/'
     | '/trainer/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/client/sessions/$sessionId'
     | '/trainer/clients/$clientId'
@@ -356,6 +368,7 @@ export interface RootRouteChildren {
   TrainerPlansRoute: typeof TrainerPlansRouteWithChildren
   ClientIndexRoute: typeof ClientIndexRoute
   TrainerIndexRoute: typeof TrainerIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ClientSessionsSessionIdRoute: typeof ClientSessionsSessionIdRoute
 }
@@ -530,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trainer/plans/$planId_/trainings/$trainingId': {
       id: '/trainer/plans/$planId_/trainings/$trainingId'
       path: '/$planId/trainings/$trainingId'
@@ -612,6 +632,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrainerPlansRoute: TrainerPlansRouteWithChildren,
   ClientIndexRoute: ClientIndexRoute,
   TrainerIndexRoute: TrainerIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ClientSessionsSessionIdRoute: ClientSessionsSessionIdRoute,
 }
