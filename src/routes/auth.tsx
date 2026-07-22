@@ -14,7 +14,12 @@ import { Swords } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false, component: AuthPage });
+  ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
+  component: AuthPage,
+});
 
 // Capture the URL hash synchronously at module load — Supabase's client
 // auto-clears the hash once it detects the invite/recovery token.
