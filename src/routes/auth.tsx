@@ -14,7 +14,12 @@ import { Swords } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false, component: AuthPage });
+  ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
+  component: AuthPage,
+});
 
 // Capture the URL hash synchronously at module load — Supabase's client
 // auto-clears the hash once it detects the invite/recovery token.
@@ -25,7 +30,10 @@ const initialIsInvite =
 function AuthPage() {
   const { user, role, loading } = useAuth();
   const nav = useNavigate();
+  const search = Route.useSearch();
   const clearFlag = useServerFn(clearMustChangePassword);
+
+  const safeNext = search.next && search.next.startsWith("/") && !search.next.startsWith("//") ? search.next : undefined;
 
   const mustChange = !!user?.user_metadata?.must_change_password;
   const [isInvite, setIsInvite] = useState(initialIsInvite);
@@ -33,11 +41,15 @@ function AuthPage() {
 
   useEffect(() => {
     if (loading || !user || showSetPassword) return;
+    if (safeNext) {
+      window.location.href = safeNext;
+      return;
+    }
     if (role === "super_admin") nav({ to: "/admin/applications" });
     else if (role === "trainer") nav({ to: "/trainer" });
     else if (role === "client") nav({ to: "/client" });
     else nav({ to: "/pending" });
-  }, [user, role, loading, nav, showSetPassword]);
+  }, [user, role, loading, nav, showSetPassword, safeNext]);
 
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
