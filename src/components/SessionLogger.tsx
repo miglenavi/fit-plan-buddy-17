@@ -1,7 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { startSession } from "@/lib/sessions.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw } from "lucide-react";
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
 
@@ -41,7 +43,8 @@ function DeltaChip({ label, value, unit = "" }: { label: string; value: number |
 
 export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
-  const { isTrainer } = useAuth();
+  const startFreshSession = useServerFn(startSession);
+  const { isTrainer, isClient } = useAuth();
   const [session, setSession] = useState<any>(null);
   const [sessionExercises, setSessionExercises] = useState<any[]>([]);
   const [exerciseMeta, setExerciseMeta] = useState<Record<string, any>>({});
@@ -57,6 +60,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const [exerciseResults, setExerciseResults] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [startingFresh, setStartingFresh] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -323,6 +327,18 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     doFinish();
   };
 
+  const startFresh = async () => {
+    if (!session?.training_id || startingFresh) return;
+    setStartingFresh(true);
+    try {
+      const res = await startFreshSession({ data: { trainingId: session.training_id } });
+      nav({ to: "/client/sessions/$sessionId", params: { sessionId: res.sessionId } });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't start a new session");
+      setStartingFresh(false);
+    }
+  };
+
   if (loading) return <p className="text-muted-foreground">Loading…</p>;
 
   if (errorMsg || !session) {
@@ -379,7 +395,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
         {session.status === "completed" && (
           <p className="text-xs text-primary mt-1 font-medium">
-            Completed{session.completed_at ? ` on ${new Date(session.completed_at).toLocaleDateString()}` : ""} · read-only
+            Completed{session.completed_at ? ` on ${new Date(session.completed_at).toLocaleDateString()}` : ""} · history only
           </p>
         )}
         <div className="mt-2 flex items-center gap-3">
@@ -389,6 +405,22 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           <span className="text-xs text-muted-foreground tabular-nums">{done} / {total}</span>
         </div>
       </div>
+
+      {session.status === "completed" && isClient && !forceReadOnly && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="font-semibold text-sm">This session is already finished</div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Start a new session to log this training again this week.
+              </p>
+            </div>
+            <Button onClick={startFresh} disabled={startingFresh} className="shrink-0">
+              <RotateCcw className="size-4 mr-1.5" /> {startingFresh ? "Starting…" : "Start again"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {showSummary && (
         <Card className="border-primary/40 bg-primary/5">
