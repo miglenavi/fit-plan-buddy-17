@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PendingRouteImport } from './routes/pending'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainerIndexRouteImport } from './routes/trainer.index'
@@ -22,6 +23,8 @@ import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as TrainerPlansIndexRouteImport } from './routes/trainer.plans.index'
 import { Route as TrainerExercisesIndexRouteImport } from './routes/trainer.exercises.index'
 import { Route as TrainerClientsIndexRouteImport } from './routes/trainer.clients.index'
@@ -29,6 +32,7 @@ import { Route as TrainerPlansPlanIdRouteImport } from './routes/trainer.plans.$
 import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer.exercises.$exerciseId'
 import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
 import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.sessions.$sessionId'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
 import { Route as TrainerClientsClientIdSessionsSessionIdRouteImport } from './routes/trainer.clients.$clientId_.sessions.$sessionId'
 
@@ -40,6 +44,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const PendingRoute = PendingRouteImport.update({
   id: '/pending',
   path: '/pending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -97,6 +106,18 @@ const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
   path: '/admin/applications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TrainerPlansIndexRoute = TrainerPlansIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -133,6 +154,12 @@ const ClientSessionsSessionIdRoute = ClientSessionsSessionIdRouteImport.update({
   path: '/client/sessions/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TrainerPlansPlanIdTrainingsTrainingIdRoute =
   TrainerPlansPlanIdTrainingsTrainingIdRouteImport.update({
     id: '/$planId_/trainings/$trainingId',
@@ -149,8 +176,11 @@ const TrainerClientsClientIdSessionsSessionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
@@ -160,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
@@ -173,14 +204,18 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
@@ -195,8 +230,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/client/history': typeof ClientHistoryRoute
@@ -206,6 +244,7 @@ export interface FileRoutesById {
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/client/sessions/$sessionId': typeof ClientSessionsSessionIdRoute
   '/trainer/clients/$clientId': typeof TrainerClientsClientIdRoute
   '/trainer/exercises/$exerciseId': typeof TrainerExercisesExerciseIdRoute
@@ -221,8 +260,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/pending'
     | '/sitemap.xml'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
     | '/client/history'
@@ -232,6 +274,7 @@ export interface FileRouteTypes {
     | '/trainer/plans'
     | '/client/'
     | '/trainer/'
+    | '/.mcp/invoke-tool/$tool'
     | '/client/sessions/$sessionId'
     | '/trainer/clients/$clientId'
     | '/trainer/exercises/$exerciseId'
@@ -245,14 +288,18 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/pending'
     | '/sitemap.xml'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
     | '/client/history'
     | '/client/profile'
     | '/client'
     | '/trainer'
+    | '/.mcp/invoke-tool/$tool'
     | '/client/sessions/$sessionId'
     | '/trainer/clients/$clientId'
     | '/trainer/exercises/$exerciseId'
@@ -266,8 +313,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/mcp'
     | '/pending'
     | '/sitemap.xml'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
     | '/client/history'
@@ -277,6 +327,7 @@ export interface FileRouteTypes {
     | '/trainer/plans'
     | '/client/'
     | '/trainer/'
+    | '/.mcp/invoke-tool/$tool'
     | '/client/sessions/$sessionId'
     | '/trainer/clients/$clientId'
     | '/trainer/exercises/$exerciseId'
@@ -291,8 +342,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  McpRoute: typeof McpRoute
   PendingRoute: typeof PendingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
@@ -302,6 +356,7 @@ export interface RootRouteChildren {
   TrainerPlansRoute: typeof TrainerPlansRouteWithChildren
   ClientIndexRoute: typeof ClientIndexRoute
   TrainerIndexRoute: typeof TrainerIndexRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ClientSessionsSessionIdRoute: typeof ClientSessionsSessionIdRoute
 }
 
@@ -319,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/pending'
       fullPath: '/pending'
       preLoaderRoute: typeof PendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -398,6 +460,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApplicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trainer/plans/': {
       id: '/trainer/plans/'
       path: '/'
@@ -445,6 +521,13 @@ declare module '@tanstack/react-router' {
       path: '/client/sessions/$sessionId'
       fullPath: '/client/sessions/$sessionId'
       preLoaderRoute: typeof ClientSessionsSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trainer/plans/$planId_/trainings/$trainingId': {
@@ -514,8 +597,12 @@ const TrainerPlansRouteWithChildren = TrainerPlansRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  McpRoute: McpRoute,
   PendingRoute: PendingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminTrainersRoute: AdminTrainersRoute,
   ClientHistoryRoute: ClientHistoryRoute,
@@ -525,6 +612,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrainerPlansRoute: TrainerPlansRouteWithChildren,
   ClientIndexRoute: ClientIndexRoute,
   TrainerIndexRoute: TrainerIndexRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ClientSessionsSessionIdRoute: ClientSessionsSessionIdRoute,
 }
 export const routeTree = rootRouteImport
