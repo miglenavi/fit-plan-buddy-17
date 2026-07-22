@@ -18,10 +18,10 @@ export default defineTool({
       .eq("trainer_id", ctx.getUserId())
       .is("archived_at", null);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    const rows = (data ?? []).map((r: { client_id: string; profiles: { full_name: string | null } | null }) => ({
-      clientId: r.client_id,
-      fullName: r.profiles?.full_name ?? null,
-    }));
+    const rows = (data ?? []).map((r) => {
+      const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+      return { clientId: r.client_id as string, fullName: (profile?.full_name as string | null) ?? null };
+    });
     return {
       content: [{ type: "text", text: JSON.stringify(rows, null, 2) }],
       structuredContent: { clients: rows },
