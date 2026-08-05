@@ -597,6 +597,218 @@ export const articles: Article[] = [
       },
     ],
   },
+  {
+    slug: "trainerize-alternatives-for-personal-trainers",
+    title: "Trainerize Alternatives: How to Choose a Coaching App That Keeps Clients",
+    description:
+      "A practical framework for evaluating Trainerize alternatives as an independent personal trainer, the questions to ask before switching, and where ValhallaFit fits.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "trainerize alternative",
+      "trainerize alternatives",
+      "personal trainer coaching app",
+      "switch from trainerize",
+    ],
+    sections: [
+      {
+        heading: "Why trainers look for an alternative",
+        paragraphs: [
+          "Most trainers do not go looking for a new coaching app because a feature is missing. They go looking because something in the day-to-day has become friction: the price no longer matches the size of their roster, clients are not logging their sessions, or the tool is built around selling programmes when what they actually need is to keep the clients they already have.",
+          "Before comparing products, write down the specific problem you are trying to solve. \"My clients stop logging after week two\" leads to a very different shortlist than \"I want to sell on-demand programmes to strangers.\" A tool that is excellent for one is often mediocre at the other.",
+        ],
+      },
+      {
+        heading: "The questions that actually separate the options",
+        paragraphs: [
+          "Does the client have to install anything? Every install step is a place where a client quietly drops out. A mobile-friendly web experience removes that barrier entirely.",
+          "Can a plan repeat indefinitely, or is it a fixed-length programme? If your clients train the same weekly structure for months at a time, a tool that expects you to rebuild or re-assign a programme every block will cost you hours.",
+          "Does the tool compare what you prescribed against what the client actually did? Logged numbers with no target beside them are a diary. Targets with deltas are coaching evidence you can show a client who thinks they are stuck.",
+          "Can you see, at a glance, who has not trained recently? Retention work is mostly about noticing a lapse in week one rather than week five.",
+          "Who owns the client relationship? Marketplaces that also sell trainers leads have an incentive structure that differs from a tool that simply serves your existing roster.",
+        ],
+      },
+      {
+        heading: "Where ValhallaFit fits",
+        paragraphs: [
+          "ValhallaFit is a retention-focused option rather than a marketplace. It does not sell trainers leads and has no client-facing discovery directory. It exists to keep an existing roster training between sessions.",
+          "Trainers build a workout plan, add training days with exercises and prescribed sets, reps, and weights, and assign the plan to a client. Plans are reusable templates that stay active and repeat weekly, so a client can start any training day on any day they train.",
+          "Clients log their own sets from a phone in the gym, with no app install, and can swap to a prescribed alternative exercise that carries its own separate targets. Trainers see target-versus-actual deltas on reps, weight, and session duration, and can log a session on a client's behalf.",
+          "ValhallaFit is in active development with an early-access list. Weekly check-ins, longer-term progress reporting, and community features are on the roadmap.",
+        ],
+      },
+      {
+        heading: "How to switch without losing clients",
+        paragraphs: [
+          "Do not migrate everyone at once. Move two willing clients first and run them for four weeks. The success measure is not whether you like the interface — it is whether those two clients log their sessions without being chased.",
+          "Export your historical data before you cancel anything. A client's training history is the single most persuasive retention asset you own, and it is much harder to recover after an account closes.",
+          "Rebuild your two or three most-used plan templates in the new tool before the switch, not during it. Most of the pain of migrating is template rebuilding, and doing it under time pressure with live clients is where trainers give up and go back.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "What is a good Trainerize alternative for a small roster?",
+        answer:
+          "Look for tools priced for your actual client count, that require no app install for the client, and that support reusable weekly plans rather than fixed-length programmes. ValhallaFit is built for independent trainers focused on retaining an existing roster.",
+      },
+      {
+        question: "Do clients need to download an app to use ValhallaFit?",
+        answer:
+          "No. Clients use a mobile-friendly web experience to follow their plan and log sets in the gym, so there is no install step to drop out of.",
+      },
+      {
+        question: "Should I switch coaching apps mid-programme?",
+        answer:
+          "Move two clients first for a four-week trial, rebuild your most-used templates in advance, and export your existing session history before closing any account.",
+      },
+    ],
+  },
+  {
+    slug: "client-management-software-for-personal-trainers",
+    title: "Client Management Software for Personal Trainers: What You Actually Need",
+    description:
+      "What client management software should do for an independent personal trainer, which features matter for retention, and how to tell a real coaching tool from an admin dashboard.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "client management software for personal trainers",
+      "personal trainer client management app",
+      "personal trainer client management",
+      "client management for trainers",
+    ],
+    sections: [
+      {
+        heading: "What client management means for a trainer",
+        paragraphs: [
+          "For most independent trainers, \"client management\" is not a CRM full of sales pipelines. It is a much narrower set of questions: who is on my roster right now, what is each person currently working on, what did they last do, and who has gone quiet.",
+          "Software that answers those four questions well will do more for your business than software with a hundred features aimed at agencies and gym chains.",
+        ],
+      },
+      {
+        heading: "The features that matter",
+        paragraphs: [
+          "A single client list with an active and archived state. Clients pause, return, and stop. If your roster view cannot distinguish an active client from a dormant one, you cannot see your business accurately.",
+          "One active plan per client. Ambiguity about which plan a client is currently following is the most common source of confusion in coaching tools — the client does not know what to do, so they do nothing.",
+          "Per-client session history. Every session a client completes should be attached to that client permanently, with the exercises, sets, reps, and weights recorded.",
+          "Prescription with targets. Assigning an exercise without a target rep and weight leaves the client guessing and leaves you with nothing to compare against later.",
+          "Trainer-side logging. Sometimes you are in the gym with the client and it is faster to record the session yourself. A tool that only allows client-side logging creates gaps in the record.",
+        ],
+      },
+      {
+        heading: "What you probably do not need yet",
+        paragraphs: [
+          "Lead capture funnels, marketplace listings, and automated sales sequences all solve a problem you may not have. If your roster is roughly full and your issue is drop-off, those features are cost and complexity without return.",
+          "Likewise, elaborate nutrition modules and body-composition scanners tend to go unused unless they are already central to how you coach. Be honest about what you will actually open every week.",
+        ],
+      },
+      {
+        heading: "How ValhallaFit handles client management",
+        paragraphs: [
+          "ValhallaFit gives trainers a client roster with archiving, a plan builder with training days and per-exercise targets, and one active plan per client so there is never ambiguity about what someone should be doing.",
+          "Assigned plans are reusable weekly templates rather than fixed-length programmes, so a client keeps training on the same structure without you reassigning anything. Each completed session is stored against the client with target-versus-actual deltas on reps and weight.",
+          "Clients log their sets from a phone in the gym with no install, and trainers can log a session on a client's behalf. An exercise library of over 100 movements, tagged by primary and secondary muscle group, backs the plan builder.",
+        ],
+      },
+      {
+        heading: "How to evaluate before you commit",
+        paragraphs: [
+          "Build one real plan for one real client and run it for four weeks. Do not evaluate on a demo account with fake data — demo data hides exactly the friction that kills adoption.",
+          "At the end of four weeks, ask two questions: did the client log without being chased, and can you show them evidence of progress from the record? If both answers are yes, the tool is doing its job.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "What is client management software for personal trainers?",
+        answer:
+          "Software that holds your client roster, the plan each client is currently following, and the history of what they have actually trained — so you can prescribe work, see progress, and spot clients who have gone quiet.",
+      },
+      {
+        question: "Do I need a CRM as a personal trainer?",
+        answer:
+          "Usually not. A sales CRM solves lead capture. Most independent trainers with a roughly full roster need prescription, client logging, and session history instead, because their problem is drop-off rather than lead volume.",
+      },
+      {
+        question: "Can ValhallaFit archive clients who stop training?",
+        answer:
+          "Yes. Clients can be archived so your active roster stays accurate, and their session history is retained.",
+      },
+    ],
+  },
+  {
+    slug: "personal-trainer-app",
+    title: "Personal Trainer App: How to Choose One for Coaching Real Clients",
+    description:
+      "What a personal trainer app should do, how coaching apps differ from consumer fitness apps, and how to pick one that your clients will actually use between sessions.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "personal trainer app",
+      "best personal trainer app",
+      "fitness app for personal trainers",
+      "personal training software",
+      "app for personal trainers to use with clients",
+    ],
+    sections: [
+      {
+        heading: "Two very different kinds of app",
+        paragraphs: [
+          "The phrase \"personal trainer app\" covers two products that have almost nothing in common. The first is a consumer fitness app that gives an individual a generic programme without a coach. The second is a coaching tool a trainer uses to prescribe work to named clients and review what they did.",
+          "If you are a working trainer, only the second category is relevant. The tell is whether the product has a trainer-side view at all: a client roster, a plan builder, and a per-client history. Consumer apps have none of those.",
+        ],
+      },
+      {
+        heading: "What a coaching app has to do",
+        paragraphs: [
+          "Prescribe: build a workout plan with training days, exercises, and target sets, reps, and weights, then assign it to a specific client.",
+          "Deliver: put that plan in front of the client wherever they train, in a form they can follow without you standing next to them. Anything requiring an install or a login they will forget is a drop-off point.",
+          "Capture: let the client record what they actually did — sets, reps, weight — in the gym, at the time, not from memory that evening.",
+          "Compare: show the difference between what you prescribed and what happened. This is the part consumer apps never do, and it is the part that turns logged data into coaching.",
+          "Retain: surface a client who has not trained recently, and hold a long enough history that you can show someone in month six how far they have come since month one.",
+        ],
+      },
+      {
+        heading: "Features worth paying for, and features that go unused",
+        paragraphs: [
+          "Worth paying for: reusable plans that repeat weekly, alternative exercises with their own targets for when equipment is busy or a movement hurts, and a session history that survives a client pausing and coming back.",
+          "Usually unused: elaborate nutrition tracking, in-app payment funnels, and marketplace listings — unless those are already central to how you run your business. Buy for the workflow you have, not the one you imagine having.",
+        ],
+      },
+      {
+        heading: "How ValhallaFit approaches it",
+        paragraphs: [
+          "ValhallaFit is a coaching tool rather than a consumer fitness app. Trainers work in a web workspace to build plans, manage a client roster, and review sessions; clients use a mobile-friendly web experience with no install.",
+          "Plans are reusable weekly templates, so a client can start any prescribed training day on any day they train, with or without the trainer present. Each exercise carries target sets, reps, and weight, and alternative exercises carry their own separate targets.",
+          "Every logged session is compared against the prescription, producing target-versus-actual deltas on reps, weight, and duration. The exercise library covers over 100 movements tagged by primary and secondary muscle group.",
+        ],
+      },
+      {
+        heading: "A four-week test before you commit",
+        paragraphs: [
+          "Pick two clients, build their real plans, and run for four weeks. Judge the tool on whether those clients logged their sessions unprompted, and whether at the end you could show them a concrete piece of progress from the record.",
+          "That single test predicts long-term retention better than any feature comparison, because it measures the only thing that matters: whether the tool survives contact with a busy client.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "What is the best personal trainer app?",
+        answer:
+          "It depends on whether you need a coaching tool or a consumer fitness app. Working trainers need a trainer-side roster, a plan builder with targets, client-side session logging, and target-versus-actual comparison. Test any candidate with two real clients for four weeks.",
+      },
+      {
+        question: "What is the difference between a fitness app and a personal trainer app?",
+        answer:
+          "A consumer fitness app gives one person a generic programme with no coach. A personal trainer app gives the trainer a client roster, a plan builder, and a per-client session history so they can prescribe and review real coaching work.",
+      },
+      {
+        question: "Is there a personal trainer app that does not require clients to install anything?",
+        answer:
+          "Yes. ValhallaFit gives clients a mobile-friendly web experience for following their plan and logging sets in the gym, so there is no install step.",
+      },
+    ],
+  },
 ];
 
 export function getArticle(slug: string): Article | undefined {
