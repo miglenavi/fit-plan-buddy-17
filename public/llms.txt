@@ -1,27 +1,39 @@
 # ValhallaFit
 
-> Coaching platform for personal trainers: manage clients, build progressive workout plans, and track performance from one platform.
+> Client-retention and coaching platform for personal trainers: keep clients training, engaged, and showing measurable progress between sessions — not just during them.
 
-ValhallaFit gives personal trainers a web workspace to plan and review training, and gives their clients a mobile-friendly experience to follow workouts and log sets in the gym.
+ValhallaFit gives personal trainers a web workspace to plan, review, and prove client progress over time, and gives clients a mobile-friendly experience to follow their plan and log sets in the gym on any day, with or without the trainer present.
+
+## Positioning
+
+ValhallaFit is built for trainers whose priority is retention, engagement, and community rather than lead generation. It is not a marketplace and does not sell trainers leads. The product exists to reduce client drop-off by making progress visible, keeping training structured between sessions, and giving trainers a record of what each client actually did.
 
 ## What ValhallaFit does
 
-- Exercise library with primary and secondary muscle group tagging (100+ exercises)
-- Workout plan builder: create reusable, progressive programs with target reps, sets, and weights per exercise
-- Alternative exercise support: prescribe a backup movement with its own targets
-- Client management: assign plans, schedule sessions, and archive clients
-- Session logging: clients log sets, reps, and weights from their phone in the gym
-- Trainer review: compare actual performance against prescribed targets with delta indicators
-- Weekly reusable plans: plans repeat weekly so clients can start the next session any day
+- Reusable weekly workout plans clients can start on any day, so training continues between booked sessions
+- Workout plan builder with target reps, sets, and weights per exercise, plus alternative exercises with their own targets
+- Exercise library of 100+ movements tagged with primary and secondary muscle groups
+- Client session logging from a phone in the gym: sets, reps, and weights
+- Trainer review with target-versus-actual performance deltas, so progress is provable rather than remembered
+- Client management: assign plans, review history, archive clients
+- In development: weekly client check-ins, long-term progress reports, and community features
 
 ## Who it is for
 
-ValhallaFit is built for independent personal trainers who coach a handful of clients and want to stop managing workouts in spreadsheets. Clients get a simple mobile experience to follow their plan and log sessions.
+Independent personal trainers and online coaches who coach a roster of clients and care about keeping them long term. Typical questions ValhallaFit answers: how do I stop clients dropping off, how do I keep clients engaged between sessions, how do I show a client the progress they have made, how do I run a coaching business without spreadsheets.
+
+## Key facts
+
+- Product type: web application for trainers, mobile-friendly web experience for clients
+- Access: trainers apply for an account; the product is in active development with an early-access list
+- Data recorded per session: exercises performed, sets, reps, weight, and comparison against the prescribed target
 
 ## Pages
 
-- [Home](/): Product overview, how it works, and roadmap.
-- [Blog](/blog): Guides and resources for personal trainers.
-- [Workout Plan Builder for Personal Trainers](/blog/workout-plan-builder-for-personal-trainers): How a dedicated plan builder helps trainers create progressive programs faster than spreadsheets.
-- [How to Build a Workout Plan for Your Clients](/blog/how-to-build-a-workout-plan-for-clients): A practical guide on building progressive workout plans from goal-setting to weekly structure.
-- [Fitness Challenges for Personal Trainers](/blog/fitness-challenges-for-personal-trainers): Challenge ideas trainers can run with clients to boost engagement and build consistency.
+- [Home](/): Product overview, retention positioning, how it works, FAQ, and early access.
+- [Blog](/blog): Guides for personal trainers on retention, engagement, and programming.
+- [Client Retention for Personal Trainers](/blog/client-retention-for-personal-trainers): Why clients leave, how to calculate a retention rate, and the coaching habits that keep clients longer.
+- [How to Keep Clients Engaged Between Training Sessions](/blog/keep-clients-engaged-between-sessions): Weekly check-ins, self-guided plans, progress reviews, and community habits that prevent drop-off.
+- [Fitness Challenges for Personal Trainers](/blog/fitness-challenges-for-personal-trainers): Challenge ideas that boost engagement and build consistency.
+- [Workout Plan Builder for Personal Trainers](/blog/workout-plan-builder-for-personal-trainers): How a dedicated plan builder beats spreadsheets for progressive programming.
+- [How to Build a Workout Plan for Your Clients](/blog/how-to-build-a-workout-plan-for-clients): Goal setting, exercise selection, targets, and weekly structure.

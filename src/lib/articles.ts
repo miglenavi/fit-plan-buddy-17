@@ -15,6 +15,139 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    slug: "client-retention-for-personal-trainers",
+    title: "Client Retention for Personal Trainers: How to Keep Clients Longer",
+    description:
+      "Why personal training clients drop off, how to measure your retention rate, and the coaching habits that keep clients training for years instead of months.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "client retention",
+      "how to improve client retention",
+      "personal trainer client retention",
+      "client retention rate",
+    ],
+    sections: [
+      {
+        heading: "What client retention means for a personal trainer",
+        paragraphs: [
+          "Client retention is the share of clients who keep training with you over a given period. If you start January with 20 clients and 16 of them are still with you in June, your six-month retention rate is 80 percent. The formula is simple: clients at the end of the period, minus new clients gained, divided by clients at the start, multiplied by 100.",
+          "Retention matters more than acquisition for most independent trainers. Every client who leaves has to be replaced before you grow, and replacing a client costs marketing time, consultation calls, and onboarding effort. A trainer with strong retention spends their energy coaching rather than constantly selling.",
+        ],
+      },
+      {
+        heading: "Why clients actually leave",
+        paragraphs: [
+          "The most common reason is not price and not the workouts. It is loss of visible progress. When a client cannot see that they are stronger, fitter, or more consistent than they were three months ago, the sessions start to feel like a cost rather than an investment.",
+          "The second reason is the gap between sessions. A client who trains with you twice a week spends roughly 165 hours a week without you. If nothing connects those hours to their goal, the relationship depends entirely on the two hours you share — and the moment life gets busy, those two hours are the first thing cut.",
+          "The third is a lack of structure. Clients who do not know what the next block looks like, what they are working toward, or when they will be reassessed have nothing to stay for once the novelty fades.",
+        ],
+      },
+      {
+        heading: "Make progress visible",
+        paragraphs: [
+          "Progress that is not recorded is progress the client forgets. Log every session — the exercises, the sets, the reps, the weights — so you can show a client in month four exactly what they were lifting in month one.",
+          "In ValhallaFit, each client session is stored against the plan you prescribed, with target-versus-actual deltas on reps and weight. When a client says they feel stuck, you can open their history and show the numbers instead of arguing about a feeling.",
+          "Review progress out loud on a regular cadence — monthly is enough. Name specific numbers: a squat that went from 40kg to 60kg, a streak of 14 completed sessions, a first unassisted pull-up. Specific evidence renews commitment in a way that generic encouragement does not.",
+        ],
+      },
+      {
+        heading: "Own the time between sessions",
+        paragraphs: [
+          "Retention is won in the gaps. Give clients something to do and something to report when you are not with them: a plan they can start on any day, a step target, a mobility routine, or a short weekly check-in on weight, sleep, and energy.",
+          "Because ValhallaFit plans repeat weekly, a client can open their phone on any day, start the next training day, and log it themselves. You see the session appear in their history, so you know who is training and who has gone quiet — before they disappear.",
+          "Act on silence quickly. A client who has not logged a session in ten days is a retention problem you can still fix with a two-line message. The same client at six weeks is usually gone.",
+        ],
+      },
+      {
+        heading: "Build a group, not a list of individuals",
+        paragraphs: [
+          "Clients who feel part of something stay longer than clients who feel like a booking slot. A shared challenge, a small group chat, or a monthly leaderboard turns isolated sessions into a community that carries its own momentum.",
+          "Community also protects you against schedule changes. When a client moves, changes jobs, or drops to one session a month, a group they belong to keeps them attached to your coaching rather than to a specific hour in your calendar.",
+        ],
+      },
+      {
+        heading: "Track the number so you can improve it",
+        paragraphs: [
+          "Calculate your retention rate every quarter using the formula above, and record why each departing client left. Patterns show up fast: if most clients leave around month three, your problem is usually the first reassessment; if they leave after a holiday break, your problem is the gap between sessions.",
+          "A good target for an independent trainer is a majority of clients still active after twelve months. Whatever your starting point, measuring it turns retention from a vague worry into something you can coach against.",
+        ],
+      },
+      {
+        heading: "A simple retention routine",
+        paragraphs: [
+          "Log every session so progress is provable. Send a weekly check-in and read the answers. Reassess and share the numbers monthly. Run a four-week challenge each quarter to create fresh goals. Reach out within a week of any client going quiet.",
+          "None of these depend on new clients. They depend on making the training relationship visible, structured, and continuous — which is exactly what ValhallaFit is built for.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "keep-clients-engaged-between-sessions",
+    title: "How to Keep Clients Engaged Between Training Sessions",
+    description:
+      "Practical ways personal trainers can stay connected with clients between sessions — weekly check-ins, self-guided plans, progress reviews, and community habits that prevent drop-off.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "client engagement",
+      "keep clients motivated",
+      "online coaching check ins",
+      "personal trainer client engagement",
+    ],
+    sections: [
+      {
+        heading: "The problem with two hours a week",
+        paragraphs: [
+          "Most personal training relationships are built on one to three hours of contact per week. Everything that determines whether a client reaches their goal — sleep, food, walking, recovery, and the workouts they do alone — happens outside those hours.",
+          "Trainers who only exist inside the session are competing with everything else in a client's week. Trainers who show up in the gap become part of the client's routine, and that is what keeps people training for years.",
+        ],
+      },
+      {
+        heading: "Run a weekly check-in",
+        paragraphs: [
+          "A check-in is a short, repeatable set of questions the client answers once a week: bodyweight if relevant, energy, sleep, soreness, how the sessions felt, and anything that got in the way. Five fields, two minutes to fill in.",
+          "The value is not the data alone — it is the ritual. A client who knows a check-in is coming stays mentally engaged all week, and you get an early warning signal when something slips. Reply to every check-in, even with two sentences; an unanswered check-in stops happening within a month.",
+        ],
+      },
+      {
+        heading: "Give them a plan they can run without you",
+        paragraphs: [
+          "Clients disengage when there is nothing to do until the next booked session. A reusable weekly plan fixes that: the client opens their phone, picks a training day, and works through it on their own, logging each set as they go.",
+          "In ValhallaFit, plans repeat weekly rather than expiring, so a client can train on any day that suits them. Every self-guided session lands in their history, which means solo work still counts as coached work — and you can review it later.",
+        ],
+      },
+      {
+        heading: "Close the loop on what they log",
+        paragraphs: [
+          "Logged data that nobody looks at teaches clients that logging is pointless. Review sessions between appointments and reference them by name: a specific set that went up, a session where reps dropped off, a movement that keeps getting skipped.",
+          "ValhallaFit shows what the client actually lifted against what you prescribed, so this review takes a few minutes rather than an evening. The client learns that you are watching, which is the single strongest engagement driver there is.",
+        ],
+      },
+      {
+        heading: "Use short challenges to reset motivation",
+        paragraphs: [
+          "Motivation decays on a predictable curve. A four-week challenge — a consistency streak, a strength ladder, a daily step target — resets it with a fresh deadline and a clear finish line.",
+          "Keep challenges specific and short, tie them to the plan you already prescribed, and review the result out loud when they end. Then start the next one.",
+        ],
+      },
+      {
+        heading: "Let clients see each other",
+        paragraphs: [
+          "Engagement compounds when clients are not training in isolation. A shared challenge board, a group chat, or a monthly recap of everyone's wins gives clients a reason to show up that does not depend on your reminders.",
+          "This is where community-focused coaching separates itself from session-selling. The trainer becomes the centre of a group people want to belong to, and belonging outlasts motivation.",
+        ],
+      },
+      {
+        heading: "What good engagement looks like in practice",
+        paragraphs: [
+          "A client trains with you once a week, runs two self-guided sessions from their plan, logs all three, submits a Friday check-in, and gets a reply plus a monthly progress review. That client has around eight touchpoints a month with your coaching instead of four hours of contact.",
+          "That is the difference between a client who renews and a client who quietly stops booking. ValhallaFit is built to make those touchpoints practical for a trainer coaching a real roster of people.",
+        ],
+      },
+    ],
+  },
+  {
     slug: "fitness-challenges-for-personal-trainers",
     title: "Fitness Challenges for Personal Trainers: Ideas That Keep Clients Engaged",
     description:

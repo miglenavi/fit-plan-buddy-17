@@ -66,7 +66,32 @@ export const Route = createFileRoute("/")({
           name: "ValhallaFit",
           url: "https://valhallafit.app/",
           description:
-            "Coaching platform for personal trainers to manage clients, build progressive workout plans, and track performance.",
+            "Client-retention and coaching platform for personal trainers: keep clients training, engaged, and showing measurable progress between sessions.",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "ValhallaFit",
+          url: "https://valhallafit.app/",
+          applicationCategory: "HealthApplication",
+          operatingSystem: "Web browser",
+          description:
+            "ValhallaFit is a client-retention and coaching platform for personal trainers. Trainers build reusable weekly workout plans, assign them to clients, and review logged sessions with target-versus-actual performance deltas. Clients follow their plan and log sets, reps, and weights from their phone in the gym on any day.",
+          audience: {
+            "@type": "Audience",
+            audienceType: "Personal trainers and online fitness coaches",
+          },
+          featureList: [
+            "Reusable weekly workout plans clients can start on any day",
+            "Workout plan builder with per-exercise reps, sets, and weight targets",
+            "Exercise library of 100+ movements with muscle group tagging",
+            "Client session logging from a phone in the gym",
+            "Target-versus-actual performance review for trainers",
+            "Client management and training history",
+          ],
         }),
       },
       {
@@ -116,7 +141,31 @@ export const Route = createFileRoute("/")({
               name: "What is ValhallaFit?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "ValhallaFit is a coaching platform for personal trainers. Trainers use it to build progressive workout plans, assign them to clients, and review completed sessions. Clients follow their plan on their phone and log sets, reps, and weights from the gym.",
+                text: "ValhallaFit is a client-retention and coaching platform for personal trainers. Trainers build reusable weekly workout plans, assign them to clients, and review logged sessions with target-versus-actual performance deltas. Clients follow their plan on their phone and log sets, reps, and weights from the gym.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "What software helps personal trainers retain clients?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Retention-focused coaching software keeps clients training between booked sessions and makes progress visible. ValhallaFit does this with reusable weekly plans clients can start any day, phone-based session logging, and a trainer review that compares actual performance against the prescribed targets, so trainers can show clients exactly how far they have come.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "How do personal trainers keep clients engaged between sessions?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "The most effective habits are a short weekly check-in, a plan the client can run on their own, a regular review of what they logged, and short four-week challenges that reset motivation. ValhallaFit supports self-guided sessions and session review today, with weekly check-ins and community features in development.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "How is client retention rate calculated?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Take the number of clients at the end of a period, subtract new clients gained during it, divide by the number of clients at the start, and multiply by 100. A trainer who starts with 20 clients and still has 16 of the original group six months later has an 80 percent six-month retention rate.",
               },
             },
             {
@@ -487,7 +536,19 @@ function Index() {
               {[
                 {
                   q: "What is ValhallaFit?",
-                  a: "ValhallaFit is a coaching platform for personal trainers. Trainers use it to build progressive workout plans, assign them to clients, and review completed sessions. Clients follow their plan on their phone and log sets, reps, and weights from the gym.",
+                  a: "ValhallaFit is a client-retention and coaching platform for personal trainers. Trainers build reusable weekly workout plans, assign them to clients, and review logged sessions with target-versus-actual performance deltas. Clients follow their plan on their phone and log sets, reps, and weights from the gym.",
+                },
+                {
+                  q: "What software helps personal trainers retain clients?",
+                  a: "Retention-focused coaching software keeps clients training between booked sessions and makes progress visible. ValhallaFit does this with reusable weekly plans clients can start any day, phone-based session logging, and a trainer review that compares actual performance against the prescribed targets — so you can show a client exactly how far they have come.",
+                },
+                {
+                  q: "How do personal trainers keep clients engaged between sessions?",
+                  a: "The habits that work are a short weekly check-in, a plan the client can run on their own, a regular review of what they logged, and short four-week challenges that reset motivation. ValhallaFit supports self-guided sessions and session review today, with weekly check-ins and community features in development.",
+                },
+                {
+                  q: "How is client retention rate calculated?",
+                  a: "Take the number of clients at the end of a period, subtract new clients gained during it, divide by the number of clients at the start, and multiply by 100. Starting with 20 clients and still having 16 of them six months later is an 80 percent six-month retention rate.",
                 },
                 {
                   q: "Who is ValhallaFit for?",
