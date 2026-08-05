@@ -11,7 +11,16 @@ import { useViewAs } from "@/lib/viewAs";
 import type { AppRole } from "@/lib/auth";
 import { Eye } from "lucide-react";
 
-export const Route = createFileRoute("/admin/trainers")({ ssr: false, component: Page });
+export const Route = createFileRoute("/admin/trainers")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Admin — Trainers — ValhallaFit" },
+      { name: "description", content: "Manage trainer accounts and roles." },
+    ],
+  }),
+  component: Page,
+});
 
 type Row = { user_id: string; full_name: string | null; roles: AppRole[] };
 
