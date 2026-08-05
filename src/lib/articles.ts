@@ -3,6 +3,11 @@ export interface ArticleSection {
   paragraphs: string[];
 }
 
+export interface ArticleFaq {
+  question: string;
+  answer: string;
+}
+
 export interface Article {
   slug: string;
   title: string;
@@ -11,6 +16,7 @@ export interface Article {
   updatedAt: string;
   keywords: string[];
   sections: ArticleSection[];
+  faqs?: ArticleFaq[];
 }
 
 export const articles: Article[] = [
