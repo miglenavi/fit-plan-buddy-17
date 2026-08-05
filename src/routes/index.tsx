@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   Repeat,
 } from "lucide-react";
+import { WaitlistForm } from "@/components/WaitlistForm";
+
 
 
 
