@@ -37,3 +37,7 @@ Independent personal trainers and online coaches who coach a roster of clients a
 - [Fitness Challenges for Personal Trainers](/blog/fitness-challenges-for-personal-trainers): Challenge ideas that boost engagement and build consistency.
 - [Workout Plan Builder for Personal Trainers](/blog/workout-plan-builder-for-personal-trainers): How a dedicated plan builder beats spreadsheets for progressive programming.
 - [How to Build a Workout Plan for Your Clients](/blog/how-to-build-a-workout-plan-for-clients): Goal setting, exercise selection, targets, and weekly structure.
+- [How to Run Weekly Check-Ins With Personal Training Clients](/blog/weekly-check-ins-with-personal-training-clients): A repeatable weekly check-in process — what to ask, how long it should take, and how to respond.
+- [Client Progress Reports](/blog/client-progress-report-for-personal-trainers): What to include in a client progress report, how often to send it, and how to build it from logged session data.
+- [How to Win Back Lapsed Personal Training Clients](/blog/win-back-lapsed-personal-training-clients): Spotting a lapse early, what to say, and making the comeback easy.
+- [Client Retention Software for Personal Trainers](/blog/client-retention-software-for-personal-trainers): What to look for when choosing software to keep clients rather than find them, and where ValhallaFit fits.
