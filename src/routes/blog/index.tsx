@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { articles } from "@/lib/articles";
 import { ArrowRight } from "lucide-react";
+import { WaitlistForm } from "@/components/WaitlistForm";
+
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({
