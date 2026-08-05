@@ -41,3 +41,6 @@ Independent personal trainers and online coaches who coach a roster of clients a
 - [Client Progress Reports](/blog/client-progress-report-for-personal-trainers): What to include in a client progress report, how often to send it, and how to build it from logged session data.
 - [How to Win Back Lapsed Personal Training Clients](/blog/win-back-lapsed-personal-training-clients): Spotting a lapse early, what to say, and making the comeback easy.
 - [Client Retention Software for Personal Trainers](/blog/client-retention-software-for-personal-trainers): What to look for when choosing software to keep clients rather than find them, and where ValhallaFit fits.
+- [Trainerize Alternatives](/blog/trainerize-alternatives-for-personal-trainers): How to evaluate coaching apps as an independent trainer and switch without losing clients.
+- [Client Management Software for Personal Trainers](/blog/client-management-software-for-personal-trainers): The roster, prescription, and history features trainers actually need, and what to skip.
+- [Personal Trainer App](/blog/personal-trainer-app): How coaching apps differ from consumer fitness apps and how to pick one clients will use.
