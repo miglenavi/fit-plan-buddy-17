@@ -283,13 +283,15 @@ function Index() {
         <section className="py-10 md:py-12 border-b">
           <div className="container mx-auto px-4 max-w-3xl">
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed text-center">
-              ValhallaFit is a coaching platform for personal trainers. Trainers use
-              it to build progressive workout plans from a library of 100+ exercises,
-              assign plans to clients, and review completed sessions with performance
-              deltas. Clients follow their training plan on their phone and log sets,
-              reps, and weights from the gym. Plans are reusable and repeat weekly, so
-              clients can start the next session any day.
+              ValhallaFit is a coaching and client-retention platform for personal
+              trainers. Trainers build progressive workout plans from a library of 100+
+              exercises, assign them to clients, and review completed sessions with
+              target-versus-actual performance deltas. Clients follow their plan on their
+              phone and log sets, reps, and weights from the gym. Plans are reusable and
+              repeat weekly, so a client can keep training — and keep showing measurable
+              progress — whether or not the trainer is in the room that day.
             </p>
+
           </div>
         </section>
 
