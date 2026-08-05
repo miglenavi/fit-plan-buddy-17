@@ -15,6 +15,67 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    slug: "fitness-challenges-for-personal-trainers",
+    title: "Fitness Challenges for Personal Trainers: Ideas That Keep Clients Engaged",
+    description:
+      "Practical fitness challenge ideas personal trainers can run with their clients to boost engagement, build consistency, and create shareable wins.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: ["fitness challenges", "fitness challenge ideas", "personal trainer"],
+    sections: [
+      {
+        heading: "Why run fitness challenges with your clients",
+        paragraphs: [
+          "Fitness challenges are short, structured goals that give clients something specific to aim for between training sessions. A 30-day challenge creates a clear deadline, a measurable outcome, and a sense of momentum that keeps clients showing up when motivation dips.",
+          "For personal trainers, challenges are also a marketing tool. A client who completes a 30-day challenge and sees real progress is likely to share it — and that word-of-mouth brings in referrals. Challenges work best when they are tied to your training program, not a generic template you found online.",
+        ],
+      },
+      {
+        heading: "Challenge idea 1: 30-day consistency streak",
+        paragraphs: [
+          "The simplest challenge: the client commits to training a set number of days per week for 30 days. The goal is not to lift more weight — it is to build the habit of showing up. Track each completed session and celebrate the streak.",
+          "In ValhallaFit, this maps naturally to a weekly plan. You assign a plan with the target number of training days, and each completed session is logged automatically. The client can see their session history build up over the 30 days.",
+        ],
+      },
+      {
+        heading: "Challenge idea 2: Progressive strength ladder",
+        paragraphs: [
+          "Pick one or two compound lifts — squat, deadlift, bench press, or overhead press. Over four weeks, the client aims to increase their top working set weight each session. The challenge is to add weight every time without losing form.",
+          "This works well with progressive programming. Set target weights in the plan that increase week over week, and review the client's actual lifts versus your prescription after each session. ValhallaFit's performance deltas show you exactly how much the client lifted compared to what you prescribed.",
+        ],
+      },
+      {
+        heading: "Challenge idea 3: Step and movement goal",
+        paragraphs: [
+          "Not every challenge needs to be about lifting. A daily step goal — 8,000 or 10,000 steps — combined with the client's training plan gives them something to focus on between gym sessions. This is especially useful for clients whose main goal is fat loss or general health.",
+          "Track steps outside the app and check in weekly. The training plan handles the structured work; the step goal fills the gaps on non-training days.",
+        ],
+      },
+      {
+        heading: "Challenge idea 4: Skill milestone challenge",
+        paragraphs: [
+          "Choose a skill the client wants to learn — a first pull-up, a bodyweight dip, a strict push-up, or holding a plank for two minutes. Structure the training plan around progressions toward that skill, and set a 4-6 week deadline to achieve it.",
+          "Skill-based challenges are highly motivating because the outcome is binary: you either did the pull-up or you did not. Break the skill down into progression steps in your plan, and celebrate each step the client unlocks.",
+        ],
+      },
+      {
+        heading: "How to structure a challenge in ValhallaFit",
+        paragraphs: [
+          "Create a plan that lasts the duration of the challenge — typically four weeks. Add training days with exercises that support the challenge goal. Set target reps, sets, and weights that progress week over week. Assign the plan to the client.",
+          "The client starts a session for each training day, logs their actual performance, and completes it. You review their logged sessions each week, see how they are tracking against the targets, and adjust the plan if needed. When the 30 days are up, you can start a new round or move to a different challenge — the plan is reusable.",
+        ],
+      },
+      {
+        heading: "Tips for running challenges that work",
+        paragraphs: [
+          "Keep it specific. 'Get fitter in 30 days' is not a challenge — 'train three times a week for 30 days and add 5kg to your squat' is. The client needs to know exactly what success looks like.",
+          "Keep it short. Four weeks is the sweet spot — long enough to see progress, short enough to stay focused. Avoid open-ended challenges with no deadline.",
+          "Celebrate the finish. When the challenge ends, review the results with the client. Show them the numbers — sessions completed, weight added, skills achieved — and plan the next block together.",
+        ],
+      },
+    ],
+  },
+  {
     slug: "workout-plan-builder-for-personal-trainers",
     title: "Workout Plan Builder for Personal Trainers",
     description:
