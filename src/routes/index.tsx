@@ -451,19 +451,23 @@ function Index() {
           </div>
         </section>
 
-        {/* Slim CTA strip */}
-        <section className="border-b">
-          <div className="container mx-auto px-4 py-10 md:py-12 flex flex-col md:flex-row items-center justify-between gap-4 max-w-5xl">
-            <p className="text-base md:text-lg font-medium text-foreground text-center md:text-left">
-              Coaching a few clients and tired of the spreadsheets?
+        {/* Email capture strip */}
+        <section id="early-access" className="border-b">
+          <div className="container mx-auto px-4 py-12 md:py-14 max-w-3xl text-center">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              Building the retention side next
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Weekly check-ins, progress reports clients actually want to read, and
+              community features for trainers who coach beyond the gym floor. Leave your
+              email and I'll let you know when each piece ships.
             </p>
-            <Link to="/auth">
-              <Button size="lg" className="gap-2">
-                Apply as trainer <ArrowRight className="size-4" />
-              </Button>
-            </Link>
+            <div className="mt-6 max-w-md mx-auto">
+              <WaitlistForm source="home-cta" buttonLabel="Get early access" />
+            </div>
           </div>
         </section>
+
 
         {/* FAQ */}
         <section id="faq" className="py-16 md:py-20">
