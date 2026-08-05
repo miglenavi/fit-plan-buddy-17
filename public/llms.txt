@@ -4,6 +4,23 @@
 
 ValhallaFit gives personal trainers a web workspace to plan and review training, and gives their clients a mobile-friendly experience to follow workouts and log sets in the gym.
 
+## What ValhallaFit does
+
+- Exercise library with primary and secondary muscle group tagging (100+ exercises)
+- Workout plan builder: create reusable, progressive programs with target reps, sets, and weights per exercise
+- Alternative exercise support: prescribe a backup movement with its own targets
+- Client management: assign plans, schedule sessions, and archive clients
+- Session logging: clients log sets, reps, and weights from their phone in the gym
+- Trainer review: compare actual performance against prescribed targets with delta indicators
+- Weekly reusable plans: plans repeat weekly so clients can start the next session any day
+
+## Who it is for
+
+ValhallaFit is built for independent personal trainers who coach a handful of clients and want to stop managing workouts in spreadsheets. Clients get a simple mobile experience to follow their plan and log sessions.
+
 ## Pages
 
 - [Home](/): Product overview, how it works, and roadmap.
+- [Blog](/blog): Guides and resources for personal trainers.
+- [Workout Plan Builder for Personal Trainers](/blog/workout-plan-builder-for-personal-trainers): How a dedicated plan builder helps trainers create progressive programs faster than spreadsheets.
+- [How to Build a Workout Plan for Your Clients](/blog/how-to-build-a-workout-plan-for-clients): A practical guide on building progressive workout plans from goal-setting to weekly structure.
