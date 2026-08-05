@@ -90,20 +90,15 @@ function Index() {
     }
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Loading…
-      </div>
-    );
-  if (user) {
+  // Redirect authenticated users to their dashboard — only after client-side auth loads.
+  // During SSR loading is true so crawlers see the full marketing page.
+  if (!loading && user) {
     if (user.user_metadata?.must_change_password) return <Navigate to="/auth" />;
     if (role === "super_admin") return <Navigate to="/admin/applications" />;
     if (role === "trainer") return <Navigate to="/trainer" />;
     if (role === "client") return <Navigate to="/client" />;
     return <Navigate to="/pending" />;
   }
-
 
   return (
     <div className="min-h-screen bg-background">
