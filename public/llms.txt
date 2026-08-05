@@ -24,3 +24,4 @@ ValhallaFit is built for independent personal trainers who coach a handful of cl
 - [Blog](/blog): Guides and resources for personal trainers.
 - [Workout Plan Builder for Personal Trainers](/blog/workout-plan-builder-for-personal-trainers): How a dedicated plan builder helps trainers create progressive programs faster than spreadsheets.
 - [How to Build a Workout Plan for Your Clients](/blog/how-to-build-a-workout-plan-for-clients): A practical guide on building progressive workout plans from goal-setting to weekly structure.
+- [Fitness Challenges for Personal Trainers](/blog/fitness-challenges-for-personal-trainers): Challenge ideas trainers can run with clients to boost engagement and build consistency.
