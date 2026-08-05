@@ -62,6 +62,20 @@ function BlogIndex() {
           </Link>
         ))}
       </div>
+
+      <section className="mt-14 rounded-2xl border bg-card p-6 md:p-8">
+        <h2 className="text-xl font-semibold tracking-tight">
+          Get new coaching guides by email
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Practical writing on client retention, progress tracking, and keeping people
+          engaged between sessions — plus early access to new ValhallaFit features.
+        </p>
+        <div className="mt-5 max-w-md">
+          <WaitlistForm source="blog-index" buttonLabel="Subscribe" />
+        </div>
+      </section>
     </main>
+
   );
 }
