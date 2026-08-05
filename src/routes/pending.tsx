@@ -9,7 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Swords, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/pending")({ ssr: false, component: PendingPage });
+export const Route = createFileRoute("/pending")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Application pending — ValhallaFit" },
+      { name: "description", content: "Your trainer application is being reviewed." },
+    ],
+  }),
+  component: PendingPage,
+});
 
 type Application = {
   status: "pending" | "approved" | "rejected";
