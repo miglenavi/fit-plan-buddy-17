@@ -24,6 +24,7 @@ import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
 import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as AdminWaitlistRouteImport } from './routes/admin.waitlist'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -114,6 +115,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => BlogRoute,
+} as any)
+const AdminWaitlistRoute = AdminWaitlistRouteImport.update({
+  id: '/admin/waitlist',
+  path: '/admin/waitlist',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTrainersRoute = AdminTrainersRouteImport.update({
   id: '/admin/trainers',
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
+  '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
+  '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
+  '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
+    | '/admin/waitlist'
     | '/blog/$slug'
     | '/client/history'
     | '/client/profile'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
+    | '/admin/waitlist'
     | '/blog/$slug'
     | '/client/history'
     | '/client/profile'
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
+    | '/admin/waitlist'
     | '/blog/$slug'
     | '/client/history'
     | '/client/profile'
@@ -396,6 +408,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
+  AdminWaitlistRoute: typeof AdminWaitlistRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
   ClientProfileRoute: typeof ClientProfileRoute
   TrainerClientsRoute: typeof TrainerClientsRouteWithChildren
@@ -514,6 +527,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
+    }
+    '/admin/waitlist': {
+      id: '/admin/waitlist'
+      path: '/admin/waitlist'
+      fullPath: '/admin/waitlist'
+      preLoaderRoute: typeof AdminWaitlistRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/trainers': {
       id: '/admin/trainers'
@@ -694,6 +714,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminTrainersRoute: AdminTrainersRoute,
+  AdminWaitlistRoute: AdminWaitlistRoute,
   ClientHistoryRoute: ClientHistoryRoute,
   ClientProfileRoute: ClientProfileRoute,
   TrainerClientsRoute: TrainerClientsRouteWithChildren,
