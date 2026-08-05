@@ -3,6 +3,11 @@ export interface ArticleSection {
   paragraphs: string[];
 }
 
+export interface ArticleFaq {
+  question: string;
+  answer: string;
+}
+
 export interface Article {
   slug: string;
   title: string;
@@ -11,6 +16,7 @@ export interface Article {
   updatedAt: string;
   keywords: string[];
   sections: ArticleSection[];
+  faqs?: ArticleFaq[];
 }
 
 export const articles: Article[] = [
@@ -306,6 +312,288 @@ export const articles: Article[] = [
           "A workout plan is not set-and-forget. Check in on your clients' completed sessions each week. Look for stalled progress, missed sessions, or signs the plan is too easy or too hard. Adjust the exercises, targets, or volume as needed.",
           "With ValhallaFit, every completed session is stored with the actual weights and reps the client logged. You can pull up a client's history, see their trend over time, and make informed coaching decisions for the next block.",
         ],
+      },
+    ],
+  },
+  {
+    slug: "weekly-check-ins-with-personal-training-clients",
+    title: "How to Run Weekly Check-Ins With Personal Training Clients",
+    description:
+      "A repeatable weekly check-in process for personal trainers: what to ask, how long it should take, how to respond, and how to use check-in data to keep clients training.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "weekly check in personal trainer",
+      "client check in template",
+      "personal trainer client check ins",
+      "coaching check in questions",
+    ],
+    sections: [
+      {
+        heading: "Why weekly check-ins keep clients longer",
+        paragraphs: [
+          "A check-in is a short, scheduled conversation about the week that just happened. It is the cheapest retention tool a trainer has, because it turns a client's quiet week into information you can act on before they drift away.",
+          "Clients rarely quit in a single decision. They miss one session, then two, then stop replying. A weekly check-in creates a fixed point where that drift becomes visible to you in days rather than weeks.",
+          "It also changes the client's own experience of coaching. When someone knows they will be asked about their week, the week itself gets more attention.",
+        ],
+      },
+      {
+        heading: "Pick a fixed day and keep it short",
+        paragraphs: [
+          "Choose one day for every client — Sunday evening or Monday morning works well because it sits between the week that ended and the week starting. Consistency matters more than the specific day.",
+          "Keep the client's side under two minutes. A check-in that feels like homework gets skipped, and a skipped check-in tells you nothing. Five or six short questions is the practical ceiling.",
+          "Your side should be under five minutes per client. If a check-in round takes an entire evening, you will stop doing it by week four.",
+        ],
+      },
+      {
+        heading: "The questions worth asking",
+        paragraphs: [
+          "Ask about behaviour, not just outcomes. Sessions completed, steps or activity outside the gym, sleep quality, stress, nutrition adherence, and energy in training cover most of what changes week to week.",
+          "Add one open question: what got in the way this week? This is where the real retention signal lives — a schedule change, an injury niggle, a loss of motivation, or a goal that no longer feels relevant.",
+          "Ask for one number the client can self-report reliably. Body weight, resting heart rate, or a simple 1-10 energy score all work. Precision matters less than having the same measure every week so you can show a trend later.",
+        ],
+      },
+      {
+        heading: "Respond in a way that changes the next week",
+        paragraphs: [
+          "Every check-in should get a reply, and the reply should contain one specific instruction. Vague encouragement is forgettable; \"add ten minutes of walking after lunch on your two non-training days\" is not.",
+          "Reference their logged sessions when you reply. In ValhallaFit you can open a client's session history and see what they actually lifted against what you prescribed, so your response is grounded in data rather than in how the client remembers feeling.",
+          "When a client reports a bad week, resist rebuilding the whole plan. Lower one variable — volume, frequency, or intensity — and tell them exactly what you changed and why.",
+        ],
+      },
+      {
+        heading: "Use the check-in record as evidence of progress",
+        paragraphs: [
+          "The compounding value of check-ins is the archive. After twelve weeks you can show a client that their reported energy went from 4 to 7, their sessions completed went from two to four a week, and their working squat weight moved up.",
+          "Review that record out loud with the client every four to six weeks. Clients renew when they can see the line moving, and most cannot see it without you showing them.",
+          "If a client has gone two check-ins without replying, treat it as an active retention risk and call them. A phone call at week two saves relationships that a message at week six will not.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "How often should personal trainers check in with clients?",
+        answer:
+          "Once a week is the practical standard. Weekly is frequent enough to catch a client drifting after one missed session, but infrequent enough that trainers can sustain it across a full roster.",
+      },
+      {
+        question: "What should a personal trainer ask in a weekly check-in?",
+        answer:
+          "Sessions completed, activity outside training, sleep, stress, nutrition adherence, energy in the gym, and one open question about what got in the way. Add one self-reported number tracked the same way every week.",
+      },
+      {
+        question: "How long should a client check-in take?",
+        answer:
+          "Under two minutes for the client and under five minutes for the trainer. Longer check-ins get skipped, and a skipped check-in gives you no retention signal at all.",
+      },
+    ],
+  },
+  {
+    slug: "client-progress-report-for-personal-trainers",
+    title: "Client Progress Reports: What to Include and How Often to Send Them",
+    description:
+      "How personal trainers should structure a client progress report — the metrics that matter, the review cadence, and how to turn logged session data into evidence clients can see.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "client progress report",
+      "personal trainer progress report",
+      "client progress report template",
+      "fitness progress tracking",
+    ],
+    sections: [
+      {
+        heading: "What a progress report is for",
+        paragraphs: [
+          "A progress report answers one question for the client: is this working? Clients cannot answer it from memory, because training adaptations are slow and daily feelings are noisy. The report replaces feeling with evidence.",
+          "It also protects you commercially. Most clients who cancel say they are not seeing results, and in many cases the results exist but were never shown to them.",
+        ],
+      },
+      {
+        heading: "What to include",
+        paragraphs: [
+          "Start with adherence: sessions completed in the period versus sessions planned. This is the metric the client controls, and it is usually the strongest predictor of everything else.",
+          "Then show strength or performance change on two or three key lifts — the working weight and reps at the start of the period against the most recent logged session. Two or three movements is enough; a full spreadsheet gets ignored.",
+          "Add body measures only if the client's goal involves them, and only measures they are tracking consistently. Include one qualitative line from their check-ins, such as improved sleep or energy, so the report reflects how training feels as well as what it measures.",
+          "Finish with what changes next: the focus for the coming block, and one behaviour you want them to hold.",
+        ],
+      },
+      {
+        heading: "How often to send it",
+        paragraphs: [
+          "Every four to six weeks fits most training blocks. Weekly is too frequent for physical change to show, and quarterly is long enough for a client to decide they are stuck before you get the chance to show them otherwise.",
+          "Anchor the report to the end of a training block so the report and the plan change land together. The client sees the evidence, then immediately sees what you are doing about it.",
+        ],
+      },
+      {
+        heading: "Build the report from logged data, not memory",
+        paragraphs: [
+          "A report is only as good as the data behind it. If sessions are not logged, you are estimating, and clients can tell.",
+          "ValhallaFit stores every session against the plan you prescribed, with the actual reps and weights the client entered and target-versus-actual deltas on each set. Pulling a progress report means reading a client's history rather than reconstructing it.",
+          "Because plans repeat weekly and clients can start a training day on any day, the log also shows genuine adherence — who trained, how often, and where the gaps were.",
+        ],
+      },
+      {
+        heading: "Deliver it as a conversation",
+        paragraphs: [
+          "Send the numbers before the conversation so the client arrives having read them, then spend the session or call interpreting them. Name two specific wins and one thing that has not moved.",
+          "Ask what they want the next block to be about. A client who chose the next goal is far more likely to still be training when the following report is due.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "How often should trainers send client progress reports?",
+        answer:
+          "Every four to six weeks, aligned to the end of a training block. That is long enough for measurable change and short enough to correct course before a client concludes they are stuck.",
+      },
+      {
+        question: "What should be in a personal training progress report?",
+        answer:
+          "Sessions completed versus planned, performance change on two or three key lifts, any body measures relevant to the client's goal, one qualitative note from check-ins, and the focus for the next block.",
+      },
+    ],
+  },
+  {
+    slug: "win-back-lapsed-personal-training-clients",
+    title: "How to Win Back Lapsed Personal Training Clients",
+    description:
+      "A practical process for re-engaging clients who stopped training: how to spot a lapse early, what to say, when to call, and how to make coming back feel easy.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "win back lapsed clients",
+      "re-engage personal training clients",
+      "lapsed gym members",
+      "client churn personal trainer",
+    ],
+    sections: [
+      {
+        heading: "Catch the lapse while it is still small",
+        paragraphs: [
+          "A lapse has a shelf life. A client who has missed ten days usually returns after one message. A client who has missed six weeks has rebuilt their routine without you, and coming back now means admitting they stopped.",
+          "Define a threshold and apply it to everyone — for example, no logged session in ten days triggers a personal message. A rule you apply automatically beats a judgement call you make when you happen to remember.",
+          "This only works if you can see activity. When clients log their own sessions, silence is visible; without a log, the first signal is a cancelled payment.",
+        ],
+      },
+      {
+        heading: "What to say first",
+        paragraphs: [
+          "Lead with the person, not the schedule. \"Haven't seen a session from you this week — everything alright?\" outperforms \"you still owe me two sessions\" every time.",
+          "Do not open with a discount. A price cut reframes the relationship as a transaction and teaches clients that disappearing is rewarded.",
+          "Make the return small. Offer one session, one short training day, or one week of a reduced plan. The barrier to returning is psychological, so lower the commitment rather than the price.",
+        ],
+      },
+      {
+        heading: "Find out what actually broke",
+        paragraphs: [
+          "Ask directly and accept the answer. The usual causes are a schedule change, an injury, a life event, money, or a quiet loss of belief that the training was working.",
+          "Each cause has a different fix. Schedule problems need a different session time or a plan the client can run alone. Injuries need a modified plan, not a pause. Loss of belief needs evidence — pull up their logged history and show what changed while they were training.",
+        ],
+      },
+      {
+        heading: "Make the comeback structurally easier",
+        paragraphs: [
+          "Returning clients quit twice as fast when they walk back into the plan they were failing at. Rebuild at a lower volume and let them succeed for two weeks before you push.",
+          "Give them something they can do without you. A reusable weekly plan they can start on any day means a busy week produces a shorter session instead of no session.",
+          "In ValhallaFit, a client's plan stays active and repeatable, so a returning client opens the app, starts the next training day, and logs it — no rebuild required, and you see the session appear.",
+        ],
+      },
+      {
+        heading: "Know when to stop",
+        paragraphs: [
+          "Two personal attempts and a phone call is a fair effort. Beyond that you are spending retention energy that belongs to active clients.",
+          "Close warmly and leave the door open. Trainers regularly get clients back nine or twelve months later, and almost never from someone they chased into discomfort.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "When should a trainer contact a client who stopped training?",
+        answer:
+          "Within about ten days of their last logged session. Re-engagement gets dramatically harder once a client has spent several weeks rebuilding their routine without training.",
+      },
+      {
+        question: "Should you offer a discount to win back a lapsed client?",
+        answer:
+          "Usually not as the opening move. Reduce the commitment instead — a single session or a shorter training week — because the barrier to returning is normally psychological rather than financial.",
+      },
+    ],
+  },
+  {
+    slug: "client-retention-software-for-personal-trainers",
+    title: "Client Retention Software for Personal Trainers: What to Look For",
+    description:
+      "How to choose personal training software when your goal is keeping clients rather than finding them — the features that drive retention, and where ValhallaFit fits.",
+    publishedAt: "2026-08-05",
+    updatedAt: "2026-08-05",
+    keywords: [
+      "client retention software",
+      "personal training software",
+      "personal trainer app for clients",
+      "trainerize alternative",
+    ],
+    sections: [
+      {
+        heading: "Retention software is a different category from lead generation",
+        paragraphs: [
+          "Most tools sold to personal trainers are aimed at finding clients: marketplaces, booking pages, funnels, and directories. They are measured in new leads.",
+          "Retention software is measured differently — by how many of your existing clients are still training in six months. The features that move that number are prescription, logging, visibility, and follow-up, not discovery.",
+          "If your problem is that clients come and go rather than that nobody enquires, buy for the second category.",
+        ],
+      },
+      {
+        heading: "The features that actually affect retention",
+        paragraphs: [
+          "Reusable plans. A plan the client can repeat every week, starting on whichever day suits them, keeps training alive during busy weeks. A one-off calendar of dated workouts turns a missed day into a missed week.",
+          "Client-side logging. If the client records their own sets, reps, and weights, you get an adherence signal between sessions instead of finding out at the next appointment — or at the cancellation.",
+          "Target versus actual. Seeing what you prescribed next to what the client did is what lets you progress the plan on evidence and show the client their own trend.",
+          "Visible history. Clients renew when they can see change. A tool that stores months of sessions in a readable history gives you that conversation on demand.",
+          "A low-friction client experience. Every extra tap between opening the app and logging a set costs adherence.",
+        ],
+      },
+      {
+        heading: "Questions to ask before you commit",
+        paragraphs: [
+          "Can a client start a session on any day, or does the plan assume fixed calendar dates? Fixed dates punish real life.",
+          "Can you change an exercise mid-session without breaking the plan template? Substitutions happen constantly — an occupied rack, a sore shoulder — and the log should still be accurate.",
+          "Can you see, in one place, who has not trained recently? That list is your retention work for the week.",
+          "What happens to the client's history if they pause? Losing the record removes your strongest argument for coming back.",
+          "Also weigh the ordinary commercial factors: pricing at your roster size, how client data can be exported, and what a client needs to install to use it.",
+        ],
+      },
+      {
+        heading: "Where ValhallaFit fits",
+        paragraphs: [
+          "ValhallaFit is built around retention rather than lead generation. Trainers build a workout plan, add training days and exercises with prescribed sets, reps, and weights, and assign the plan to a client.",
+          "Plans are reusable templates: they stay active and repeat weekly, so a client can start any training day whenever they train. Clients log their own sets and can swap in a prescribed alternative exercise, each with its own targets.",
+          "Trainers see target-versus-actual deltas on reps, weight, and session duration, plus a full session history per client, and can also log a session on a client's behalf.",
+          "Retention-focused check-ins, longer-term progress reporting, and community features are on the roadmap — you can join the early access list from the home page.",
+        ],
+      },
+      {
+        heading: "Choosing between options",
+        paragraphs: [
+          "Trial any tool with two real clients for four weeks, not with a demo account. The question is whether those clients log their sessions without being chased.",
+          "If they do, the tool is doing its job. If it takes a reminder every session, no feature list will fix the retention problem underneath.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "What software helps personal trainers retain clients?",
+        answer:
+          "Tools built around prescription, client-side session logging, target-versus-actual comparison, and visible history — rather than marketplaces or booking funnels aimed at finding new clients. ValhallaFit is built for this use case.",
+      },
+      {
+        question: "Is ValhallaFit a marketplace for finding clients?",
+        answer:
+          "No. ValhallaFit is for trainers who already have clients and want to keep them training, with reusable weekly plans, client logging, and per-client session history.",
+      },
+      {
+        question: "Can clients log their own workouts in ValhallaFit?",
+        answer:
+          "Yes. Clients start any training day from their active plan, log sets, reps, and weights, and can select a prescribed alternative exercise with its own targets. Trainers can also log a session for a client.",
       },
     ],
   },
