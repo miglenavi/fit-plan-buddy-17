@@ -135,6 +135,24 @@ function ArticlePage() {
             </section>
           ))}
         </div>
+
+        {article.faqs && article.faqs.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-semibold tracking-tight mb-4">
+              Frequently asked questions
+            </h2>
+            <dl className="space-y-5">
+              {article.faqs.map((faq) => (
+                <div key={faq.question}>
+                  <dt className="font-medium">{faq.question}</dt>
+                  <dd className="mt-1 text-muted-foreground leading-relaxed">
+                    {faq.answer}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
       </article>
 
       <div className="mt-12 rounded-2xl border bg-card p-6 text-center">
@@ -153,20 +171,27 @@ function ArticlePage() {
         </Link>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        {articles
-          .filter((a) => a.slug !== article.slug)
-          .map((a) => (
-            <Link
-              key={a.slug}
-              to="/blog/$slug"
-              params={{ slug: a.slug }}
-              className="text-sm text-primary hover:underline"
-            >
-              {a.title}
-            </Link>
-          ))}
-      </div>
+      <section className="mt-10 border-t pt-8">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+          Keep reading
+        </h2>
+        <ul className="space-y-2">
+          {articles
+            .filter((a) => a.slug !== article.slug)
+            .map((a) => (
+              <li key={a.slug}>
+                <Link
+                  to="/blog/$slug"
+                  params={{ slug: a.slug }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {a.title}
+                </Link>
+              </li>
+            ))}
+        </ul>
+      </section>
+
     </main>
   );
 }
