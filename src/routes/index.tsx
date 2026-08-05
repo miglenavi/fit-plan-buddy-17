@@ -28,7 +28,6 @@ import {
 
 
 export const Route = createFileRoute("/")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "ValhallaFit — Coaching platform for personal trainers" },
@@ -67,6 +66,91 @@ export const Route = createFileRoute("/")({
             "Coaching platform for personal trainers to manage clients, build progressive workout plans, and track performance.",
         }),
       },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          name: "Coaching loop with ValhallaFit",
+          description:
+            "How personal trainers use ValhallaFit to plan, assign, train, and review client workouts.",
+          step: [
+            {
+              "@type": "HowToStep",
+              position: 1,
+              name: "Plan",
+              text: "Build a progressive workout program from your exercise library.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 2,
+              name: "Assign",
+              text: "Schedule the plan for a specific client.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 3,
+              name: "Train",
+              text: "The client follows it on their phone and logs each set.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 4,
+              name: "Review",
+              text: "Check what was completed and adjust the next training block.",
+            },
+          ],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "What is ValhallaFit?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "ValhallaFit is a coaching platform for personal trainers. Trainers use it to build progressive workout plans, assign them to clients, and review completed sessions. Clients follow their plan on their phone and log sets, reps, and weights from the gym.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Who is ValhallaFit for?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "ValhallaFit is built for independent personal trainers who coach a handful of clients and want to stop managing workouts in spreadsheets. Clients get a simple mobile experience to follow their plan and log sessions.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "How does the workout plan builder work?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Trainers build a plan from their exercise library, adding training days and exercises with target reps, sets, and weights. Each exercise can have an alternative movement with its own targets. Plans are reusable and repeat weekly, so clients can start the next session any day.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Can clients log workouts from the gym?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Yes. Clients see their training days on their phone, start a session, and log each set as they go. They can see what they lifted last time and add or remove exercises mid-session if needed.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Is ValhallaFit free?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "ValhallaFit is in active development. Personal trainers can apply for an account from the home page.",
+              },
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Index,
@@ -91,20 +175,15 @@ function Index() {
     }
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Loading…
-      </div>
-    );
-  if (user) {
+  // Redirect authenticated users to their dashboard — only after client-side auth loads.
+  // During SSR loading is true so crawlers see the full marketing page.
+  if (!loading && user) {
     if (user.user_metadata?.must_change_password) return <Navigate to="/auth" />;
     if (role === "super_admin") return <Navigate to="/admin/applications" />;
     if (role === "trainer") return <Navigate to="/trainer" />;
     if (role === "client") return <Navigate to="/client" />;
     return <Navigate to="/pending" />;
   }
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -142,6 +221,8 @@ function Index() {
           </div>
           <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
+            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+            <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
             <a href="#coming-soon" className="hover:text-foreground transition-colors">Roadmap</a>
           </nav>
 
@@ -186,6 +267,19 @@ function Index() {
           </div>
         </section>
 
+        {/* Factual product summary — AI-citable */}
+        <section className="py-10 md:py-12 border-b">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed text-center">
+              ValhallaFit is a coaching platform for personal trainers. Trainers use
+              it to build progressive workout plans from a library of 100+ exercises,
+              assign plans to clients, and review completed sessions with performance
+              deltas. Clients follow their training plan on their phone and log sets,
+              reps, and weights from the gym. Plans are reusable and repeat weekly, so
+              clients can start the next session any day.
+            </p>
+          </div>
+        </section>
 
 
         {/* Two sides of the platform — trainer + client, illustrated with feature lists */}
@@ -359,6 +453,49 @@ function Index() {
                 Apply as trainer <ArrowRight className="size-4" />
               </Button>
             </Link>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section id="faq" className="py-16 md:py-20">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <div className="text-center mb-10">
+              <p className="text-sm font-medium text-primary mb-3">FAQ</p>
+              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+                Frequently asked questions
+              </h2>
+            </div>
+            <div className="space-y-6">
+              {[
+                {
+                  q: "What is ValhallaFit?",
+                  a: "ValhallaFit is a coaching platform for personal trainers. Trainers use it to build progressive workout plans, assign them to clients, and review completed sessions. Clients follow their plan on their phone and log sets, reps, and weights from the gym.",
+                },
+                {
+                  q: "Who is ValhallaFit for?",
+                  a: "ValhallaFit is built for independent personal trainers who coach a handful of clients and want to stop managing workouts in spreadsheets. Clients get a simple mobile experience to follow their plan and log sessions.",
+                },
+                {
+                  q: "How does the workout plan builder work?",
+                  a: "Trainers build a plan from their exercise library, adding training days and exercises with target reps, sets, and weights. Each exercise can have an alternative movement with its own targets. Plans are reusable and repeat weekly, so clients can start the next session any day.",
+                },
+                {
+                  q: "Can clients log workouts from the gym?",
+                  a: "Yes. Clients see their training days on their phone, start a session, and log each set as they go. They can see what they lifted last time and add or remove exercises mid-session if needed.",
+                },
+                {
+                  q: "Is ValhallaFit free?",
+                  a: "ValhallaFit is in active development. Personal trainers can apply for an account from the home page.",
+                },
+              ].map((item) => (
+                <div key={item.q} className="border-b pb-6">
+                  <h3 className="font-semibold text-base mb-2">{item.q}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
