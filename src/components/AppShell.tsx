@@ -20,7 +20,9 @@ const clientNav = [
 const adminNav = [
   { to: "/admin/applications", label: "Applications", icon: UserCheck },
   { to: "/admin/trainers", label: "Trainers", icon: ShieldCheck },
+  { to: "/admin/waitlist", label: "Waitlist", icon: Mail },
 ];
+
 
 function initialsOf(name?: string | null, email?: string | null) {
   const src = (name || email || "?").trim();
