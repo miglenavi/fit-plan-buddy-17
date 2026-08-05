@@ -456,6 +456,49 @@ function Index() {
           </div>
         </section>
 
+        {/* FAQ */}
+        <section id="faq" className="py-16 md:py-20">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <div className="text-center mb-10">
+              <p className="text-sm font-medium text-primary mb-3">FAQ</p>
+              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+                Frequently asked questions
+              </h2>
+            </div>
+            <div className="space-y-6">
+              {[
+                {
+                  q: "What is ValhallaFit?",
+                  a: "ValhallaFit is a coaching platform for personal trainers. Trainers use it to build progressive workout plans, assign them to clients, and review completed sessions. Clients follow their plan on their phone and log sets, reps, and weights from the gym.",
+                },
+                {
+                  q: "Who is ValhallaFit for?",
+                  a: "ValhallaFit is built for independent personal trainers who coach a handful of clients and want to stop managing workouts in spreadsheets. Clients get a simple mobile experience to follow their plan and log sessions.",
+                },
+                {
+                  q: "How does the workout plan builder work?",
+                  a: "Trainers build a plan from their exercise library, adding training days and exercises with target reps, sets, and weights. Each exercise can have an alternative movement with its own targets. Plans are reusable and repeat weekly, so clients can start the next session any day.",
+                },
+                {
+                  q: "Can clients log workouts from the gym?",
+                  a: "Yes. Clients see their training days on their phone, start a session, and log each set as they go. They can see what they lifted last time and add or remove exercises mid-session if needed.",
+                },
+                {
+                  q: "Is ValhallaFit free?",
+                  a: "ValhallaFit is in active development. Personal trainers can apply for an account from the home page.",
+                },
+              ].map((item) => (
+                <div key={item.q} className="border-b pb-6">
+                  <h3 className="font-semibold text-base mb-2">{item.q}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
       </main>
 
       <footer className="border-t">
