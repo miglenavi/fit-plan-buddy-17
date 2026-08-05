@@ -14,7 +14,16 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { toast } from "sonner";
 import { inviteTrainer } from "@/lib/trainers.functions";
 
-export const Route = createFileRoute("/admin/applications")({ ssr: false, component: Page });
+export const Route = createFileRoute("/admin/applications")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Admin — Trainer applications — ValhallaFit" },
+      { name: "description", content: "Review and approve trainer applications." },
+    ],
+  }),
+  component: Page,
+});
 
 type Application = {
   user_id: string;

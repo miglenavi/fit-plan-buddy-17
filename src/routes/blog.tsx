@@ -2,25 +2,6 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { Swords } from "lucide-react";
 
 export const Route = createFileRoute("/blog")({
-  head: () => ({
-    meta: [
-      { title: "Blog — ValhallaFit" },
-      {
-        name: "description",
-        content:
-          "Guides and resources for personal trainers on building workout plans, managing clients, and coaching more effectively.",
-      },
-      { property: "og:title", content: "Blog — ValhallaFit" },
-      {
-        property: "og:description",
-        content:
-          "Guides and resources for personal trainers on building workout plans, managing clients, and coaching more effectively.",
-      },
-      { property: "og:url", content: "https://valhallafit.app/blog" },
-      { property: "og:type", content: "website" },
-    ],
-    links: [{ rel: "canonical", href: "https://valhallafit.app/blog" }],
-  }),
   component: BlogLayout,
 });
 

@@ -10,6 +10,12 @@ import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/trainer/")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Trainer dashboard — ValhallaFit" },
+      { name: "description", content: "Manage your clients, plans, and sessions from one dashboard." },
+    ],
+  }),
   component: () => <RoleGuard role="trainer"><AppShell><Dashboard /></AppShell></RoleGuard>,
 });
 

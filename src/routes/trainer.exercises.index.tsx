@@ -322,7 +322,7 @@ function ExercisesList() {
                         </div>
                       </div>
                       {ex.trainer_id === uid && (
-                        <Button size="icon" variant="ghost" onClick={(e) => remove(e, ex.id)}>
+                        <Button size="icon" variant="ghost" aria-label={`Delete ${ex.name}`} onClick={(e) => remove(e, ex.id)}>
                           <Trash2 className="size-4 text-muted-foreground" />
                         </Button>
                       )}

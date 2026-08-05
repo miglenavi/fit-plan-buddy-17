@@ -18,6 +18,12 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" ? s.next : undefined,
   }),
+  head: () => ({
+    meta: [
+      { title: "Log in — ValhallaFit" },
+      { name: "description", content: "Sign in to your ValhallaFit trainer or client account." },
+    ],
+  }),
   component: AuthPage,
 });
 

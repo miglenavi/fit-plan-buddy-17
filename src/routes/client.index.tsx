@@ -12,6 +12,12 @@ import { startSession } from "@/lib/sessions.functions";
 
 export const Route = createFileRoute("/client/")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Today's workout — ValhallaFit" },
+      { name: "description", content: "View your assigned plans and start your training sessions." },
+    ],
+  }),
   component: () => <RoleGuard role="client"><ClientShell title="Today"><ClientToday /></ClientShell></RoleGuard>,
 });
 
