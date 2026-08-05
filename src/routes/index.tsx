@@ -221,6 +221,8 @@ function Index() {
           </div>
           <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
+            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+            <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
             <a href="#coming-soon" className="hover:text-foreground transition-colors">Roadmap</a>
           </nav>
 
@@ -265,6 +267,19 @@ function Index() {
           </div>
         </section>
 
+        {/* Factual product summary — AI-citable */}
+        <section className="py-10 md:py-12 border-b">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed text-center">
+              ValhallaFit is a coaching platform for personal trainers. Trainers use
+              it to build progressive workout plans from a library of 100+ exercises,
+              assign plans to clients, and review completed sessions with performance
+              deltas. Clients follow their training plan on their phone and log sets,
+              reps, and weights from the gym. Plans are reusable and repeat weekly, so
+              clients can start the next session any day.
+            </p>
+          </div>
+        </section>
 
 
         {/* Two sides of the platform — trainer + client, illustrated with feature lists */}
