@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   Repeat,
 } from "lucide-react";
+import { WaitlistForm } from "@/components/WaitlistForm";
+
 
 
 
@@ -30,19 +32,20 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ValhallaFit — Coaching platform for personal trainers" },
+      { title: "ValhallaFit — Client retention platform for personal trainers" },
       {
         name: "description",
         content:
-          "ValhallaFit helps personal trainers manage clients, build progressive workout plans, and track performance from one platform.",
+          "ValhallaFit helps personal trainers retain and engage clients long term: progressive plans, result tracking, and check-ins that keep people training between sessions.",
       },
-      { property: "og:title", content: "ValhallaFit — Coaching platform for personal trainers" },
+      { property: "og:title", content: "ValhallaFit — Client retention platform for personal trainers" },
       {
         property: "og:description",
         content:
-          "Manage clients, build progressive workout plans, and track performance from one platform.",
+          "Retain and engage clients long term with progressive plans, result tracking, and check-ins between sessions.",
       },
       { property: "og:url", content: "https://valhallafit.app/" },
+
     ],
     links: [{ rel: "canonical", href: "https://valhallafit.app/" }],
     scripts: [
@@ -224,6 +227,8 @@ function Index() {
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
             <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
             <a href="#coming-soon" className="hover:text-foreground transition-colors">Roadmap</a>
+            <a href="#early-access" className="hover:text-foreground transition-colors">Early access</a>
+
           </nav>
 
           <div className="flex items-center gap-2">
@@ -244,15 +249,21 @@ function Index() {
                 In active development
               </div>
               <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
-                A coaching platform for personal trainers.
+                Keep clients training — long after the session ends.
               </h1>
               <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                Help clients stay consistent, track progress, and build stronger training habits.
+                ValhallaFit is built for trainers who care about retention, not lead
+                generation. Track results, stay in your clients' week, and keep people
+                engaged even when they're not training with you in person.
               </p>
 
-              <div className="mt-8 flex flex-col items-center gap-3">
+              <div className="mt-8 max-w-md mx-auto">
+                <WaitlistForm source="home-hero" buttonLabel="Get early access" />
+              </div>
+
+              <div className="mt-6 flex flex-col items-center gap-3">
                 <Link to="/auth">
-                  <Button size="lg" className="gap-2">
+                  <Button size="lg" variant="outline" className="gap-2">
                     Apply as trainer <ArrowRight className="size-4" />
                   </Button>
                 </Link>
@@ -263,6 +274,7 @@ function Index() {
                   Already have an account? Sign in →
                 </Link>
               </div>
+
             </div>
           </div>
         </section>
@@ -271,13 +283,15 @@ function Index() {
         <section className="py-10 md:py-12 border-b">
           <div className="container mx-auto px-4 max-w-3xl">
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed text-center">
-              ValhallaFit is a coaching platform for personal trainers. Trainers use
-              it to build progressive workout plans from a library of 100+ exercises,
-              assign plans to clients, and review completed sessions with performance
-              deltas. Clients follow their training plan on their phone and log sets,
-              reps, and weights from the gym. Plans are reusable and repeat weekly, so
-              clients can start the next session any day.
+              ValhallaFit is a coaching and client-retention platform for personal
+              trainers. Trainers build progressive workout plans from a library of 100+
+              exercises, assign them to clients, and review completed sessions with
+              target-versus-actual performance deltas. Clients follow their plan on their
+              phone and log sets, reps, and weights from the gym. Plans are reusable and
+              repeat weekly, so a client can keep training — and keep showing measurable
+              progress — whether or not the trainer is in the room that day.
             </p>
+
           </div>
         </section>
 
@@ -442,19 +456,23 @@ function Index() {
           </div>
         </section>
 
-        {/* Slim CTA strip */}
-        <section className="border-b">
-          <div className="container mx-auto px-4 py-10 md:py-12 flex flex-col md:flex-row items-center justify-between gap-4 max-w-5xl">
-            <p className="text-base md:text-lg font-medium text-foreground text-center md:text-left">
-              Coaching a few clients and tired of the spreadsheets?
+        {/* Email capture strip */}
+        <section id="early-access" className="border-b">
+          <div className="container mx-auto px-4 py-12 md:py-14 max-w-3xl text-center">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              Building the retention side next
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Weekly check-ins, progress reports clients actually want to read, and
+              community features for trainers who coach beyond the gym floor. Leave your
+              email and I'll let you know when each piece ships.
             </p>
-            <Link to="/auth">
-              <Button size="lg" className="gap-2">
-                Apply as trainer <ArrowRight className="size-4" />
-              </Button>
-            </Link>
+            <div className="mt-6 max-w-md mx-auto">
+              <WaitlistForm source="home-cta" buttonLabel="Get early access" />
+            </div>
           </div>
         </section>
+
 
         {/* FAQ */}
         <section id="faq" className="py-16 md:py-20">

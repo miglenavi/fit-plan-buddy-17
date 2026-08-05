@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useViewAs } from "@/lib/viewAs";
 import { Button } from "@/components/ui/button";
-import { Swords, Users, ClipboardList, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck, Eye, X } from "lucide-react";
+import { Swords, Users, ClipboardList, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck, Eye, X, Mail } from "lucide-react";
 import type { ReactNode } from "react";
 
 const trainerNav = [
@@ -20,7 +20,9 @@ const clientNav = [
 const adminNav = [
   { to: "/admin/applications", label: "Applications", icon: UserCheck },
   { to: "/admin/trainers", label: "Trainers", icon: ShieldCheck },
+  { to: "/admin/waitlist", label: "Waitlist", icon: Mail },
 ];
+
 
 function initialsOf(name?: string | null, email?: string | null) {
   const src = (name || email || "?").trim();
