@@ -227,6 +227,8 @@ function Index() {
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
             <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
             <a href="#coming-soon" className="hover:text-foreground transition-colors">Roadmap</a>
+            <a href="#early-access" className="hover:text-foreground transition-colors">Early access</a>
+
           </nav>
 
           <div className="flex items-center gap-2">
