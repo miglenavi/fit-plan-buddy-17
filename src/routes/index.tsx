@@ -28,7 +28,6 @@ import {
 
 
 export const Route = createFileRoute("/")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "ValhallaFit — Coaching platform for personal trainers" },
