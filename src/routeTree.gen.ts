@@ -12,15 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainerIndexRouteImport } from './routes/trainer.index'
 import { Route as ClientIndexRouteImport } from './routes/client.index'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
 import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
 import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
 import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -52,6 +55,11 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -71,6 +79,11 @@ const ClientIndexRoute = ClientIndexRouteImport.update({
   id: '/client/',
   path: '/client/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BlogRoute,
 } as any)
 const TrainerPlansRoute = TrainerPlansRouteImport.update({
   id: '/trainer/plans',
@@ -96,6 +109,11 @@ const ClientHistoryRoute = ClientHistoryRouteImport.update({
   id: '/client/history',
   path: '/client/history',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const AdminTrainersRoute = AdminTrainersRouteImport.update({
   id: '/admin/trainers',
@@ -182,6 +200,7 @@ const TrainerClientsClientIdSessionsSessionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -189,11 +208,13 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
+  '/blog/': typeof BlogIndexRoute
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -218,8 +239,10 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
+  '/blog': typeof BlogIndexRoute
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -238,6 +261,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/mcp': typeof McpRoute
   '/pending': typeof PendingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -245,11 +269,13 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
+  '/blog/': typeof BlogIndexRoute
   '/client/': typeof ClientIndexRoute
   '/trainer/': typeof TrainerIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -269,6 +295,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/blog'
     | '/mcp'
     | '/pending'
     | '/sitemap.xml'
@@ -276,11 +303,13 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
+    | '/blog/$slug'
     | '/client/history'
     | '/client/profile'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
+    | '/blog/'
     | '/client/'
     | '/trainer/'
     | '/.lovable/oauth/consent'
@@ -305,8 +334,10 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
+    | '/blog/$slug'
     | '/client/history'
     | '/client/profile'
+    | '/blog'
     | '/client'
     | '/trainer'
     | '/.lovable/oauth/consent'
@@ -324,6 +355,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/blog'
     | '/mcp'
     | '/pending'
     | '/sitemap.xml'
@@ -331,11 +363,13 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/applications'
     | '/admin/trainers'
+    | '/blog/$slug'
     | '/client/history'
     | '/client/profile'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
+    | '/blog/'
     | '/client/'
     | '/trainer/'
     | '/.lovable/oauth/consent'
@@ -354,6 +388,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRouteWithChildren
   McpRoute: typeof McpRoute
   PendingRoute: typeof PendingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -396,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -423,6 +465,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/client/'
       preLoaderRoute: typeof ClientIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/trainer/plans': {
       id: '/trainer/plans'
@@ -458,6 +507,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/client/history'
       preLoaderRoute: typeof ClientHistoryRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/admin/trainers': {
       id: '/admin/trainers'
@@ -567,6 +623,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 interface TrainerClientsRouteChildren {
   TrainerClientsClientIdRoute: typeof TrainerClientsClientIdRoute
   TrainerClientsIndexRoute: typeof TrainerClientsIndexRoute
@@ -617,6 +685,7 @@ const TrainerPlansRouteWithChildren = TrainerPlansRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BlogRoute: BlogRouteWithChildren,
   McpRoute: McpRoute,
   PendingRoute: PendingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
