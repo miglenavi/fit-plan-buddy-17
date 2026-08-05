@@ -244,15 +244,21 @@ function Index() {
                 In active development
               </div>
               <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
-                A coaching platform for personal trainers.
+                Keep clients training — long after the session ends.
               </h1>
               <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                Help clients stay consistent, track progress, and build stronger training habits.
+                ValhallaFit is built for trainers who care about retention, not lead
+                generation. Track results, stay in your clients' week, and keep people
+                engaged even when they're not training with you in person.
               </p>
 
-              <div className="mt-8 flex flex-col items-center gap-3">
+              <div className="mt-8 max-w-md mx-auto">
+                <WaitlistForm source="home-hero" buttonLabel="Get early access" />
+              </div>
+
+              <div className="mt-6 flex flex-col items-center gap-3">
                 <Link to="/auth">
-                  <Button size="lg" className="gap-2">
+                  <Button size="lg" variant="outline" className="gap-2">
                     Apply as trainer <ArrowRight className="size-4" />
                   </Button>
                 </Link>
@@ -263,6 +269,7 @@ function Index() {
                   Already have an account? Sign in →
                 </Link>
               </div>
+
             </div>
           </div>
         </section>
