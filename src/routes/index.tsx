@@ -32,19 +32,20 @@ import { WaitlistForm } from "@/components/WaitlistForm";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ValhallaFit — Coaching platform for personal trainers" },
+      { title: "ValhallaFit — Client retention platform for personal trainers" },
       {
         name: "description",
         content:
-          "ValhallaFit helps personal trainers manage clients, build progressive workout plans, and track performance from one platform.",
+          "ValhallaFit helps personal trainers retain and engage clients long term: progressive plans, result tracking, and check-ins that keep people training between sessions.",
       },
-      { property: "og:title", content: "ValhallaFit — Coaching platform for personal trainers" },
+      { property: "og:title", content: "ValhallaFit — Client retention platform for personal trainers" },
       {
         property: "og:description",
         content:
-          "Manage clients, build progressive workout plans, and track performance from one platform.",
+          "Retain and engage clients long term with progressive plans, result tracking, and check-ins between sessions.",
       },
       { property: "og:url", content: "https://valhallafit.app/" },
+
     ],
     links: [{ rel: "canonical", href: "https://valhallafit.app/" }],
     scripts: [
