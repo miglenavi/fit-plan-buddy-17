@@ -57,7 +57,7 @@ function BlogIndex() {
               {article.description}
             </p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
-              Read more <ArrowRight className="size-3.5" />
+              {`Read "${article.title}"`} <ArrowRight className="size-3.5" />
             </span>
           </Link>
         ))}
