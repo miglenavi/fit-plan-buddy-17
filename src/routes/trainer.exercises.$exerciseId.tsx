@@ -18,7 +18,7 @@ export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
 
 
 const MUSCLE_GROUPS = [
-  "chest", "back", "shoulders", "biceps", "triceps",
+  "chest", "upper_back", "lower_back", "shoulders", "biceps", "triceps",
   "quads", "hamstrings", "glutes", "calves", "core", "full_body",
 ] as const;
 type MuscleGroup = typeof MUSCLE_GROUPS[number];

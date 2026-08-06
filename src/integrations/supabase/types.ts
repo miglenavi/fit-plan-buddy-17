@@ -613,7 +613,8 @@ export type Database = {
       app_role: "trainer" | "client" | "super_admin"
       muscle_group:
         | "chest"
-        | "back"
+        | "upper_back"
+        | "lower_back"
         | "shoulders"
         | "biceps"
         | "triceps"
@@ -753,7 +754,8 @@ export const Constants = {
       app_role: ["trainer", "client", "super_admin"],
       muscle_group: [
         "chest",
-        "back",
+        "upper_back",
+        "lower_back",
         "shoulders",
         "biceps",
         "triceps",
