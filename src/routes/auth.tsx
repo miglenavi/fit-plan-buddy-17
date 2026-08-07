@@ -100,6 +100,23 @@ function AuthPage() {
     else toast.success("Application submitted! Awaiting approval.");
   };
 
+  const handleClientSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/client/trainer`,
+        data: { full_name: fullName },
+      },
+    });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Account created! Check your email to confirm, then pick your trainer.");
+  };
+
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-accent/30">
       <div className="w-full max-w-md">
