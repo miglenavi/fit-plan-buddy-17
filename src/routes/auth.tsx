@@ -187,7 +187,28 @@ function AuthPage() {
                   </button>
                 </form>
               </TabsContent>
+              <TabsContent value="client">
+                <form onSubmit={handleClientSignUp} className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Create your client account, then request access to your trainer.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="cn">Full name</Label>
+                    <Input id="cn" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ce">Email</Label>
+                    <Input id="ce" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cp">Password</Label>
+                    <Input id="cp" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Create client account"}</Button>
+                </form>
+              </TabsContent>
               <TabsContent value="apply">
+
                 <form onSubmit={handleApply} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="sn">Full name</Label>
@@ -213,8 +234,9 @@ function AuthPage() {
           )}
         </Card>
         <p className="text-xs text-center text-muted-foreground mt-4">
-          Clients: log in with the credentials your trainer gave you. Trainers: apply and wait for super‑admin approval.
+          Clients: sign up and request access to your trainer, or log in with the credentials your trainer gave you. Trainers: apply and wait for super‑admin approval.
         </p>
+
       </div>
     </div>
   );
