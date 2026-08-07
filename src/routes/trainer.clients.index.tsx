@@ -17,22 +17,47 @@ export const Route = createFileRoute("/trainer/clients/")({
 
 function Clients() {
   const [clients, setClients] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const invite = useServerFn(inviteClient);
   const resend = useServerFn(resendClientInvite);
 
   const load = async () => {
-    const { data } = await supabase
-      .from("trainer_clients")
-      .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
-      .is("archived_at", null)
-      .order("created_at", { ascending: false });
+    const [{ data }, { data: reqs }] = await Promise.all([
+      supabase
+        .from("trainer_clients")
+        .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
+        .is("archived_at", null)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("trainer_requests")
+        .select("id, client_id, note, created_at, profiles:client_id(full_name)")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+    ]);
     setClients(data ?? []);
+    setRequests(reqs ?? []);
   };
 
   useEffect(() => { load(); }, []);
+
+  const respond = async (id: string, approve: boolean) => {
+    setRespondingTo(id);
+    const reason = approve ? null : (window.prompt("Reason (optional)") ?? null);
+    const { error } = await supabase.rpc("respond_to_trainer_request", {
+      _request_id: id,
+      _approve: approve,
+      _reason: reason,
+    });
+    setRespondingTo(null);
+    if (error) return toast.error(error.message);
+    toast.success(approve ? "Client added" : "Request declined");
+    load();
+  };
+
 
   const redirectTo = () =>
     typeof window !== "undefined" ? `${window.location.origin}/auth` : "";
