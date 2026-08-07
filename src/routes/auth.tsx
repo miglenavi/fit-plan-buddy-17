@@ -100,6 +100,23 @@ function AuthPage() {
     else toast.success("Application submitted! Awaiting approval.");
   };
 
+  const handleClientSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/client/trainer`,
+        data: { full_name: fullName },
+      },
+    });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Account created! Check your email to confirm, then pick your trainer.");
+  };
+
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-accent/30">
       <div className="w-full max-w-md">
@@ -133,10 +150,12 @@ function AuthPage() {
           ) : (
           <Tabs defaultValue="login">
             <CardHeader>
-              <TabsList className="grid grid-cols-2 w-full">
+              <TabsList className="grid grid-cols-3 w-full">
                 <TabsTrigger value="login">Log in</TabsTrigger>
-                <TabsTrigger value="apply">Apply as trainer</TabsTrigger>
+                <TabsTrigger value="client">Sign up</TabsTrigger>
+                <TabsTrigger value="apply">Trainer</TabsTrigger>
               </TabsList>
+
             </CardHeader>
             <CardContent>
               <TabsContent value="login">
@@ -168,7 +187,28 @@ function AuthPage() {
                   </button>
                 </form>
               </TabsContent>
+              <TabsContent value="client">
+                <form onSubmit={handleClientSignUp} className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Create your client account, then request access to your trainer.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="cn">Full name</Label>
+                    <Input id="cn" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ce">Email</Label>
+                    <Input id="ce" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cp">Password</Label>
+                    <Input id="cp" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "..." : "Create client account"}</Button>
+                </form>
+              </TabsContent>
               <TabsContent value="apply">
+
                 <form onSubmit={handleApply} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="sn">Full name</Label>
@@ -194,8 +234,9 @@ function AuthPage() {
           )}
         </Card>
         <p className="text-xs text-center text-muted-foreground mt-4">
-          Clients: log in with the credentials your trainer gave you. Trainers: apply and wait for super‑admin approval.
+          Clients: sign up and request access to your trainer, or log in with the credentials your trainer gave you. Trainers: apply and wait for super‑admin approval.
         </p>
+
       </div>
     </div>
   );

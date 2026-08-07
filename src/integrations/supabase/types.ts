@@ -355,6 +355,39 @@ export type Database = {
           },
         ]
       }
+      trainer_requests: {
+        Row: {
+          client_id: string
+          created_at: string
+          decline_reason: string | null
+          id: string
+          note: string | null
+          status: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       training_exercises: {
         Row: {
           alt_coach_notes: string | null
@@ -603,9 +636,20 @@ export type Database = {
         Returns: boolean
       }
       link_client_by_email: { Args: { _email: string }; Returns: string }
+      list_trainers: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       reapply_trainer: { Args: { _note: string }; Returns: undefined }
       reject_trainer: {
         Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
+      respond_to_trainer_request: {
+        Args: { _approve: boolean; _reason?: string; _request_id: string }
         Returns: undefined
       }
     }

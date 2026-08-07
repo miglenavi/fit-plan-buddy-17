@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { UserPlus, ChevronRight, Mail, ClipboardList } from "lucide-react";
+import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
@@ -17,22 +17,48 @@ export const Route = createFileRoute("/trainer/clients/")({
 
 function Clients() {
   const [clients, setClients] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const invite = useServerFn(inviteClient);
   const resend = useServerFn(resendClientInvite);
 
   const load = async () => {
-    const { data } = await supabase
-      .from("trainer_clients")
-      .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
-      .is("archived_at", null)
-      .order("created_at", { ascending: false });
+    const [{ data }, { data: reqs }] = await Promise.all([
+      supabase
+        .from("trainer_clients")
+        .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
+        .is("archived_at", null)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("trainer_requests")
+        .select("id, client_id, note, created_at, profiles:client_id(full_name)")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+    ]);
     setClients(data ?? []);
+    setRequests(reqs ?? []);
   };
 
   useEffect(() => { load(); }, []);
+
+  const respond = async (id: string, approve: boolean) => {
+    setRespondingTo(id);
+    const reason = approve ? undefined : (window.prompt("Reason (optional)") || undefined);
+    const { error } = await supabase.rpc("respond_to_trainer_request", {
+      _request_id: id,
+      _approve: approve,
+      ...(reason ? { _reason: reason } : {}),
+    });
+
+    setRespondingTo(null);
+    if (error) return toast.error(error.message);
+    toast.success(approve ? "Client added" : "Request declined");
+    load();
+  };
+
 
   const redirectTo = () =>
     typeof window !== "undefined" ? `${window.location.origin}/auth` : "";
@@ -69,9 +95,41 @@ function Clients() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
         <p className="text-muted-foreground mt-1">
-          Invite clients by email — they'll get a link to set their own password.
+          Invite clients by email, or approve clients who requested to train with you.
         </p>
       </div>
+
+      {requests.length > 0 && (
+        <Card className="border-primary/60 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserRoundCheck className="size-5" /> Access requests ({requests.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {requests.map((r) => (
+              <div key={r.id} className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
+                <div className="min-w-0">
+                  <div className="font-medium">{r.profiles?.full_name ?? "New client"}</div>
+                  {r.note && <p className="text-xs text-muted-foreground mt-0.5">{r.note}</p>}
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    Requested {new Date(r.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" disabled={respondingTo === r.id} onClick={() => respond(r.id, true)}>
+                    Approve
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={respondingTo === r.id} onClick={() => respond(r.id, false)}>
+                    Decline
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Invite a client</CardTitle></CardHeader>
