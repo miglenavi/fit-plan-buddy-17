@@ -207,24 +207,9 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const BANNER_KEY = "vf-banner-dismissed";
-
 function Index() {
   const { user, role, loading } = useAuth();
-  const [bannerOpen, setBannerOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.localStorage.getItem(BANNER_KEY) !== "1";
-  });
   const [aboutOpen, setAboutOpen] = useState(false);
-
-  const dismissBanner = () => {
-    setBannerOpen(false);
-    try {
-      window.localStorage.setItem(BANNER_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-  };
 
   // Redirect authenticated users to their dashboard — only after client-side auth loads.
   // During SSR loading is true so crawlers see the full marketing page.
@@ -238,28 +223,6 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Announcement banner — personal, subtle */}
-      {bannerOpen && (
-        <div className="border-b bg-accent/40">
-          <div className="container mx-auto px-4 py-2 flex items-center justify-center gap-3 text-sm">
-            <button
-              onClick={() => setAboutOpen(true)}
-              className="text-center text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <span aria-hidden>🚀</span>{" "}
-              <span className="font-medium text-foreground">Why did I build ValhallaFit?</span>{" "}
-              <span className="underline underline-offset-2">Read the story →</span>
-            </button>
-            <button
-              onClick={dismissBanner}
-              aria-label="Dismiss"
-              className="ml-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Header */}
       <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
