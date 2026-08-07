@@ -96,10 +96,16 @@ function ClientToday() {
       </div>
 
       {!program && (
-        <Card><CardContent className="p-5 text-sm text-muted-foreground text-center">
-          No active plan yet. Your trainer will set one up soon 🌿
+        <Card><CardContent className="p-5 text-sm text-center space-y-3">
+          <p className="text-muted-foreground">
+            No active plan yet. Connect with a trainer to get your first plan 🌿
+          </p>
+          <Link to="/client/trainer">
+            <Button variant="outline" size="sm">Find a trainer</Button>
+          </Link>
         </CardContent></Card>
       )}
+
 
       {program && trainings.length === 0 && (
         <Card><CardContent className="p-5 text-sm text-muted-foreground text-center">
