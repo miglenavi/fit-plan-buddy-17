@@ -17,7 +17,6 @@ import {
   Sparkles,
   AlertTriangle,
   FileText,
-  X,
   ArrowRight,
   LayoutDashboard,
   CheckCircle2,
