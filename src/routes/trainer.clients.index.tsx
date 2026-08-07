@@ -46,12 +46,13 @@ function Clients() {
 
   const respond = async (id: string, approve: boolean) => {
     setRespondingTo(id);
-    const reason = approve ? null : (window.prompt("Reason (optional)") ?? null);
+    const reason = approve ? undefined : (window.prompt("Reason (optional)") || undefined);
     const { error } = await supabase.rpc("respond_to_trainer_request", {
       _request_id: id,
       _approve: approve,
-      _reason: reason,
+      ...(reason ? { _reason: reason } : {}),
     });
+
     setRespondingTo(null);
     if (error) return toast.error(error.message);
     toast.success(approve ? "Client added" : "Request declined");
