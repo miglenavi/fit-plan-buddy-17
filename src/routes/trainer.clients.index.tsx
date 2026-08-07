@@ -95,9 +95,41 @@ function Clients() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
         <p className="text-muted-foreground mt-1">
-          Invite clients by email — they'll get a link to set their own password.
+          Invite clients by email, or approve clients who requested to train with you.
         </p>
       </div>
+
+      {requests.length > 0 && (
+        <Card className="border-primary/60 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserRoundCheck className="size-5" /> Access requests ({requests.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {requests.map((r) => (
+              <div key={r.id} className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
+                <div className="min-w-0">
+                  <div className="font-medium">{r.profiles?.full_name ?? "New client"}</div>
+                  {r.note && <p className="text-xs text-muted-foreground mt-0.5">{r.note}</p>}
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    Requested {new Date(r.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" disabled={respondingTo === r.id} onClick={() => respond(r.id, true)}>
+                    Approve
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={respondingTo === r.id} onClick={() => respond(r.id, false)}>
+                    Decline
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Invite a client</CardTitle></CardHeader>
