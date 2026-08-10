@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string | null
+          expires_at: string
+          full_name: string | null
+          id: string
+          status: string
+          token: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          status?: string
+          token: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          status?: string
+          token?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_programs: {
         Row: {
           client_id: string
@@ -611,7 +653,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_client_invite: { Args: { _token: string }; Returns: string }
       approve_trainer: { Args: { _user_id: string }; Returns: undefined }
+      get_invite_info: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          full_name: string
+          trainer_name: string
+          valid: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
