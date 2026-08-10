@@ -112,6 +112,10 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         return next;
       });
 
+      // Open the first card that still needs an "X or Y" choice so the picker is visible.
+      const firstChoice = (se ?? []).find((row: any) => row.alternative_exercise_id && !picked[row.id]);
+      if (firstChoice) setExpandedId((cur) => cur ?? firstChoice.id);
+
 
       // "Last time"
       const exIds = (se ?? []).map((r: any) => r.exercise_id);
