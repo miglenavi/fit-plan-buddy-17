@@ -574,8 +574,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                     <div className="space-y-2">
 
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Today's sets</Label>
-                      <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem] gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
-                        <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span>
+                      <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_minmax(2.5rem,1fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] sm:gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
+                        <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span><span></span>
                       </div>
                       {sets.map((s, idx) => {
                         const usingAlt = hasAlt && picked && pickedByEx[se.id] && !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
@@ -588,11 +588,11 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         const wd = isSetDone(s) && actualW != null && tW != null ? actualW - Number(tW) : null;
                         return (
                         <div key={idx} className="space-y-1">
-                        <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] gap-2 items-center">
+                        <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_minmax(2.5rem,1fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] sm:gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
-                          <Input type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
-                          <Input type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input className="min-w-0 px-2 text-center tabular-nums" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
+                          <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Checkbox checked={s.completed} disabled={!canEdit} onCheckedChange={(v) => { if (!canEdit) return; updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
                           {canEdit ? (
                             <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => removeSet(se.id, idx)} aria-label="Remove set">
