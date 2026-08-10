@@ -655,6 +655,10 @@ export type Database = {
     Functions: {
       accept_client_invite: { Args: { _token: string }; Returns: string }
       approve_trainer: { Args: { _user_id: string }; Returns: undefined }
+      choose_session_exercise: {
+        Args: { _se_id: string; _use_alternative: boolean }
+        Returns: undefined
+      }
       get_invite_info: {
         Args: { _token: string }
         Returns: {
