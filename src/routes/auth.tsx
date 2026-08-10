@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Swords } from "lucide-react";
-import { PENDING_INVITE_KEY } from "@/routes/join.$token";
+import { PENDING_INVITE_KEY } from "@/lib/invite";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({

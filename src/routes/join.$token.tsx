@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Swords } from "lucide-react";
 import { toast } from "sonner";
+import { PENDING_INVITE_KEY } from "@/lib/invite";
 
-export const PENDING_INVITE_KEY = "valhallafit_pending_invite";
 
 export const Route = createFileRoute("/join/$token")({
   ssr: false,
