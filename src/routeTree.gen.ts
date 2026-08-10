@@ -21,6 +21,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
 import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
 import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ClientTrainerRouteImport } from './routes/client.trainer'
 import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
@@ -100,6 +101,11 @@ const TrainerExercisesRoute = TrainerExercisesRouteImport.update({
 const TrainerClientsRoute = TrainerClientsRouteImport.update({
   id: '/trainer/clients',
   path: '/trainer/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientTrainerRoute = ClientTrainerRouteImport.update({
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
+  '/join/$token': typeof JoinTokenRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
+  '/join/$token': typeof JoinTokenRoute
   '/blog': typeof BlogIndexRoute
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
+  '/join/$token': typeof JoinTokenRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
@@ -326,6 +335,7 @@ export interface FileRouteTypes {
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
+    | '/join/$token'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
+    | '/join/$token'
     | '/blog'
     | '/client'
     | '/trainer'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
+    | '/join/$token'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
@@ -424,6 +436,7 @@ export interface RootRouteChildren {
   ClientHistoryRoute: typeof ClientHistoryRoute
   ClientProfileRoute: typeof ClientProfileRoute
   ClientTrainerRoute: typeof ClientTrainerRoute
+  JoinTokenRoute: typeof JoinTokenRoute
   TrainerClientsRoute: typeof TrainerClientsRouteWithChildren
   TrainerExercisesRoute: typeof TrainerExercisesRouteWithChildren
   TrainerPlansRoute: typeof TrainerPlansRouteWithChildren
@@ -518,6 +531,13 @@ declare module '@tanstack/react-router' {
       path: '/trainer/clients'
       fullPath: '/trainer/clients'
       preLoaderRoute: typeof TrainerClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/client/trainer': {
@@ -738,6 +758,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientHistoryRoute: ClientHistoryRoute,
   ClientProfileRoute: ClientProfileRoute,
   ClientTrainerRoute: ClientTrainerRoute,
+  JoinTokenRoute: JoinTokenRoute,
   TrainerClientsRoute: TrainerClientsRouteWithChildren,
   TrainerExercisesRoute: TrainerExercisesRouteWithChildren,
   TrainerPlansRoute: TrainerPlansRouteWithChildren,
