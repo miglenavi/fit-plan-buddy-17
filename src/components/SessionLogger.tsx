@@ -389,7 +389,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const showSummary = isTrainer && (durationMin != null || deltaSetCount > 0);
 
   return (
-    <div className="space-y-5 pb-24">
+    <div className="space-y-5 pb-40">
       <div>
         <h2 className="text-xl font-bold tracking-tight">{session.trainings?.name}</h2>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
@@ -672,7 +672,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       </Dialog>
 
       {canEdit && (
-        <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-30">
+        <div className={`fixed inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-[55] ${isTrainer ? "bottom-[68px] md:bottom-0" : "bottom-0"}`}>
           <div className="max-w-md mx-auto">
             <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
               <CheckCircle2 className="size-5 mr-2" /> {finishing ? "Finishing…" : "Finish session"}
@@ -680,6 +680,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           </div>
         </div>
       )}
+
 
       <Dialog open={confirmFinishOpen} onOpenChange={setConfirmFinishOpen}>
         <DialogContent className="max-w-sm">
