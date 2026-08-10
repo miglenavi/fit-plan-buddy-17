@@ -18,6 +18,9 @@ export const Route = createFileRoute("/trainer/clients/")({
 function Clients() {
   const [clients, setClients] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [links, setLinks] = useState<any[]>([]);
+  const [linkName, setLinkName] = useState("");
+  const [creatingLink, setCreatingLink] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,7 +29,7 @@ function Clients() {
   const resend = useServerFn(resendClientInvite);
 
   const load = async () => {
-    const [{ data }, { data: reqs }] = await Promise.all([
+    const [{ data }, { data: reqs }, { data: invs }] = await Promise.all([
       supabase
         .from("trainer_clients")
         .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
@@ -37,12 +40,53 @@ function Clients() {
         .select("id, client_id, note, created_at, profiles:client_id(full_name)")
         .eq("status", "pending")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("client_invites")
+        .select("id, token, full_name, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
     ]);
     setClients(data ?? []);
     setRequests(reqs ?? []);
+    setLinks(invs ?? []);
   };
 
   useEffect(() => { load(); }, []);
+
+  const inviteUrl = (token: string) =>
+    typeof window !== "undefined" ? `${window.location.origin}/join/${token}` : "";
+
+  const createInviteLink = async () => {
+    setCreatingLink(true);
+    const { data: auth } = await supabase.auth.getUser();
+    const token = crypto.randomUUID().replace(/-/g, "");
+    const { error } = await supabase.from("client_invites").insert({
+      trainer_id: auth.user?.id as string,
+      token,
+      full_name: linkName || null,
+    });
+    setCreatingLink(false);
+    if (error) return toast.error(error.message);
+    setLinkName("");
+    await copyLink(token);
+    load();
+  };
+
+  const copyLink = async (token: string) => {
+    try {
+      await navigator.clipboard.writeText(inviteUrl(token));
+      toast.success("Invite link copied — send it to your client");
+    } catch {
+      toast.info(inviteUrl(token));
+    }
+  };
+
+  const cancelLink = async (id: string) => {
+    const { error } = await supabase.from("client_invites").update({ status: "cancelled" }).eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
 
   const respond = async (id: string, approve: boolean) => {
     setRespondingTo(id);
