@@ -389,7 +389,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const showSummary = isTrainer && (durationMin != null || deltaSetCount > 0);
 
   return (
-    <div className="space-y-5 pb-24">
+    <div className="space-y-5 pb-40">
       <div>
         <h2 className="text-xl font-bold tracking-tight">{session.trainings?.name}</h2>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
