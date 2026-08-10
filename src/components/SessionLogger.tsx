@@ -104,7 +104,13 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       }
       setSetLogsByEx(logs);
       setExerciseMeta(meta);
-      setPickedByEx(picked);
+      // Keep choices already made in this session view — reloading must not
+      // reset the card back to "Choose one to start".
+      setPickedByEx((prev) => {
+        const next = { ...picked };
+        for (const [k, v] of Object.entries(prev)) if (v) next[k] = true;
+        return next;
+      });
 
 
       // "Last time"
