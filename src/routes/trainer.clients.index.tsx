@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck } from "lucide-react";
+import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
@@ -18,6 +18,9 @@ export const Route = createFileRoute("/trainer/clients/")({
 function Clients() {
   const [clients, setClients] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [links, setLinks] = useState<any[]>([]);
+  const [linkName, setLinkName] = useState("");
+  const [creatingLink, setCreatingLink] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,7 +29,7 @@ function Clients() {
   const resend = useServerFn(resendClientInvite);
 
   const load = async () => {
-    const [{ data }, { data: reqs }] = await Promise.all([
+    const [{ data }, { data: reqs }, { data: invs }] = await Promise.all([
       supabase
         .from("trainer_clients")
         .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
@@ -37,12 +40,53 @@ function Clients() {
         .select("id, client_id, note, created_at, profiles:client_id(full_name)")
         .eq("status", "pending")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("client_invites")
+        .select("id, token, full_name, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
     ]);
     setClients(data ?? []);
     setRequests(reqs ?? []);
+    setLinks(invs ?? []);
   };
 
   useEffect(() => { load(); }, []);
+
+  const inviteUrl = (token: string) =>
+    typeof window !== "undefined" ? `${window.location.origin}/join/${token}` : "";
+
+  const createInviteLink = async () => {
+    setCreatingLink(true);
+    const { data: auth } = await supabase.auth.getUser();
+    const token = crypto.randomUUID().replace(/-/g, "");
+    const { error } = await supabase.from("client_invites").insert({
+      trainer_id: auth.user?.id as string,
+      token,
+      full_name: linkName || null,
+    });
+    setCreatingLink(false);
+    if (error) return toast.error(error.message);
+    setLinkName("");
+    await copyLink(token);
+    load();
+  };
+
+  const copyLink = async (token: string) => {
+    try {
+      await navigator.clipboard.writeText(inviteUrl(token));
+      toast.success("Invite link copied — send it to your client");
+    } catch {
+      toast.info(inviteUrl(token));
+    }
+  };
+
+  const cancelLink = async (id: string) => {
+    const { error } = await supabase.from("client_invites").update({ status: "cancelled" }).eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
 
   const respond = async (id: string, approve: boolean) => {
     setRespondingTo(id);
@@ -132,7 +176,43 @@ function Clients() {
 
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Invite a client</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="size-5" /> Invite link (most reliable)</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Create a link and send it however you like — WhatsApp, Messenger, SMS. When your client opens it and
+            creates an account (or logs in), they're connected to you automatically. Valid 30 days.
+          </p>
+          <div className="flex gap-2 flex-col sm:flex-row">
+            <Input placeholder="Client name (optional)" value={linkName} onChange={(e) => setLinkName(e.target.value)} />
+            <Button type="button" disabled={creatingLink} onClick={createInviteLink}>
+              {creatingLink ? "..." : "Create invite link"}
+            </Button>
+          </div>
+          {links.length > 0 && (
+            <div className="space-y-2">
+              {links.map((l) => (
+                <div key={l.id} className="flex items-center justify-between gap-2 rounded-lg border p-2 text-sm">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{l.full_name || "Invite link"}</div>
+                    <div className="text-xs text-muted-foreground truncate">{inviteUrl(l.token)}</div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button type="button" size="sm" variant="outline" onClick={() => copyLink(l.token)}>
+                      <Copy className="size-3.5 mr-1" /> Copy
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => cancelLink(l.id)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Invite a client by email</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={handleInvite} className="flex gap-2 flex-col sm:flex-row">
             <Input placeholder="Full name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -141,9 +221,11 @@ function Clients() {
           </form>
           <p className="text-xs text-muted-foreground mt-2">
             Your client receives an email with a secure link to activate their account and set a password.
+            Email links expire quickly — if it fails, use an invite link above instead.
           </p>
         </CardContent>
       </Card>
+
 
       <div className="grid sm:grid-cols-2 gap-3">
         {clients.map((c) => (

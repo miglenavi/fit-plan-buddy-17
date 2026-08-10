@@ -85,15 +85,15 @@ export const resendClientInvite = createServerFn({ method: "POST" })
     });
 
 
-    // Generate a fresh magic link (works whether or not the user already confirmed)
-    const { error: linkGenErr } = await supabaseAdmin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: { redirectTo: data.redirectTo },
+    // Actually deliver a fresh email. admin.generateLink() only *returns* a link,
+    // it never sends one — that's why "resend invite" appeared to do nothing.
+    const { error: sendErr } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
+      redirectTo: data.redirectTo,
     });
-    if (linkGenErr) throw new Error(linkGenErr.message);
+    if (sendErr) throw new Error(sendErr.message);
 
     return { ok: true, email };
+
   });
 
 export const clearMustChangePassword = createServerFn({ method: "POST" })

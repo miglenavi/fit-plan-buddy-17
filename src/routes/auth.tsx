@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Swords } from "lucide-react";
+import { PENDING_INVITE_KEY } from "@/lib/invite";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -43,6 +44,19 @@ function AuthPage() {
   const mustChange = !!user?.user_metadata?.must_change_password;
   const [isInvite, setIsInvite] = useState(initialIsInvite);
   const showSetPassword = isInvite || mustChange;
+
+  // Redeem a pending trainer invite link (stored by /join/$token) once signed in.
+  useEffect(() => {
+    if (loading || !user) return;
+    let pending: string | null = null;
+    try { pending = localStorage.getItem(PENDING_INVITE_KEY); } catch { /* ignore */ }
+    if (!pending) return;
+    (async () => {
+      const { error } = await supabase.rpc("accept_client_invite", { _token: pending });
+      try { localStorage.removeItem(PENDING_INVITE_KEY); } catch { /* ignore */ }
+      if (!error) toast.success("You're connected with your trainer!");
+    })();
+  }, [user, loading]);
 
   useEffect(() => {
     if (loading || !user || showSetPassword) return;
