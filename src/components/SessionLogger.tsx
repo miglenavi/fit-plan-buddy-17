@@ -672,7 +672,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       </Dialog>
 
       {canEdit && (
-        <div className="fixed bottom-[68px] md:bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-[55]">
+        <div className={`fixed inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-[55] ${isTrainer ? "bottom-[68px] md:bottom-0" : "bottom-0"}`}>
           <div className="max-w-md mx-auto">
             <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
               <CheckCircle2 className="size-5 mr-2" /> {finishing ? "Finishing…" : "Finish session"}
