@@ -271,34 +271,21 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const chooseExercise = async (seId: string, useAlternative: boolean) => {
     const se = sessionExercises.find((r) => r.id === seId);
     if (!se) return;
-    const hasAnyLog = (setLogsByEx[seId] ?? []).some((s) => s.completed || s.reps != null || s.weight != null || s.rpe != null);
-    if (hasAnyLog) {
-      toast.error("You've already logged sets — clear them before switching exercise.");
-      return;
-    }
-    if (useAlternative && se.alternative_exercise_id) {
-      // Swap exercise IDs AND target prescriptions so target_* always reflects the performed exercise.
-      // Fall back to primary targets when alt_* is not set.
-      const { error } = await supabase
-        .from("session_exercises")
-        .update({
-          exercise_id: se.alternative_exercise_id,
-          alternative_exercise_id: se.exercise_id,
-          target_sets: se.alt_target_sets ?? se.target_sets,
-          target_reps_min: se.alt_target_reps_min ?? se.target_reps_min,
-          target_reps_max: se.alt_target_reps_max ?? se.target_reps_max,
-          target_weight: se.alt_target_weight ?? se.target_weight,
-          alt_target_sets: se.target_sets,
-          alt_target_reps_min: se.target_reps_min,
-          alt_target_reps_max: se.target_reps_max,
-          alt_target_weight: se.target_weight,
-        })
-        .eq("id", seId);
-      if (error) return toast.error(error.message);
-    }
+    if (useAlternative && !se.alternative_exercise_id) return;
+
+    // Runs through a database helper so both the client and the trainer can pick,
+    // regardless of who started the session.
+    const { error } = await supabase.rpc("choose_session_exercise", {
+      _se_id: seId,
+      _use_alternative: useAlternative,
+    });
+    if (error) return toast.error(error.message);
+
     setPickedByEx((p) => ({ ...p, [seId]: true }));
     if (useAlternative) await load();
+    toast.success(useAlternative ? `Switched to ${se.alternative?.name ?? "alternative"}` : `Doing ${se.exercise?.name ?? "this exercise"}`);
   };
+
 
 
 
