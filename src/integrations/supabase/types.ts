@@ -708,6 +708,10 @@ export type Database = {
         Args: { _approve: boolean; _reason?: string; _request_id: string }
         Returns: undefined
       }
+      set_session_exercise_sets: {
+        Args: { _count: number; _se_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "trainer" | "client" | "super_admin"

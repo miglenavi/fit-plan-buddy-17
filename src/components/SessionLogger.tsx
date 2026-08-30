@@ -210,13 +210,21 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     else if (data?.id) updateSet(seId, idx, "id", data.id);
   };
 
-  const addSet = (seId: string) => {
-    setSetLogsByEx((p) => {
-      const arr = [...(p[seId] ?? [])];
-      const nextIdx = arr.reduce((m, s) => Math.max(m, s.set_index), -1) + 1;
-      arr.push({ set_index: nextIdx, reps: null, weight: null, rpe: null, completed: false });
-      return { ...p, [seId]: arr };
-    });
+  // Persist how many sets this exercise has, so add/remove survives a refresh.
+  const persistSetCount = async (seId: string, count: number) => {
+    const { error } = await supabase.rpc("set_session_exercise_sets", { _se_id: seId, _count: count });
+    if (error) toast.error(error.message);
+    else {
+      setSessionExercises((p) => p.map((r: any) => (r.id === seId ? { ...r, target_sets: count } : r)));
+    }
+  };
+
+  const addSet = async (seId: string) => {
+    const arr = [...(setLogsByEx[seId] ?? [])];
+    const nextIdx = arr.reduce((m, s) => Math.max(m, s.set_index), -1) + 1;
+    arr.push({ set_index: nextIdx, reps: null, weight: null, rpe: null, completed: false });
+    setSetLogsByEx((p) => ({ ...p, [seId]: arr }));
+    await persistSetCount(seId, arr.length);
   };
 
   const removeSet = async (seId: string, idx: number) => {
@@ -226,12 +234,12 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       const { error } = await supabase.from("set_logs").delete().eq("id", s.id);
       if (error) return toast.error(error.message);
     }
-    setSetLogsByEx((p) => {
-      const arr = [...(p[seId] ?? [])];
-      arr.splice(idx, 1);
-      return { ...p, [seId]: arr };
-    });
+    const arr = [...(setLogsByEx[seId] ?? [])];
+    arr.splice(idx, 1);
+    setSetLogsByEx((p) => ({ ...p, [seId]: arr }));
+    await persistSetCount(seId, arr.length);
   };
+
 
   useEffect(() => {
     if (!pickerOpen) return;
