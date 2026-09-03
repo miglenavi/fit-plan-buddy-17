@@ -805,6 +805,13 @@ export type Database = {
         Args: { _count: number; _se_id: string }
         Returns: undefined
       }
+      trainer_busy_slots: {
+        Args: { _from: string; _to: string; _trainer_id: string }
+        Returns: {
+          end_at: string
+          start_at: string
+        }[]
+      }
     }
     Enums: {
       app_role: "trainer" | "client" | "super_admin"
