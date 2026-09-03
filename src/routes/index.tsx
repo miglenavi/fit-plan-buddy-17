@@ -193,10 +193,18 @@ export const Route = createFileRoute("/")({
             },
             {
               "@type": "Question",
+              name: "Can a client sign up without an invite?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Yes. A client can create an account and request access to a specific trainer. The trainer reviews and approves the request before the client can see workouts or book sessions.",
+              },
+            },
+            {
+              "@type": "Question",
               name: "Is ValhallaFit free?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "ValhallaFit is in active development. Personal trainers can apply for an account from the home page.",
+                text: "ValhallaFit is in active development. Personal trainers can apply for an account from the home page, and clients can sign up and request their trainer directly.",
               },
             },
           ],
