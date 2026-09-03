@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy } from "lucide-react";
+import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
