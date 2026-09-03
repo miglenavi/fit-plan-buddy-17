@@ -178,8 +178,9 @@ function AuthPage() {
             <CardHeader>
               <TabsList className="grid grid-cols-3 w-full">
                 <TabsTrigger value="login">Log in</TabsTrigger>
-                <TabsTrigger value="client">Sign up</TabsTrigger>
-                <TabsTrigger value="apply">Trainer</TabsTrigger>
+                <TabsTrigger value="client">Client sign up</TabsTrigger>
+                <TabsTrigger value="apply">Trainer application</TabsTrigger>
+
               </TabsList>
 
             </CardHeader>
