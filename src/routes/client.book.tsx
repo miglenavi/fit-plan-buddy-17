@@ -192,8 +192,13 @@ function BookSession() {
             {mine.map((b) => (
               <div key={b.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm">
                 <div className="flex-1">
-                  <div className="font-medium">
+                  <div className="flex items-center gap-2 font-medium">
                     {new Date(b.start_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                    {b.series_id && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        <Repeat className="size-3" /> Recurring
+                      </span>
+                    )}
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {clock(new Date(b.start_at))} – {clock(new Date(b.end_at))}
