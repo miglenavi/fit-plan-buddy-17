@@ -25,8 +25,11 @@ function Clients() {
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  const [pendingFirstLogin, setPendingFirstLogin] = useState<string[]>([]);
   const invite = useServerFn(inviteClient);
   const resend = useServerFn(resendClientInvite);
+  const loadPending = useServerFn(listPendingClients);
+
 
   const load = async () => {
     const [{ data }, { data: reqs }, { data: invs }] = await Promise.all([
