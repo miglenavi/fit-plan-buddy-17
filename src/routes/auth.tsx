@@ -79,7 +79,7 @@ function AuthPage() {
     else if (role === "trainer") nav({ to: "/trainer" });
     else if (role === "client") nav({ to: "/client" });
     else nav({ to: "/pending" });
-  }, [user, role, loading, nav, showSetPassword, safeNext]);
+  }, [user, role, loading, nav, showSetPassword, safeNext, redeeming]);
 
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
