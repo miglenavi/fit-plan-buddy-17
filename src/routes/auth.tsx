@@ -34,7 +34,7 @@ const initialIsInvite =
   initialHash.includes("type=invite") || initialHash.includes("type=recovery");
 
 function AuthPage() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, refresh } = useAuth();
   const nav = useNavigate();
   const search = Route.useSearch();
   const clearFlag = useServerFn(clearMustChangePassword);
