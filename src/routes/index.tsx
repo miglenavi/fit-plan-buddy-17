@@ -317,6 +317,7 @@ function Index() {
               </h2>
               <p className="mt-4 text-muted-foreground">
                 A web workspace for the trainer. A focused mobile experience for the client.
+                Clients can join by trainer invite, or sign up themselves and request access to a specific trainer.
               </p>
             </div>
 
