@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { inviteClient, resendClientInvite } from "@/lib/clients.functions";
+import { inviteClient, resendClientInvite, listPendingClients } from "@/lib/clients.functions";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
