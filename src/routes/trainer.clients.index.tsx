@@ -2,13 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { inviteClient, resendClientInvite } from "@/lib/clients.functions";
+import { inviteClient, resendClientInvite, listPendingClients } from "@/lib/clients.functions";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy } from "lucide-react";
+import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
@@ -25,8 +25,11 @@ function Clients() {
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  const [pendingFirstLogin, setPendingFirstLogin] = useState<string[]>([]);
   const invite = useServerFn(inviteClient);
   const resend = useServerFn(resendClientInvite);
+  const loadPending = useServerFn(listPendingClients);
+
 
   const load = async () => {
     const [{ data }, { data: reqs }, { data: invs }] = await Promise.all([
@@ -49,7 +52,14 @@ function Clients() {
     setClients(data ?? []);
     setRequests(reqs ?? []);
     setLinks(invs ?? []);
+    try {
+      const res = await loadPending({ data: {} } as any);
+      setPendingFirstLogin(res.pending ?? []);
+    } catch {
+      setPendingFirstLogin([]);
+    }
   };
+
 
   useEffect(() => { load(); }, []);
 
@@ -123,16 +133,18 @@ function Clients() {
     }
   };
 
-  const handleResend = async (clientId: string, e: React.MouseEvent) => {
+  const handleResend = async (clientId: string, e: React.MouseEvent, isReset = false) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isReset && !window.confirm("Send this client a password reset email? They'll be asked to set a new password on next login.")) return;
     try {
       const res = await resend({ data: { clientId, redirectTo: redirectTo() } });
-      toast.success(`New invite link sent to ${res.email}`);
+      toast.success(isReset ? `Password reset sent to ${res.email}` : `New invite link sent to ${res.email}`);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to resend invite");
+      toast.error(err?.message ?? "Failed to send email");
     }
   };
+
 
   return (
     <div className="space-y-6">
@@ -252,10 +264,26 @@ function Clients() {
                     </Button>
                   }
                 />
-                <Button type="button" size="sm" variant="outline" className="flex-1" onClick={(e) => handleResend(c.client_id, e)}>
-                  <Mail className="size-3.5 mr-1.5" /> Resend invite
-                </Button>
+                {pendingFirstLogin.includes(c.client_id) ? (
+                  <Button type="button" size="sm" variant="outline" className="flex-1" onClick={(e) => handleResend(c.client_id, e)}>
+                    <Mail className="size-3.5 mr-1.5" /> Resend invite
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="flex-1 text-muted-foreground"
+                    onClick={(e) => handleResend(c.client_id, e, true)}
+                  >
+                    <KeyRound className="size-3.5 mr-1.5" /> Send password reset
+                  </Button>
+                )}
               </div>
+              {pendingFirstLogin.includes(c.client_id) && (
+                <p className="text-[11px] text-muted-foreground">Hasn't logged in yet</p>
+              )}
+
             </CardContent>
           </Card>
         ))}

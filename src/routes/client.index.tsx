@@ -6,7 +6,7 @@ import { RoleGuard } from "@/components/RoleGuard";
 import { ClientShell } from "@/components/ClientShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarClock, Play, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
 
@@ -30,6 +30,8 @@ function ClientToday() {
   const [lastDone, setLastDone] = useState<string | null>(null);
   const [inProgress, setInProgress] = useState<{ id: string; training_id: string } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
+  const [hasTrainer, setHasTrainer] = useState<boolean | null>(null);
+  const [todayBooking, setTodayBooking] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -64,8 +66,29 @@ function ClientToday() {
         .order("started_at", { ascending: false })
         .limit(1);
       setInProgress(ip?.[0] ?? null);
+
+      const { data: link } = await supabase
+        .from("trainer_clients")
+        .select("trainer_id")
+        .is("archived_at", null)
+        .limit(1);
+      setHasTrainer(!!link?.[0]);
+
+      const now = new Date();
+      const dayEnd = new Date(now);
+      dayEnd.setHours(23, 59, 59, 999);
+      const { data: bk } = await supabase
+        .from("bookings")
+        .select("id, start_at, end_at, status")
+        .eq("status", "booked")
+        .gte("end_at", now.toISOString())
+        .lte("start_at", dayEnd.toISOString())
+        .order("start_at")
+        .limit(1);
+      setTodayBooking(bk?.[0] ?? null);
     })();
   }, []);
+
 
   // Next suggestion: the training after the last completed one, in order_index. Wraps around.
   let nextId: string | null = null;
@@ -95,16 +118,42 @@ function ClientToday() {
         {program?.plans?.name && <p className="text-sm text-muted-foreground mt-0.5">Current plan: {program.plans.name}</p>}
       </div>
 
-      {!program && (
+      {todayBooking && (
+        <Card className="border-primary/60 bg-primary/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <CalendarClock className="size-5 text-primary shrink-0" />
+            <div className="text-sm">
+              <div className="font-semibold">
+                You have a session booked at{" "}
+                {new Date(todayBooking.start_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} today
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Start your training when you get there — it links to this booking automatically.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!program && hasTrainer !== null && (
         <Card><CardContent className="p-5 text-sm text-center space-y-3">
-          <p className="text-muted-foreground">
-            No active plan yet. Connect with a trainer to get your first plan 🌿
-          </p>
-          <Link to="/client/trainer">
-            <Button variant="outline" size="sm">Find a trainer</Button>
-          </Link>
+          {hasTrainer ? (
+            <p className="text-muted-foreground">
+              Your trainer hasn't assigned a plan yet — check back soon 🌿
+            </p>
+          ) : (
+            <>
+              <p className="text-muted-foreground">
+                No active plan yet. Connect with a trainer to get your first plan 🌿
+              </p>
+              <Link to="/client/trainer">
+                <Button variant="outline" size="sm">Find a trainer</Button>
+              </Link>
+            </>
+          )}
         </CardContent></Card>
       )}
+
 
 
       {program && trainings.length === 0 && (
