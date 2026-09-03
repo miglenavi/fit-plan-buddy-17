@@ -526,8 +526,12 @@ function Index() {
                   a: "Yes. Clients see their training days on their phone, start a session, and log each set as they go. They can see what they lifted last time and add or remove exercises mid-session if needed.",
                 },
                 {
+                  q: "Can a client sign up without an invite?",
+                  a: "Yes. A client can create an account and request access to a specific trainer. The trainer reviews and approves the request before the client can see workouts or book sessions.",
+                },
+                {
                   q: "Is ValhallaFit free?",
-                  a: "ValhallaFit is in active development. Personal trainers can apply for an account from the home page.",
+                  a: "ValhallaFit is in active development. Personal trainers can apply for an account from the home page, and clients can sign up and request their trainer directly.",
                 },
               ].map((item) => (
                 <div key={item.q} className="border-b pb-6">
