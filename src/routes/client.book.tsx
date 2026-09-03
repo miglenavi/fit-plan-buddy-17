@@ -47,7 +47,7 @@ type Availability = {
   end_time: string;
 };
 
-type Booking = { id: string; start_at: string; end_at: string; status: string };
+type Booking = { id: string; start_at: string; end_at: string; status: string; series_id: string | null };
 type Slot = { start: Date; end: Date; taken: boolean };
 
 const dateKey = (d: Date) => d.toISOString().slice(0, 10);
