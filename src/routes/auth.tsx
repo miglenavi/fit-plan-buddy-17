@@ -34,7 +34,7 @@ const initialIsInvite =
   initialHash.includes("type=invite") || initialHash.includes("type=recovery");
 
 function AuthPage() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, refresh } = useAuth();
   const nav = useNavigate();
   const search = Route.useSearch();
   const clearFlag = useServerFn(clearMustChangePassword);
@@ -46,20 +46,31 @@ function AuthPage() {
   const showSetPassword = isInvite || mustChange;
 
   // Redeem a pending trainer invite link (stored by /join/$token) once signed in.
+  // Hold the redirect until it resolves, otherwise roles are still empty and we
+  // would bounce a brand-new client to the trainer-application page.
+  const [redeeming, setRedeeming] = useState(() => {
+    try { return !!localStorage.getItem(PENDING_INVITE_KEY); } catch { return false; }
+  });
+
   useEffect(() => {
     if (loading || !user) return;
     let pending: string | null = null;
     try { pending = localStorage.getItem(PENDING_INVITE_KEY); } catch { /* ignore */ }
-    if (!pending) return;
+    if (!pending) { setRedeeming(false); return; }
+    setRedeeming(true);
     (async () => {
       const { error } = await supabase.rpc("accept_client_invite", { _token: pending });
       try { localStorage.removeItem(PENDING_INVITE_KEY); } catch { /* ignore */ }
-      if (!error) toast.success("You're connected with your trainer!");
+      if (!error) {
+        toast.success("You're connected with your trainer!");
+        await refresh();
+      }
+      setRedeeming(false);
     })();
-  }, [user, loading]);
+  }, [user, loading, refresh]);
 
   useEffect(() => {
-    if (loading || !user || showSetPassword) return;
+    if (loading || !user || showSetPassword || redeeming) return;
     if (safeNext) {
       window.location.href = safeNext;
       return;
@@ -68,7 +79,7 @@ function AuthPage() {
     else if (role === "trainer") nav({ to: "/trainer" });
     else if (role === "client") nav({ to: "/client" });
     else nav({ to: "/pending" });
-  }, [user, role, loading, nav, showSetPassword, safeNext]);
+  }, [user, role, loading, nav, showSetPassword, safeNext, redeeming]);
 
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
@@ -121,7 +132,8 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/client/trainer`,
+        // Land back on /auth so a pending invite token is redeemed before routing.
+        emailRedirectTo: `${window.location.origin}/auth`,
         data: { full_name: fullName },
       },
     });

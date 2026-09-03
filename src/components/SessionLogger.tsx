@@ -96,7 +96,10 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed,
         })).sort((a: SetLog, b: SetLog) => a.set_index - b.set_index);
         const target = row.target_sets ?? 3;
-        while (existing.length < target) existing.push({ set_index: existing.length, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false });
+        // Never reuse an index that already exists in the DB — a deleted set can
+        // leave gaps, and duplicate indices would make the upsert overwrite logs.
+        let nextIndex = existing.reduce((m: number, l: SetLog) => Math.max(m, l.set_index), -1) + 1;
+        while (existing.length < target) existing.push({ set_index: nextIndex++, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false });
         logs[row.id] = existing;
         // If no alternative, the question doesn't apply. If any log has data, treat as picked.
         const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null);
