@@ -52,7 +52,14 @@ function Clients() {
     setClients(data ?? []);
     setRequests(reqs ?? []);
     setLinks(invs ?? []);
+    try {
+      const res = await loadPending({ data: {} } as any);
+      setPendingFirstLogin(res.pending ?? []);
+    } catch {
+      setPendingFirstLogin([]);
+    }
   };
+
 
   useEffect(() => { load(); }, []);
 
