@@ -102,7 +102,7 @@ function BookSession() {
 
     const { data: myBookings } = await supabase
       .from("bookings")
-      .select("id, start_at, end_at, status")
+      .select("id, start_at, end_at, status, series_id")
       .gte("start_at", new Date().toISOString())
       .order("start_at");
     setMine(((myBookings as Booking[]) ?? []).filter((b) => b.status !== "cancelled"));
