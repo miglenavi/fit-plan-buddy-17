@@ -6,7 +6,7 @@ import { RoleGuard } from "@/components/RoleGuard";
 import { ClientShell } from "@/components/ClientShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarClock, Play, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
 
