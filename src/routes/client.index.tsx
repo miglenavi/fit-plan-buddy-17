@@ -30,6 +30,8 @@ function ClientToday() {
   const [lastDone, setLastDone] = useState<string | null>(null);
   const [inProgress, setInProgress] = useState<{ id: string; training_id: string } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
+  const [hasTrainer, setHasTrainer] = useState<boolean | null>(null);
+  const [todayBooking, setTodayBooking] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -64,8 +66,29 @@ function ClientToday() {
         .order("started_at", { ascending: false })
         .limit(1);
       setInProgress(ip?.[0] ?? null);
+
+      const { data: link } = await supabase
+        .from("trainer_clients")
+        .select("trainer_id")
+        .is("archived_at", null)
+        .limit(1);
+      setHasTrainer(!!link?.[0]);
+
+      const now = new Date();
+      const dayEnd = new Date(now);
+      dayEnd.setHours(23, 59, 59, 999);
+      const { data: bk } = await supabase
+        .from("bookings")
+        .select("id, start_at, end_at, status")
+        .eq("status", "booked")
+        .gte("end_at", now.toISOString())
+        .lte("start_at", dayEnd.toISOString())
+        .order("start_at")
+        .limit(1);
+      setTodayBooking(bk?.[0] ?? null);
     })();
   }, []);
+
 
   // Next suggestion: the training after the last completed one, in order_index. Wraps around.
   let nextId: string | null = null;
