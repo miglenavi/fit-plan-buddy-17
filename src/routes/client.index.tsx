@@ -118,16 +118,42 @@ function ClientToday() {
         {program?.plans?.name && <p className="text-sm text-muted-foreground mt-0.5">Current plan: {program.plans.name}</p>}
       </div>
 
-      {!program && (
+      {todayBooking && (
+        <Card className="border-primary/60 bg-primary/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <CalendarClock className="size-5 text-primary shrink-0" />
+            <div className="text-sm">
+              <div className="font-semibold">
+                You have a session booked at{" "}
+                {new Date(todayBooking.start_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} today
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Start your training when you get there — it links to this booking automatically.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!program && hasTrainer !== null && (
         <Card><CardContent className="p-5 text-sm text-center space-y-3">
-          <p className="text-muted-foreground">
-            No active plan yet. Connect with a trainer to get your first plan 🌿
-          </p>
-          <Link to="/client/trainer">
-            <Button variant="outline" size="sm">Find a trainer</Button>
-          </Link>
+          {hasTrainer ? (
+            <p className="text-muted-foreground">
+              Your trainer hasn't assigned a plan yet — check back soon 🌿
+            </p>
+          ) : (
+            <>
+              <p className="text-muted-foreground">
+                No active plan yet. Connect with a trainer to get your first plan 🌿
+              </p>
+              <Link to="/client/trainer">
+                <Button variant="outline" size="sm">Find a trainer</Button>
+              </Link>
+            </>
+          )}
         </CardContent></Card>
       )}
+
 
 
       {program && trainings.length === 0 && (
