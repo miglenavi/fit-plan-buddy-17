@@ -262,10 +262,26 @@ function Clients() {
                     </Button>
                   }
                 />
-                <Button type="button" size="sm" variant="outline" className="flex-1" onClick={(e) => handleResend(c.client_id, e)}>
-                  <Mail className="size-3.5 mr-1.5" /> Resend invite
-                </Button>
+                {pendingFirstLogin.includes(c.client_id) ? (
+                  <Button type="button" size="sm" variant="outline" className="flex-1" onClick={(e) => handleResend(c.client_id, e)}>
+                    <Mail className="size-3.5 mr-1.5" /> Resend invite
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="flex-1 text-muted-foreground"
+                    onClick={(e) => handleResend(c.client_id, e, true)}
+                  >
+                    <KeyRound className="size-3.5 mr-1.5" /> Send password reset
+                  </Button>
+                )}
               </div>
+              {pendingFirstLogin.includes(c.client_id) && (
+                <p className="text-[11px] text-muted-foreground">Hasn't logged in yet</p>
+              )}
+
             </CardContent>
           </Card>
         ))}
