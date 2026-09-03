@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { addDays } from "@/lib/week";
-import { CalendarClock, CalendarX2, Check } from "lucide-react";
+import { CalendarClock, CalendarX2, Check, Repeat } from "lucide-react";
 
 export const Route = createFileRoute("/client/book")({
   ssr: false,
