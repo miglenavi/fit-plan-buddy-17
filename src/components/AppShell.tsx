@@ -2,20 +2,23 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useViewAs } from "@/lib/viewAs";
 import { Button } from "@/components/ui/button";
-import { Swords, Users, ClipboardList, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck, Eye, X, Mail } from "lucide-react";
+import { Swords, Users, ClipboardList, History, LogOut, Home, Dumbbell, ShieldCheck, UserCheck, Eye, X, Mail, CalendarDays } from "lucide-react";
 import type { ReactNode } from "react";
 
 const trainerNav = [
   { to: "/trainer", label: "Dashboard", icon: Home },
   { to: "/trainer/clients", label: "Clients", icon: Users },
+  { to: "/trainer/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/trainer/exercises", label: "Exercises", icon: Dumbbell },
   { to: "/trainer/plans", label: "Workout Plans", icon: ClipboardList },
 ];
 
 const clientNav = [
   { to: "/client", label: "Today", icon: Home },
+  { to: "/client/book", label: "Book", icon: CalendarDays },
   { to: "/client/history", label: "History", icon: History },
 ];
+
 
 const adminNav = [
   { to: "/admin/applications", label: "Applications", icon: UserCheck },
