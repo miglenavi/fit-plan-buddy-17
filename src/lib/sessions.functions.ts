@@ -78,5 +78,47 @@ export const startSession = createServerFn({ method: "POST" })
       if (seErr) throw new Error(seErr.message);
     }
 
+    // Additive: if this session falls inside a booking today for this client
+    // (and trainer, when a trainer is logging), link them. Never blocks starting.
+    try {
+      const now = new Date();
+      const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(now); dayEnd.setHours(23, 59, 59, 999);
+      let q = supabase
+        .from("bookings")
+        .select("id, start_at, end_at, training_id, training_session_id")
+        .eq("client_id", clientId)
+        .eq("status", "booked")
+        .is("training_session_id", null)
+        .gte("start_at", dayStart.toISOString())
+        .lte("start_at", dayEnd.toISOString())
+        .order("start_at");
+      if (trainerId) q = q.eq("trainer_id", trainerId);
+      const { data: candidates } = await q;
+      // Prefer a booking whose window contains "now"; else the nearest today.
+      const ts = now.getTime();
+      const match =
+        candidates?.find(
+          (b: any) => new Date(b.start_at).getTime() <= ts && new Date(b.end_at).getTime() >= ts,
+        ) ??
+        candidates?.sort(
+          (a: any, b: any) =>
+            Math.abs(new Date(a.start_at).getTime() - ts) -
+            Math.abs(new Date(b.start_at).getTime() - ts),
+        )[0];
+      if (match) {
+        await supabase
+          .from("bookings")
+          .update({
+            training_session_id: session.id,
+            ...(match.training_id ? {} : { training_id: data.trainingId }),
+          })
+          .eq("id", match.id);
+      }
+    } catch {
+      // linking is best-effort only
+    }
+
     return { sessionId: session.id };
   });
+
