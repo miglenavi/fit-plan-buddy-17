@@ -26,6 +26,7 @@ import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ClientTrainerRouteImport } from './routes/client.trainer'
 import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
+import { Route as ClientBookRouteImport } from './routes/client.book'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AdminWaitlistRouteImport } from './routes/admin.waitlist'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
@@ -127,6 +128,11 @@ const ClientProfileRoute = ClientProfileRouteImport.update({
 const ClientHistoryRoute = ClientHistoryRouteImport.update({
   id: '/client/history',
   path: '/client/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientBookRoute = ClientBookRouteImport.update({
+  id: '/client/book',
+  path: '/client/book',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/client/book': typeof ClientBookRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/client/book': typeof ClientBookRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
@@ -303,6 +311,7 @@ export interface FileRoutesById {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/client/book': typeof ClientBookRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/waitlist'
     | '/blog/$slug'
+    | '/client/book'
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/waitlist'
     | '/blog/$slug'
+    | '/client/book'
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
@@ -409,6 +420,7 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/waitlist'
     | '/blog/$slug'
+    | '/client/book'
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
@@ -445,6 +457,7 @@ export interface RootRouteChildren {
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
   AdminWaitlistRoute: typeof AdminWaitlistRoute
+  ClientBookRoute: typeof ClientBookRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
   ClientProfileRoute: typeof ClientProfileRoute
   ClientTrainerRoute: typeof ClientTrainerRoute
@@ -579,6 +592,13 @@ declare module '@tanstack/react-router' {
       path: '/client/history'
       fullPath: '/client/history'
       preLoaderRoute: typeof ClientHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/book': {
+      id: '/client/book'
+      path: '/client/book'
+      fullPath: '/client/book'
+      preLoaderRoute: typeof ClientBookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -775,6 +795,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminTrainersRoute: AdminTrainersRoute,
   AdminWaitlistRoute: AdminWaitlistRoute,
+  ClientBookRoute: ClientBookRoute,
   ClientHistoryRoute: ClientHistoryRoute,
   ClientProfileRoute: ClientProfileRoute,
   ClientTrainerRoute: ClientTrainerRoute,
