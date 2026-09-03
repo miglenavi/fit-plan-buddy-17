@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_series: {
+        Row: {
+          client_id: string
+          created_at: string
+          day_of_week: number
+          end_date: string | null
+          end_time: string
+          id: string
+          start_date: string
+          start_time: string
+          status: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          day_of_week: number
+          end_date?: string | null
+          end_time: string
+          id?: string
+          start_date: string
+          start_time: string
+          status?: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_date?: string | null
+          end_time?: string
+          id?: string
+          start_date?: string
+          start_time?: string
+          status?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           client_id: string
@@ -21,6 +63,7 @@ export type Database = {
           created_at: string
           end_at: string
           id: string
+          series_id: string | null
           start_at: string
           status: string
           trainer_id: string
@@ -34,6 +77,7 @@ export type Database = {
           created_at?: string
           end_at: string
           id?: string
+          series_id?: string | null
           start_at: string
           status?: string
           trainer_id: string
@@ -47,6 +91,7 @@ export type Database = {
           created_at?: string
           end_at?: string
           id?: string
+          series_id?: string | null
           start_at?: string
           status?: string
           trainer_id?: string
@@ -55,6 +100,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "booking_series"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_training_id_fkey"
             columns: ["training_id"]

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { addDays } from "@/lib/week";
-import { CalendarClock, CalendarX2, Check } from "lucide-react";
+import { CalendarClock, CalendarX2, Check, Repeat } from "lucide-react";
 
 export const Route = createFileRoute("/client/book")({
   ssr: false,
@@ -47,7 +47,7 @@ type Availability = {
   end_time: string;
 };
 
-type Booking = { id: string; start_at: string; end_at: string; status: string };
+type Booking = { id: string; start_at: string; end_at: string; status: string; series_id: string | null };
 type Slot = { start: Date; end: Date; taken: boolean };
 
 const dateKey = (d: Date) => d.toISOString().slice(0, 10);
@@ -102,7 +102,7 @@ function BookSession() {
 
     const { data: myBookings } = await supabase
       .from("bookings")
-      .select("id, start_at, end_at, status")
+      .select("id, start_at, end_at, status, series_id")
       .gte("start_at", new Date().toISOString())
       .order("start_at");
     setMine(((myBookings as Booking[]) ?? []).filter((b) => b.status !== "cancelled"));
@@ -192,8 +192,13 @@ function BookSession() {
             {mine.map((b) => (
               <div key={b.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm">
                 <div className="flex-1">
-                  <div className="font-medium">
+                  <div className="flex items-center gap-2 font-medium">
                     {new Date(b.start_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                    {b.series_id && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        <Repeat className="size-3" /> Recurring
+                      </span>
+                    )}
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {clock(new Date(b.start_at))} – {clock(new Date(b.end_at))}
