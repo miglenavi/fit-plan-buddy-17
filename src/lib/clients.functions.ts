@@ -96,7 +96,37 @@ export const resendClientInvite = createServerFn({ method: "POST" })
 
   });
 
+/**
+ * Returns the ids of the caller's clients who have never completed first login
+ * (still flagged must_change_password). Used to decide whether "Resend invite"
+ * is an honest action for that client.
+ */
+export const listPendingClients = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertTrainer(supabase, userId);
+
+    const { data: links, error } = await supabase
+      .from("trainer_clients")
+      .select("client_id")
+      .eq("trainer_id", userId)
+      .is("archived_at", null);
+    if (error) throw new Error(error.message);
+
+    const ids = (links ?? []).map((l: any) => l.client_id as string);
+    const pending: string[] = [];
+    await Promise.all(
+      ids.map(async (id) => {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(id);
+        if (u?.user?.user_metadata?.must_change_password) pending.push(id);
+      }),
+    );
+    return { pending };
+  });
+
 export const clearMustChangePassword = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
