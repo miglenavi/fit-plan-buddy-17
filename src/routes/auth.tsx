@@ -132,7 +132,8 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/client/trainer`,
+        // Land back on /auth so a pending invite token is redeemed before routing.
+        emailRedirectTo: `${window.location.origin}/auth`,
         data: { full_name: fullName },
       },
     });
