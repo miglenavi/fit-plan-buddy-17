@@ -95,17 +95,16 @@ export const startSession = createServerFn({ method: "POST" })
         .order("start_at");
       if (trainerId) q = q.eq("trainer_id", trainerId);
       const { data: candidates } = await q;
-      // Prefer a booking whose window contains "now"; else the nearest today.
+      // Match a booking whose window contains "now", allowing a 60-minute
+      // grace before the start (starting a bit early) and after the end.
       const ts = now.getTime();
-      const match =
-        candidates?.find(
-          (b: any) => new Date(b.start_at).getTime() <= ts && new Date(b.end_at).getTime() >= ts,
-        ) ??
-        candidates?.sort(
-          (a: any, b: any) =>
-            Math.abs(new Date(a.start_at).getTime() - ts) -
-            Math.abs(new Date(b.start_at).getTime() - ts),
-        )[0];
+      const GRACE = 60 * 60 * 1000;
+      const match = candidates?.find(
+        (b: any) =>
+          new Date(b.start_at).getTime() - GRACE <= ts &&
+          new Date(b.end_at).getTime() + GRACE >= ts,
+      );
+
       if (match) {
         await supabase
           .from("bookings")
