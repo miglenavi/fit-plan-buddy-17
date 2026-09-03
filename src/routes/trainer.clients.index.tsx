@@ -133,16 +133,18 @@ function Clients() {
     }
   };
 
-  const handleResend = async (clientId: string, e: React.MouseEvent) => {
+  const handleResend = async (clientId: string, e: React.MouseEvent, isReset = false) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isReset && !window.confirm("Send this client a password reset email? They'll be asked to set a new password on next login.")) return;
     try {
       const res = await resend({ data: { clientId, redirectTo: redirectTo() } });
-      toast.success(`New invite link sent to ${res.email}`);
+      toast.success(isReset ? `Password reset sent to ${res.email}` : `New invite link sent to ${res.email}`);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to resend invite");
+      toast.error(err?.message ?? "Failed to send email");
     }
   };
+
 
   return (
     <div className="space-y-6">
