@@ -27,12 +27,20 @@ export function ClientShell({ children, title }: { children: ReactNode; title?: 
               <Home className="size-5" />
             </Link>
             <Link
+              to="/client/book"
+              className={`p-2 rounded-md ${path.startsWith("/client/book") ? "text-primary" : "text-muted-foreground"}`}
+              aria-label="Book a session"
+            >
+              <CalendarDays className="size-5" />
+            </Link>
+            <Link
               to="/client/history"
               className={`p-2 rounded-md ${path.startsWith("/client/history") ? "text-primary" : "text-muted-foreground"}`}
               aria-label="History"
             >
               <History className="size-5" />
             </Link>
+
             <Link
               to="/client/profile"
               className={`p-2 rounded-md ${path.startsWith("/client/profile") ? "text-primary" : "text-muted-foreground"}`}
