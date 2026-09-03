@@ -21,10 +21,12 @@ import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
 import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
 import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
+import { Route as TrainerCalendarRouteImport } from './routes/trainer.calendar'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ClientTrainerRouteImport } from './routes/client.trainer'
 import { Route as ClientProfileRouteImport } from './routes/client.profile'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
+import { Route as ClientBookRouteImport } from './routes/client.book'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AdminWaitlistRouteImport } from './routes/admin.waitlist'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
@@ -103,6 +105,11 @@ const TrainerClientsRoute = TrainerClientsRouteImport.update({
   path: '/trainer/clients',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainerCalendarRoute = TrainerCalendarRouteImport.update({
+  id: '/trainer/calendar',
+  path: '/trainer/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -121,6 +128,11 @@ const ClientProfileRoute = ClientProfileRouteImport.update({
 const ClientHistoryRoute = ClientHistoryRouteImport.update({
   id: '/client/history',
   path: '/client/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientBookRoute = ClientBookRouteImport.update({
+  id: '/client/book',
+  path: '/client/book',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
@@ -228,10 +240,12 @@ export interface FileRoutesByFullPath {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/client/book': typeof ClientBookRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
   '/join/$token': typeof JoinTokenRoute
+  '/trainer/calendar': typeof TrainerCalendarRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
@@ -262,10 +276,12 @@ export interface FileRoutesByTo {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/client/book': typeof ClientBookRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
   '/join/$token': typeof JoinTokenRoute
+  '/trainer/calendar': typeof TrainerCalendarRoute
   '/blog': typeof BlogIndexRoute
   '/client': typeof ClientIndexRoute
   '/trainer': typeof TrainerIndexRoute
@@ -295,10 +311,12 @@ export interface FileRoutesById {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/waitlist': typeof AdminWaitlistRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/client/book': typeof ClientBookRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/profile': typeof ClientProfileRoute
   '/client/trainer': typeof ClientTrainerRoute
   '/join/$token': typeof JoinTokenRoute
+  '/trainer/calendar': typeof TrainerCalendarRoute
   '/trainer/clients': typeof TrainerClientsRouteWithChildren
   '/trainer/exercises': typeof TrainerExercisesRouteWithChildren
   '/trainer/plans': typeof TrainerPlansRouteWithChildren
@@ -332,10 +350,12 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/waitlist'
     | '/blog/$slug'
+    | '/client/book'
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
     | '/join/$token'
+    | '/trainer/calendar'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
@@ -366,10 +386,12 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/waitlist'
     | '/blog/$slug'
+    | '/client/book'
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
     | '/join/$token'
+    | '/trainer/calendar'
     | '/blog'
     | '/client'
     | '/trainer'
@@ -398,10 +420,12 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/waitlist'
     | '/blog/$slug'
+    | '/client/book'
     | '/client/history'
     | '/client/profile'
     | '/client/trainer'
     | '/join/$token'
+    | '/trainer/calendar'
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
@@ -433,10 +457,12 @@ export interface RootRouteChildren {
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
   AdminWaitlistRoute: typeof AdminWaitlistRoute
+  ClientBookRoute: typeof ClientBookRoute
   ClientHistoryRoute: typeof ClientHistoryRoute
   ClientProfileRoute: typeof ClientProfileRoute
   ClientTrainerRoute: typeof ClientTrainerRoute
   JoinTokenRoute: typeof JoinTokenRoute
+  TrainerCalendarRoute: typeof TrainerCalendarRoute
   TrainerClientsRoute: typeof TrainerClientsRouteWithChildren
   TrainerExercisesRoute: typeof TrainerExercisesRouteWithChildren
   TrainerPlansRoute: typeof TrainerPlansRouteWithChildren
@@ -533,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainerClientsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trainer/calendar': {
+      id: '/trainer/calendar'
+      path: '/trainer/calendar'
+      fullPath: '/trainer/calendar'
+      preLoaderRoute: typeof TrainerCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/join/$token': {
       id: '/join/$token'
       path: '/join/$token'
@@ -559,6 +592,13 @@ declare module '@tanstack/react-router' {
       path: '/client/history'
       fullPath: '/client/history'
       preLoaderRoute: typeof ClientHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/book': {
+      id: '/client/book'
+      path: '/client/book'
+      fullPath: '/client/book'
+      preLoaderRoute: typeof ClientBookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -755,10 +795,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminTrainersRoute: AdminTrainersRoute,
   AdminWaitlistRoute: AdminWaitlistRoute,
+  ClientBookRoute: ClientBookRoute,
   ClientHistoryRoute: ClientHistoryRoute,
   ClientProfileRoute: ClientProfileRoute,
   ClientTrainerRoute: ClientTrainerRoute,
   JoinTokenRoute: JoinTokenRoute,
+  TrainerCalendarRoute: TrainerCalendarRoute,
   TrainerClientsRoute: TrainerClientsRouteWithChildren,
   TrainerExercisesRoute: TrainerExercisesRouteWithChildren,
   TrainerPlansRoute: TrainerPlansRouteWithChildren,

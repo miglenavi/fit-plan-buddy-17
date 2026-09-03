@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          client_id: string
+          client_note: string | null
+          created_at: string
+          end_at: string
+          id: string
+          start_at: string
+          status: string
+          trainer_id: string
+          training_id: string | null
+          training_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          client_note?: string | null
+          created_at?: string
+          end_at: string
+          id?: string
+          start_at: string
+          status?: string
+          trainer_id: string
+          training_id?: string | null
+          training_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          client_note?: string | null
+          created_at?: string
+          end_at?: string
+          id?: string
+          start_at?: string
+          status?: string
+          trainer_id?: string
+          training_id?: string | null
+          training_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_training_session_id_fkey"
+            columns: ["training_session_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_invites: {
         Row: {
           accepted_at: string | null
@@ -365,6 +422,42 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number | null
+          end_time: string
+          id: string
+          is_recurring: boolean
+          specific_date: string | null
+          start_time: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week?: number | null
+          end_time: string
+          id?: string
+          is_recurring?: boolean
+          specific_date?: string | null
+          start_time: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number | null
+          end_time?: string
+          id?: string
+          is_recurring?: boolean
+          specific_date?: string | null
+          start_time?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trainer_clients: {
         Row: {
           archived_at: string | null
@@ -711,6 +804,13 @@ export type Database = {
       set_session_exercise_sets: {
         Args: { _count: number; _se_id: string }
         Returns: undefined
+      }
+      trainer_busy_slots: {
+        Args: { _from: string; _to: string; _trainer_id: string }
+        Returns: {
+          end_at: string
+          start_at: string
+        }[]
       }
     }
     Enums: {
