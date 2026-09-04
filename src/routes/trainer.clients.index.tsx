@@ -140,7 +140,7 @@ function Clients() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
         <p className="text-muted-foreground mt-1">
-          Invite clients by email, or approve clients who requested to train with you.
+          Invite clients with a shareable link, or approve clients who requested to train with you.
         </p>
       </div>
 
