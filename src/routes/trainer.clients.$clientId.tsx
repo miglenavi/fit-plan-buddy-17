@@ -5,7 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Play, CheckCircle2, Clock, Archive } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Play, CheckCircle2, Clock, Archive, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
 
@@ -24,9 +25,12 @@ function ClientDetail() {
   const [trainings, setTrainings] = useState<any[]>([]);
   const [inProgress, setInProgress] = useState<{ id: string; training_id: string; trainings: { name: string } | null } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [noteBody, setNoteBody] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
 
   const load = async () => {
-    const [{ data: p }, { data: pr }, { data: ss }, { data: ip }] = await Promise.all([
+    const [{ data: p }, { data: pr }, { data: ss }, { data: ip }, { data: ns }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", clientId).maybeSingle(),
       supabase.from("client_programs").select("*, plans(id, name, description)").eq("client_id", clientId).order("start_date", { ascending: false }),
       supabase.from("training_sessions")
@@ -40,9 +44,14 @@ function ClientDetail() {
         .eq("status", "in_progress")
         .order("started_at", { ascending: false })
         .limit(1),
+      supabase.from("client_notes")
+        .select("id, body, created_at")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false }),
     ]);
     setProfile(p); setPrograms(pr ?? []); setSessions(ss ?? []);
     setInProgress((ip?.[0] as any) ?? null);
+    setNotes(ns ?? []);
 
     // active program → trainings to start
     const active = (pr ?? []).find((x: any) => x.status === "active");
@@ -54,6 +63,23 @@ function ClientDetail() {
   useEffect(() => { load(); }, [clientId]);
 
 
+
+  const addNote = async () => {
+    const body = noteBody.trim();
+    if (!body) return;
+    setSavingNote(true);
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase.from("client_notes").insert({
+      trainer_id: auth.user?.id as string,
+      client_id: clientId,
+      body,
+    });
+    setSavingNote(false);
+    if (error) return toast.error(error.message);
+    setNoteBody("");
+    toast.success("Note added");
+    load();
+  };
 
   const endProgram = async (id: string) => {
     if (!confirm("Mark this program as completed?")) return;
@@ -197,6 +223,38 @@ function ClientDetail() {
                   <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: s.id } })}>
                     Open
                   </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><StickyNote className="size-5" /> Notes</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">Private — only you can see these notes.</p>
+          <div className="space-y-2">
+            <Textarea
+              placeholder={`Add a note about ${profile?.full_name?.split(" ")[0] ?? "this client"}…`}
+              value={noteBody}
+              onChange={(e) => setNoteBody(e.target.value)}
+              rows={3}
+            />
+            <Button type="button" size="sm" disabled={savingNote || !noteBody.trim()} onClick={addNote}>
+              {savingNote ? "Saving…" : "Add note"}
+            </Button>
+          </div>
+          {notes.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No notes yet.</p>
+          ) : (
+            <ul className="divide-y">
+              {notes.map((n) => (
+                <li key={n.id} className="py-3">
+                  <p className="text-sm whitespace-pre-wrap">{n.body}</p>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {new Date(n.created_at).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </div>
                 </li>
               ))}
             </ul>
