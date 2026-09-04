@@ -165,6 +165,33 @@ export type Database = {
         }
         Relationships: []
       }
+      client_notes: {
+        Row: {
+          body: string
+          client_id: string
+          created_at: string
+          id: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          client_id: string
+          created_at?: string
+          id?: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_programs: {
         Row: {
           client_id: string
