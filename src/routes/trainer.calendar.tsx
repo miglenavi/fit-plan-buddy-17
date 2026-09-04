@@ -116,6 +116,7 @@ function TrainerCalendar() {
   const [sFrom, setSFrom] = useState(() => dateKey(new Date()));
   const [sUntil, setSUntil] = useState("");
   const [savingSeries, setSavingSeries] = useState(false);
+  const { isImpersonating } = useAuth();
 
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
 
