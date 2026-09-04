@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 type Props = {
   trigger: React.ReactNode;
@@ -25,6 +26,7 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
   const [busy, setBusy] = useState(false);
+  const { isImpersonating } = useAuth();
 
   useEffect(() => {
     if (!open) return;
@@ -52,11 +54,15 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
     const cid = clientId ?? pickClient;
     if (!pid) return toast.error("Pick a plan");
     if (!cid) return toast.error("Pick a client");
+    if (isImpersonating) {
+      return toast.error("You're viewing as another user. Exit view-as mode to assign plans.");
+    }
     setBusy(true);
     try {
       const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Your session expired — please sign in again.");
       const { error } = await supabase.from("client_programs").insert({
-        trainer_id: u.user!.id,
+        trainer_id: u.user.id,
         client_id: cid,
         plan_id: pid,
         start_date: startDate,
