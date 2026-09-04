@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy, KeyRound } from "lucide-react";
+import { ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
@@ -21,7 +21,6 @@ function Clients() {
   const [links, setLinks] = useState<any[]>([]);
   const [linkName, setLinkName] = useState("");
   const [creatingLink, setCreatingLink] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [pendingFirstLogin, setPendingFirstLogin] = useState<string[]>([]);
   const resend = useServerFn(resendClientInvite);
@@ -62,6 +61,14 @@ function Clients() {
 
   const inviteUrl = (token: string) =>
     typeof window !== "undefined" ? `${window.location.origin}/join/${token}` : "";
+
+  const mailtoLink = (l: any) => {
+    const url = inviteUrl(l.token);
+    const subject = "Your ValhallaFit invite";
+    const body = `Hi${l.full_name ? ` ${l.full_name}` : ""},\n\nHere's your invite link to join me on ValhallaFit:\n\n${url}\n\nOpen it, create your account (or log in), and we'll be connected automatically.\n`;
+    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
 
   const createInviteLink = async () => {
     setCreatingLink(true);
