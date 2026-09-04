@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { addDays, fmtWeekRange, weekStart } from "@/lib/week";
+import { useAuth } from "@/lib/auth";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Plus, Repeat, Trash2, X } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/calendar")({
@@ -186,9 +187,16 @@ function TrainerCalendar() {
     if (!sClient) return toast.error("Pick a client");
     if (sEnd <= sStart) return toast.error("End time must be after the start time");
     if (sUntil && sUntil < sFrom) return toast.error("End date must be after the start date");
+    if (isImpersonating) {
+      return toast.error("You're viewing as another user. Exit view-as mode to make changes.");
+    }
     setSavingSeries(true);
     const { data: u } = await supabase.auth.getUser();
-    const trainerId = u.user!.id;
+    if (!u.user) {
+      setSavingSeries(false);
+      return toast.error("Your session expired — please sign in again.");
+    }
+    const trainerId = u.user.id;
 
     const { data: created, error } = await supabase
       .from("booking_series")
@@ -231,8 +239,13 @@ function TrainerCalendar() {
         end_at: endAt.toISOString(),
         series_id: created.id,
       });
-      if (bErr) skipped++;
-      else made++;
+      if (bErr) {
+        if (/row-level security|permission/i.test(bErr.message)) {
+          setSavingSeries(false);
+          return toast.error(`Could not schedule sessions: ${bErr.message}`);
+        }
+        skipped++;
+      } else made++;
     }
 
     setSavingSeries(false);

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { addDays } from "@/lib/week";
+import { useAuth } from "@/lib/auth";
 import { CalendarClock, CalendarX2, Check, Repeat } from "lucide-react";
 
 export const Route = createFileRoute("/client/book")({
@@ -50,7 +51,8 @@ type Availability = {
 type Booking = { id: string; start_at: string; end_at: string; status: string; series_id: string | null };
 type Slot = { start: Date; end: Date; taken: boolean };
 
-const dateKey = (d: Date) => d.toISOString().slice(0, 10);
+const dateKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const clock = (d: Date) => d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 
 function buildSlots(avail: Availability[], busy: { start_at: string; end_at: string }[]): Slot[] {
@@ -89,11 +91,16 @@ function BookSession() {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { isImpersonating } = useAuth();
 
   const load = useCallback(async () => {
+    const { data: au } = await supabase.auth.getUser();
+    const authUserId = au.user?.id ?? null;
+
     const { data: link } = await supabase
       .from("trainer_clients")
       .select("trainer_id, profiles:trainer_id(full_name)")
+      .eq("client_id", authUserId ?? "")
       .is("archived_at", null)
       .limit(1);
 
@@ -136,9 +143,17 @@ function BookSession() {
     if (!picked || !trainerId) return;
     setBusy(true);
     const { data: u } = await supabase.auth.getUser();
+    if (!u.user) {
+      setBusy(false);
+      return toast.error("Your session expired — please sign in again.");
+    }
+    if (isImpersonating) {
+      setBusy(false);
+      return toast.error("You're viewing as another user. Exit view-as mode to book.");
+    }
     const { error } = await supabase.from("bookings").insert({
       trainer_id: trainerId,
-      client_id: u.user!.id,
+      client_id: u.user.id,
       start_at: picked.start.toISOString(),
       end_at: picked.end.toISOString(),
       client_note: note.trim() || null,
