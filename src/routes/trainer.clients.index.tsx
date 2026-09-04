@@ -114,21 +114,6 @@ function Clients() {
   const redirectTo = () =>
     typeof window !== "undefined" ? `${window.location.origin}/auth` : "";
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      await invite({ data: { email, fullName, redirectTo: redirectTo() } });
-      toast.success(`Invite sent to ${email}`);
-      setEmail("");
-      setFullName("");
-      load();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to invite client");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const handleResend = async (clientId: string, e: React.MouseEvent, isReset = false) => {
     e.preventDefault();
