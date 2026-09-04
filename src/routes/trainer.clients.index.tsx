@@ -23,6 +23,7 @@ function Clients() {
   const [creatingLink, setCreatingLink] = useState(false);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [pendingFirstLogin, setPendingFirstLogin] = useState<string[]>([]);
+  const [lastSession, setLastSession] = useState<Record<string, string>>({});
   const resend = useServerFn(resendClientInvite);
   const loadPending = useServerFn(listPendingClients);
 
@@ -48,12 +49,34 @@ function Clients() {
     setClients(data ?? []);
     setRequests(reqs ?? []);
     setLinks(invs ?? []);
+    const ids = (data ?? []).map((c: any) => c.client_id);
+    if (ids.length > 0) {
+      const { data: ss } = await supabase
+        .from("training_sessions")
+        .select("client_id, completed_at")
+        .eq("status", "completed")
+        .in("client_id", ids)
+        .order("completed_at", { ascending: false });
+      const map: Record<string, string> = {};
+      for (const s of ss ?? []) if (!map[s.client_id] && s.completed_at) map[s.client_id] = s.completed_at;
+      setLastSession(map);
+    } else {
+      setLastSession({});
+    }
     try {
       const res = await loadPending({ data: {} } as any);
       setPendingFirstLogin(res.pending ?? []);
     } catch {
       setPendingFirstLogin([]);
     }
+  };
+
+  const lastSessionLabel = (clientId: string) => {
+    const iso = lastSession[clientId];
+    if (!iso) return "No sessions yet";
+    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (days <= 0) return "Last session today";
+    return `Last session ${days} day${days === 1 ? "" : "s"} ago`;
   };
 
 
@@ -231,6 +254,7 @@ function Clients() {
                   <div>
                     <div className="font-medium">{c.profiles?.full_name ?? "Unnamed"}</div>
                     <div className="text-xs text-muted-foreground">Since {new Date(c.created_at).toLocaleDateString()}</div>
+                    <div className="text-xs text-muted-foreground">{lastSessionLabel(c.client_id)}</div>
                   </div>
                 </div>
                 <ChevronRight className="size-5 text-muted-foreground" />
