@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { inviteClient, resendClientInvite, listPendingClients } from "@/lib/clients.functions";
+import { resendClientInvite, listPendingClients } from "@/lib/clients.functions";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,9 @@ function Clients() {
   const [links, setLinks] = useState<any[]>([]);
   const [linkName, setLinkName] = useState("");
   const [creatingLink, setCreatingLink] = useState(false);
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [pendingFirstLogin, setPendingFirstLogin] = useState<string[]>([]);
-  const invite = useServerFn(inviteClient);
   const resend = useServerFn(resendClientInvite);
   const loadPending = useServerFn(listPendingClients);
 
