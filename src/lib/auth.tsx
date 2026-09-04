@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [fullName, setFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { target } = useViewAs();
+  const currentUserIdRef = useRef<string | null>(null);
 
   const loadProfile = async (uid: string) => {
     const [{ data: roleRows }, { data: profile }] = await Promise.all([
