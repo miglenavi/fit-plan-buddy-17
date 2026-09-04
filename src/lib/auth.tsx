@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 import { useViewAs } from "@/lib/viewAs";
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [fullName, setFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { target } = useViewAs();
+  const currentUserIdRef = useRef<string | null>(null);
 
   const loadProfile = async (uid: string) => {
     const [{ data: roleRows }, { data: profile }] = await Promise.all([
@@ -50,13 +51,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       if (s?.user) {
-        setLoading(true);
-        setTimeout(() => {
-          loadProfile(s.user.id).finally(() => setLoading(false));
-        }, 0);
+        // Only treat this as a real sign-in/load if the user actually changed.
+        // TOKEN_REFRESHED / USER_UPDATED on the same user should not blank the UI.
+        if (s.user.id !== currentUserIdRef.current) {
+          setLoading(true);
+          setTimeout(() => {
+            loadProfile(s.user.id).finally(() => setLoading(false));
+          }, 0);
+        }
       } else {
         setRoles([]);
         setFullName(null);
@@ -72,6 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  // Keep the ref in sync with the current session user so the callback above
+  // can compare against the already-known user id without relying on a stale closure.
+  useEffect(() => {
+    currentUserIdRef.current = session?.user?.id ?? null;
+  }, [session?.user?.id]);
 
   const realUser = session?.user ?? null;
   const realIsSuperAdmin = roles.includes("super_admin");
