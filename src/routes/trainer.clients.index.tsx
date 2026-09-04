@@ -2,13 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { inviteClient, resendClientInvite, listPendingClients } from "@/lib/clients.functions";
+import { resendClientInvite, listPendingClients } from "@/lib/clients.functions";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { UserPlus, ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy, KeyRound } from "lucide-react";
+import { ChevronRight, Mail, ClipboardList, UserRoundCheck, Link as LinkIcon, Copy, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/trainer/clients/")({
   ssr: false,
@@ -21,12 +21,8 @@ function Clients() {
   const [links, setLinks] = useState<any[]>([]);
   const [linkName, setLinkName] = useState("");
   const [creatingLink, setCreatingLink] = useState(false);
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [busy, setBusy] = useState(false);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [pendingFirstLogin, setPendingFirstLogin] = useState<string[]>([]);
-  const invite = useServerFn(inviteClient);
   const resend = useServerFn(resendClientInvite);
   const loadPending = useServerFn(listPendingClients);
 
@@ -65,6 +61,14 @@ function Clients() {
 
   const inviteUrl = (token: string) =>
     typeof window !== "undefined" ? `${window.location.origin}/join/${token}` : "";
+
+  const mailtoLink = (l: any) => {
+    const url = inviteUrl(l.token);
+    const subject = "Your ValhallaFit invite";
+    const body = `Hi${l.full_name ? ` ${l.full_name}` : ""},\n\nHere's your invite link to join me on ValhallaFit:\n\n${url}\n\nOpen it, create your account (or log in), and we'll be connected automatically.\n`;
+    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
 
   const createInviteLink = async () => {
     setCreatingLink(true);
@@ -117,21 +121,6 @@ function Clients() {
   const redirectTo = () =>
     typeof window !== "undefined" ? `${window.location.origin}/auth` : "";
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      await invite({ data: { email, fullName, redirectTo: redirectTo() } });
-      toast.success(`Invite sent to ${email}`);
-      setEmail("");
-      setFullName("");
-      load();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to invite client");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const handleResend = async (clientId: string, e: React.MouseEvent, isReset = false) => {
     e.preventDefault();
@@ -151,7 +140,7 @@ function Clients() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
         <p className="text-muted-foreground mt-1">
-          Invite clients by email, or approve clients who requested to train with you.
+          Invite clients with a shareable link, or approve clients who requested to train with you.
         </p>
       </div>
 
@@ -212,6 +201,11 @@ function Clients() {
                     <Button type="button" size="sm" variant="outline" onClick={() => copyLink(l.token)}>
                       <Copy className="size-3.5 mr-1" /> Copy
                     </Button>
+                    <Button type="button" size="sm" variant="outline" asChild>
+                      <a href={mailtoLink(l)}>
+                        <Mail className="size-3.5 mr-1" /> Email it
+                      </a>
+                    </Button>
                     <Button type="button" size="sm" variant="ghost" onClick={() => cancelLink(l.id)}>
                       Cancel
                     </Button>
@@ -223,20 +217,6 @@ function Clients() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><UserPlus className="size-5" /> Invite a client by email</CardTitle></CardHeader>
-        <CardContent>
-          <form onSubmit={handleInvite} className="flex gap-2 flex-col sm:flex-row">
-            <Input placeholder="Full name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-            <Input placeholder="client@email.com" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Button disabled={busy}>{busy ? "..." : "Send invite"}</Button>
-          </form>
-          <p className="text-xs text-muted-foreground mt-2">
-            Your client receives an email with a secure link to activate their account and set a password.
-            Email links expire quickly — if it fails, use an invite link above instead.
-          </p>
-        </CardContent>
-      </Card>
 
 
       <div className="grid sm:grid-cols-2 gap-3">
