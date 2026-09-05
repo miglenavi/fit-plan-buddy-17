@@ -42,6 +42,7 @@ import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.cli
 import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.sessions.$sessionId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicHooksBookingRemindersRouteImport } from './routes/api/public/hooks/booking-reminders'
 import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
 import { Route as TrainerClientsClientIdSessionsSessionIdRouteImport } from './routes/trainer.clients.$clientId_.sessions.$sessionId'
 
@@ -214,6 +215,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksBookingRemindersRoute =
+  ApiPublicHooksBookingRemindersRouteImport.update({
+    id: '/api/public/hooks/booking-reminders',
+    path: '/api/public/hooks/booking-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TrainerPlansPlanIdTrainingsTrainingIdRoute =
   TrainerPlansPlanIdTrainingsTrainingIdRouteImport.update({
     id: '/$planId_/trainings/$trainingId',
@@ -261,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/trainer/clients/': typeof TrainerClientsIndexRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
+  '/api/public/hooks/booking-reminders': typeof ApiPublicHooksBookingRemindersRoute
   '/trainer/clients/$clientId/sessions/$sessionId': typeof TrainerClientsClientIdSessionsSessionIdRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
@@ -294,6 +302,7 @@ export interface FileRoutesByTo {
   '/trainer/clients': typeof TrainerClientsIndexRoute
   '/trainer/exercises': typeof TrainerExercisesIndexRoute
   '/trainer/plans': typeof TrainerPlansIndexRoute
+  '/api/public/hooks/booking-reminders': typeof ApiPublicHooksBookingRemindersRoute
   '/trainer/clients/$clientId/sessions/$sessionId': typeof TrainerClientsClientIdSessionsSessionIdRoute
   '/trainer/plans/$planId/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
@@ -332,6 +341,7 @@ export interface FileRoutesById {
   '/trainer/clients/': typeof TrainerClientsIndexRoute
   '/trainer/exercises/': typeof TrainerExercisesIndexRoute
   '/trainer/plans/': typeof TrainerPlansIndexRoute
+  '/api/public/hooks/booking-reminders': typeof ApiPublicHooksBookingRemindersRoute
   '/trainer/clients/$clientId_/sessions/$sessionId': typeof TrainerClientsClientIdSessionsSessionIdRoute
   '/trainer/plans/$planId_/trainings/$trainingId': typeof TrainerPlansPlanIdTrainingsTrainingIdRoute
 }
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | '/trainer/clients/'
     | '/trainer/exercises/'
     | '/trainer/plans/'
+    | '/api/public/hooks/booking-reminders'
     | '/trainer/clients/$clientId/sessions/$sessionId'
     | '/trainer/plans/$planId/trainings/$trainingId'
   fileRoutesByTo: FileRoutesByTo
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/trainer/clients'
     | '/trainer/exercises'
     | '/trainer/plans'
+    | '/api/public/hooks/booking-reminders'
     | '/trainer/clients/$clientId/sessions/$sessionId'
     | '/trainer/plans/$planId/trainings/$trainingId'
   id:
@@ -441,6 +453,7 @@ export interface FileRouteTypes {
     | '/trainer/clients/'
     | '/trainer/exercises/'
     | '/trainer/plans/'
+    | '/api/public/hooks/booking-reminders'
     | '/trainer/clients/$clientId_/sessions/$sessionId'
     | '/trainer/plans/$planId_/trainings/$trainingId'
   fileRoutesById: FileRoutesById
@@ -471,6 +484,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ClientSessionsSessionIdRoute: typeof ClientSessionsSessionIdRoute
+  ApiPublicHooksBookingRemindersRoute: typeof ApiPublicHooksBookingRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -706,6 +720,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/booking-reminders': {
+      id: '/api/public/hooks/booking-reminders'
+      path: '/api/public/hooks/booking-reminders'
+      fullPath: '/api/public/hooks/booking-reminders'
+      preLoaderRoute: typeof ApiPublicHooksBookingRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trainer/plans/$planId_/trainings/$trainingId': {
       id: '/trainer/plans/$planId_/trainings/$trainingId'
       path: '/$planId/trainings/$trainingId'
@@ -809,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ClientSessionsSessionIdRoute: ClientSessionsSessionIdRoute,
+  ApiPublicHooksBookingRemindersRoute: ApiPublicHooksBookingRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
