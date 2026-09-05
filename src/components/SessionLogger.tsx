@@ -210,7 +210,10 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       .select("id")
       .single();
     if (error) toast.error(error.message);
-    else if (data?.id) updateSet(seId, idx, "id", data.id);
+    else if (data?.id) {
+      updateSet(seId, idx, "id", data.id);
+      updateSet(seId, idx, "completed", payload.completed);
+    }
   };
 
   // Persist how many sets this exercise has, so add/remove survives a refresh.
