@@ -4,6 +4,9 @@ import { createFileRoute } from "@tanstack/react-router";
  * Scheduled job: send one reminder email per booking, to the client only,
  * from 18:00 (Europe/Vilnius) the evening before the session.
  *
+ * Triggered by the `booking-reminders` pg_cron job (every 30 minutes), which
+ * calls this endpoint with `Authorization: Bearer <CRON_SECRET>`.
+ *
  * Idempotency: the row is "claimed" via a conditional update on
  * bookings.reminder_sent_at BEFORE the email is sent, so overlapping runs
  * can never double-send. On send failure the claim is released for retry.
