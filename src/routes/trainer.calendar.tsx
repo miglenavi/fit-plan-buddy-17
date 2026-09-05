@@ -61,7 +61,6 @@ type Booking = {
   status: string;
   client_note: string | null;
   series_id: string | null;
-  profiles?: { full_name: string | null } | null;
 };
 
 type Availability = {
