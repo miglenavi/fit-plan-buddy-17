@@ -411,7 +411,7 @@ function TrainerCalendar() {
                               {b.series_id && <Repeat className="size-3 shrink-0" aria-label="Recurring" />}
                               <span>{fmtClock(b.start_at)}–{fmtClock(b.end_at)}</span>
                             </div>
-                            <div className="truncate">{b.profiles?.full_name ?? "Client"}</div>
+                            <div className="truncate">{clientName(b.client_id)}</div>
                             {b.client_note && <div className="text-muted-foreground truncate">{b.client_note}</div>}
                             <button
                               onClick={() => (b.series_id ? setCancelTarget(b) : cancelOccurrence(b.id))}
