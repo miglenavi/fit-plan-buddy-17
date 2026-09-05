@@ -41,6 +41,27 @@ export async function createTestUser(
   return { id, email, client };
 }
 
+/** Creates a confirmed auth user WITHOUT granting any role (exercises the real signup path). */
+export async function createRawUser(label: string, metadata: Record<string, unknown> = {}) {
+  const email = `qa+${label}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@valhallafit.test`;
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { full_name: `QA ${label}`, ...metadata },
+  });
+  if (error) throw error;
+  return { id: data.user!.id, email };
+}
+
+/** Signs in an existing test account and returns an anon-key client (RLS applies as that user). */
+export async function signInAs(email: string): Promise<SupabaseClient> {
+  const client = createClient(URL, ANON, { auth: { persistSession: false } });
+  const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD });
+  if (error) throw error;
+  return client;
+}
+
 export async function linkTrainerClient(trainerId: string, clientId: string) {
   const { error } = await admin
     .from("trainer_clients")
@@ -58,6 +79,9 @@ export async function cleanupUsers(ids: string[]) {
     await admin.from("client_programs").delete().or(`trainer_id.eq.${id},client_id.eq.${id}`);
     await admin.from("plans").delete().eq("trainer_id", id);
     await admin.from("exercises").delete().eq("trainer_id", id);
+    await admin.from("client_notes").delete().or(`trainer_id.eq.${id},client_id.eq.${id}`);
+    await admin.from("client_invites").delete().or(`trainer_id.eq.${id},accepted_by.eq.${id}`);
+    await admin.from("trainer_requests").delete().or(`trainer_id.eq.${id},client_id.eq.${id}`);
     await admin.from("trainer_clients").delete().or(`trainer_id.eq.${id},client_id.eq.${id}`);
     await admin.from("trainer_applications").delete().eq("user_id", id);
     await admin.from("user_roles").delete().eq("user_id", id);
