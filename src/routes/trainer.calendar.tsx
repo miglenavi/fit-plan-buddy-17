@@ -125,9 +125,7 @@ function TrainerCalendar() {
     const [{ data: b, error: be }, { data: a }, { data: s }, { data: c }] = await Promise.all([
       supabase
         .from("bookings")
-        .select(
-          "id, client_id, start_at, end_at, status, client_note, series_id, profiles!bookings_client_id_fkey(full_name)",
-        )
+        .select("id, client_id, start_at, end_at, status, client_note, series_id")
         .gte("start_at", from.toISOString())
         .lt("start_at", to.toISOString())
         .order("start_at"),
