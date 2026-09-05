@@ -63,6 +63,7 @@ export type Database = {
           created_at: string
           end_at: string
           id: string
+          reminder_sent_at: string | null
           series_id: string | null
           start_at: string
           status: string
@@ -77,6 +78,7 @@ export type Database = {
           created_at?: string
           end_at: string
           id?: string
+          reminder_sent_at?: string | null
           series_id?: string | null
           start_at: string
           status?: string
@@ -91,6 +93,7 @@ export type Database = {
           created_at?: string
           end_at?: string
           id?: string
+          reminder_sent_at?: string | null
           series_id?: string | null
           start_at?: string
           status?: string
