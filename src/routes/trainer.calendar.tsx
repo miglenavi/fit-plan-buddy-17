@@ -61,7 +61,6 @@ type Booking = {
   status: string;
   client_note: string | null;
   series_id: string | null;
-  profiles?: { full_name: string | null } | null;
 };
 
 type Availability = {
@@ -126,9 +125,7 @@ function TrainerCalendar() {
     const [{ data: b, error: be }, { data: a }, { data: s }, { data: c }] = await Promise.all([
       supabase
         .from("bookings")
-        .select(
-          "id, client_id, start_at, end_at, status, client_note, series_id, profiles!bookings_client_id_fkey(full_name)",
-        )
+        .select("id, client_id, start_at, end_at, status, client_note, series_id")
         .gte("start_at", from.toISOString())
         .lt("start_at", to.toISOString())
         .order("start_at"),
@@ -412,7 +409,7 @@ function TrainerCalendar() {
                               {b.series_id && <Repeat className="size-3 shrink-0" aria-label="Recurring" />}
                               <span>{fmtClock(b.start_at)}–{fmtClock(b.end_at)}</span>
                             </div>
-                            <div className="truncate">{b.profiles?.full_name ?? "Client"}</div>
+                            <div className="truncate">{clientName(b.client_id)}</div>
                             {b.client_note && <div className="text-muted-foreground truncate">{b.client_note}</div>}
                             <button
                               onClick={() => (b.series_id ? setCancelTarget(b) : cancelOccurrence(b.id))}
