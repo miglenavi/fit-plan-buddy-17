@@ -99,7 +99,7 @@ function BookSession() {
 
     const { data: link } = await supabase
       .from("trainer_clients")
-      .select("trainer_id, profiles:trainer_id(full_name)")
+      .select("trainer_id")
       .eq("client_id", authUserId ?? "")
       .is("archived_at", null)
       .limit(1);
