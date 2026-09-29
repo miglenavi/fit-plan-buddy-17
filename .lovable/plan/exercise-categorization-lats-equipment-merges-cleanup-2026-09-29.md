@@ -8,6 +8,7 @@ All trainings and logged sessions stay intact. Every step adds to what's there, 
 - Library and exercise picker: muscle group and equipment filters that work together (e.g. "Lats + Dumbbell").
 - Creating or editing a custom exercise requires a primary muscle group and equipment. Secondary groups stay optional (up to 3). New names are auto-formatted to Title Case, e.g. "incline db press" becomes "Incline Db Press". Hyphens and brackets are kept.
 - Your data updates A–E are applied exactly as you listed them.
+- Built-in **"Seated Dumbbell Press" is renamed to "Seated Dumbbell Shoulder Press"** (id unchanged, so all logged history stays linked). Primary: Shoulders. Secondary: triceps. Equipment: Dumbbell.
 
 ## Answers to your questions
 
@@ -28,6 +29,8 @@ This is why the order matters: deleting a duplicate before re-pointing would wip
 5. Re-count afterwards. Kept totals must equal the old totals added together (Pull-Up: 5 trainings / 17 sessions).
 6. Progress history uses the exercise id, so after the merge "Last time" and progress pull from the combined history.
 
+The Seated Dumbbell Press rename is a name-only update on the same row — its id never changes, so trainings, sessions and "Last time" history are untouched.
+
 **Exercises that end up without equipment**
 The new field starts optional. After your list E is applied, I'll send you any exercises still missing equipment (e.g. Landmine-style or band exercises not in the list) so you can assign them. I won't guess. The app then requires equipment for new and edited exercises. Old exercises without a tag show no label and don't appear under any equipment filter until they're tagged. The database only enforces "required" in a later step, once every exercise has a value.
 
@@ -41,7 +44,7 @@ The new field starts optional. After your list E is applied, I'll send you any e
 
 ## Technical details
 - Migration (additive): `ALTER TYPE muscle_group ADD VALUE 'lats'`; new enum `equipment_type`; nullable `exercises.equipment`. Nothing gets renamed or dropped.
-- Data changes (A–E, merges) run as separate queries in a transaction, not in the migration. Each merge updates 4 columns, checks the count, then deletes.
+- Data changes (A–E, merges, Seated Dumbbell Press rename) run as separate queries in a transaction, not in the migration. Each merge updates 4 columns, checks the count, then deletes. The rename is a single `UPDATE exercises SET name, primary_muscle_group, secondary_muscle_groups, equipment WHERE id = <built-in Seated Dumbbell Press id>`.
 - UI: add `lats` to the `MUSCLE_GROUPS` list in `trainer.exercises.index.tsx` and `trainer.exercises.$exerciseId.tsx`; add equipment select, validation and a `toTitleCase` helper on create; add equipment chip and filters in the library and in the exercise pickers (training editor, SessionLogger add-exercise); add an equipment field to the MCP `search_exercises` output.
 - Later step (after you confirm no exercises lack equipment): `SET NOT NULL` on `exercises.equipment`.
 - Tests: add a merge test on disposable data (history preserved, set logs follow). The full suite must stay green. Nothing gets published.

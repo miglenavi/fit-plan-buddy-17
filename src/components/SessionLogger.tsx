@@ -57,6 +57,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const [finishing, setFinishing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState("");
+  const [pickerEquipment, setPickerEquipment] = useState("all");
   const [exerciseResults, setExerciseResults] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -253,13 +254,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     if (!pickerOpen) return;
     let cancelled = false;
     const t = setTimeout(async () => {
-      let q = supabase.from("exercises").select("id, name, description").order("name").limit(30);
+      let q = supabase.from("exercises").select("id, name, description, equipment").order("name").limit(30);
       if (exerciseSearch.trim()) q = q.ilike("name", `%${exerciseSearch.trim()}%`);
+      if (pickerEquipment !== "all") q = q.eq("equipment", pickerEquipment as any);
       const { data } = await q;
       if (!cancelled) setExerciseResults(data ?? []);
     }, 150);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [pickerOpen, exerciseSearch]);
+  }, [pickerOpen, exerciseSearch, pickerEquipment]);
 
   const addExercise = async (exerciseId: string) => {
     if (adding) return;
@@ -277,6 +279,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     if (error) return toast.error(error.message);
     setPickerOpen(false);
     setExerciseSearch("");
+    setPickerEquipment("all");
     toast.success("Exercise added");
     await load();
   };
@@ -664,6 +667,18 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
             value={exerciseSearch}
             onChange={(e) => setExerciseSearch(e.target.value)}
           />
+          <div className="flex flex-wrap gap-1.5">
+            {["all", "barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "resistance_band"].map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => setPickerEquipment(e)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${pickerEquipment === e ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+              >
+                {e === "all" ? "All" : e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              </button>
+            ))}
+          </div>
           <div className="max-h-80 overflow-y-auto space-y-1">
             {exerciseResults.length === 0 && (
               <p className="text-sm text-muted-foreground py-4 text-center">No exercises found.</p>
@@ -676,7 +691,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                 onClick={() => addExercise(ex.id)}
                 className="w-full text-left p-3 rounded-md hover:bg-accent disabled:opacity-50"
               >
-                <div className="font-medium text-sm">{ex.name}</div>
+                <div className="flex items-center gap-1.5">
+                  <div className="font-medium text-sm">{ex.name}</div>
+                  {ex.equipment && (
+                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border">
+                      {String(ex.equipment).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </span>
+                  )}
+                </div>
                 {ex.description && <div className="text-xs text-muted-foreground line-clamp-1">{ex.description}</div>}
               </button>
             ))}

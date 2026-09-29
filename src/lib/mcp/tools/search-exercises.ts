@@ -24,7 +24,7 @@ export default defineTool({
     const sb = supabaseForUser(ctx);
     let q = sb
       .from("exercises")
-      .select("id, name, description, primary_muscle_group, secondary_muscle_groups")
+      .select("id, name, description, primary_muscle_group, secondary_muscle_groups, equipment")
       .order("name", { ascending: true })
       .limit(limit ?? 25);
     if (query) q = q.ilike("name", `%${query}%`);

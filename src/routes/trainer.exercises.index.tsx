@@ -18,11 +18,16 @@ export const Route = createFileRoute("/trainer/exercises/")({
 });
 
 const MUSCLE_GROUPS = [
-  "chest", "upper_back", "lower_back", "shoulders", "biceps", "triceps",
+  "chest", "lats", "upper_back", "lower_back", "shoulders", "biceps", "triceps",
   "quads", "hamstrings", "glutes", "calves", "core", "full_body",
 ] as const;
 type MuscleGroup = typeof MUSCLE_GROUPS[number];
 const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const EQUIPMENT_OPTIONS = ["barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "resistance_band"] as const;
+type EquipmentOption = typeof EQUIPMENT_OPTIONS[number];
+const prettyEquipment = (e: string) => e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const toTitleCase = (s: string) => s.trim().replace(/\S+/g, (w) => (w.charAt(0).toUpperCase() + w.slice(1)));
 
 function ExercisesList() {
   const [list, setList] = useState<any[]>([]);
@@ -37,6 +42,8 @@ function ExercisesList() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [eqFilter, setEqFilter] = useState<string>("all");
+  const [equipment, setEquipment] = useState<EquipmentOption | "">("");
   const [search, setSearch] = useState("");
 
 
@@ -51,20 +58,24 @@ function ExercisesList() {
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (primary === "none") { toast.error("Pick a primary muscle group"); return; }
+    if (!equipment) { toast.error("Pick the equipment for this exercise"); return; }
+    const formattedName = toTitleCase(name);
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("exercises").insert({
       trainer_id: u.user!.id,
-      name,
+      name: formattedName,
       description: desc || null,
-      primary_muscle_group: primary === "none" ? null : primary,
+      primary_muscle_group: primary,
       secondary_muscle_groups: secondary,
+      equipment,
       video_url: videoUrl || null,
       image_url: imageUrl || null,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Exercise added");
-      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
+      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setEquipment(""); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
     }
   };
 
@@ -125,12 +136,14 @@ function ExercisesList() {
         filter === "unset" ? !ex.primary_muscle_group :
         ex.primary_muscle_group === filter;
       if (!matchesFilter) return false;
+      if (eqFilter !== "all" && ex.equipment !== eqFilter) return false;
       if (!q) return true;
       const haystack = [
         ex.name,
         ex.description,
         ex.primary_muscle_group ? prettyMuscle(ex.primary_muscle_group) : "",
         ...(ex.secondary_muscle_groups ?? []).map((m: string) => prettyMuscle(m)),
+        ex.equipment ? prettyEquipment(ex.equipment) : "",
       ].join(" ").toLowerCase();
       return haystack.includes(q);
     });
@@ -143,7 +156,7 @@ function ExercisesList() {
     return Array.from(byGroup.entries())
       .map(([id, items]) => ({ id, name: id === "__none__" ? "Unassigned" : prettyMuscle(id), items }))
       .sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
-  }, [list, filter, search]);
+  }, [list, filter, eqFilter, search]);
 
 
   return (
@@ -161,12 +174,20 @@ function ExercisesList() {
             <form onSubmit={create} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
               <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div className="space-y-2">
-                <Label>Primary muscle group</Label>
+                <Label>Primary muscle group <span className="text-destructive">*</span></Label>
                 <Select value={primary} onValueChange={setPrimary}>
-                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select muscle group" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
                     {MUSCLE_GROUPS.map((m) => <SelectItem key={m} value={m}>{prettyMuscle(m)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Equipment <span className="text-destructive">*</span></Label>
+                <Select value={equipment} onValueChange={(v) => setEquipment(v as EquipmentOption)}>
+                  <SelectTrigger><SelectValue placeholder="Select equipment" /></SelectTrigger>
+                  <SelectContent>
+                    {EQUIPMENT_OPTIONS.map((e) => <SelectItem key={e} value={e}>{prettyEquipment(e)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -280,6 +301,25 @@ function ExercisesList() {
         </button>
       </div>
 
+      {/* Equipment filter chips (combinable with muscle group) */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setEqFilter("all")}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${eqFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+        >
+          All equipment
+        </button>
+        {EQUIPMENT_OPTIONS.map((e) => (
+          <button
+            key={e}
+            onClick={() => setEqFilter(e)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${eqFilter === e ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+          >
+            {prettyEquipment(e)}
+          </button>
+        ))}
+      </div>
+
       {grouped.length === 0 && <p className="text-muted-foreground text-sm">No exercises yet.</p>}
 
       {grouped.map((g) => (
@@ -299,7 +339,14 @@ function ExercisesList() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold truncate">{ex.name}</div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="font-semibold truncate">{ex.name}</div>
+                          {ex.equipment && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border">
+                              {prettyEquipment(ex.equipment)}
+                            </span>
+                          )}
+                        </div>
                         {!ex.trainer_id && <Badge variant="secondary" className="mt-1 text-[10px]">Built-in</Badge>}
                         {(ex.primary_muscle_group || (ex.secondary_muscle_groups?.length ?? 0) > 0) && (
                           <div className="flex flex-wrap gap-1 mt-2">
