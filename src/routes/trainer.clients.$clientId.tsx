@@ -181,7 +181,7 @@ function ClientDetail() {
           <CardContent className="p-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-xs uppercase tracking-wider text-primary font-semibold">Session in progress</div>
-              <div className="font-semibold truncate">{inProgress.trainings?.name ?? "Training"}</div>
+              <div className="font-semibold truncate">{inProgress.custom_name ?? inProgress.trainings?.name ?? "Custom session"}</div>
             </div>
             <Button onClick={() => navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: inProgress.id } })}>
               Resume
@@ -190,10 +190,10 @@ function ClientDetail() {
         </Card>
       )}
 
-      {trainings.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Start a training for {profile?.full_name?.split(" ")[0] ?? "this client"}</CardTitle></CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader><CardTitle>Start a session for {profile?.full_name?.split(" ")[0] ?? "this client"}</CardTitle></CardHeader>
+        <CardContent>
+          {trainings.length > 0 ? (
             <div className="grid sm:grid-cols-2 gap-2">
               {trainings.map((t) => {
                 const resumeHere = inProgress?.training_id === t.id;
@@ -214,10 +214,59 @@ function ClientDetail() {
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground mt-3">Log the session yourself during in-person coaching.</p>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <p className="text-muted-foreground text-sm">No plan days available — you can still run a session from scratch.</p>
+          )}
+
+          <div className="mt-3 pt-3 border-t">
+            <Button
+              variant="secondary"
+              className="w-full justify-between h-auto py-3"
+              disabled={starting === "custom"}
+              onClick={() => setCustomOpen(true)}
+            >
+              <span className="text-left">
+                <span className="block">Start a session from scratch</span>
+                <span className="block text-xs font-normal text-muted-foreground">Sore, injured, or improvising — add exercises as you go</span>
+              </span>
+              <Sparkles className="size-4 shrink-0" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">Every exercise you log keeps the client's history, whichever way you start.</p>
+        </CardContent>
+      </Card>
+
+      <Dialog open={customOpen} onOpenChange={(o) => { setCustomOpen(o); if (!o) setCustomName(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Session from scratch</DialogTitle>
+            <DialogDescription>Give it a name, then add exercises during the session.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {["Mobility & stretch", "Injury rehab / deload", "Improvised session"].map((p) => (
+                <Button key={p} type="button" size="sm" variant={customName === p ? "default" : "outline"} onClick={() => setCustomName(p)}>
+                  {p}
+                </Button>
+              ))}
+            </div>
+            <Input
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Or type your own name"
+              maxLength={80}
+            />
+            <Button
+              className="w-full"
+              disabled={starting === "custom"}
+              onClick={() => startCustom(customName.trim() || "Custom session")}
+            >
+              {starting === "custom" ? "Starting…" : "Start session"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       <Card>
         <CardHeader><CardTitle>Recent sessions</CardTitle></CardHeader>
