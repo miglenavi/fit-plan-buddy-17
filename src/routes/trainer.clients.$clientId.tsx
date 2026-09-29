@@ -25,11 +25,13 @@ function ClientDetail() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [trainings, setTrainings] = useState<any[]>([]);
-  const [inProgress, setInProgress] = useState<{ id: string; training_id: string; trainings: { name: string } | null } | null>(null);
+  const [inProgress, setInProgress] = useState<{ id: string; training_id: string | null; custom_name: string | null; trainings: { name: string } | null } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [noteBody, setNoteBody] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customName, setCustomName] = useState("");
 
   const load = async () => {
     const [{ data: p }, { data: pr }, { data: ss }, { data: ip }, { data: ns }] = await Promise.all([
