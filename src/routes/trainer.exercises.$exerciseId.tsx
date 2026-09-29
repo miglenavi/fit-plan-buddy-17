@@ -18,11 +18,14 @@ export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
 
 
 const MUSCLE_GROUPS = [
-  "chest", "upper_back", "lower_back", "shoulders", "biceps", "triceps",
+  "chest", "lats", "upper_back", "lower_back", "shoulders", "biceps", "triceps",
   "quads", "hamstrings", "glutes", "calves", "core", "full_body",
 ] as const;
 type MuscleGroup = typeof MUSCLE_GROUPS[number];
 const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const EQUIPMENT_OPTIONS = ["barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "resistance_band"] as const;
+const prettyEquipment = (e: string) => e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function ExerciseDetail() {
   const { exerciseId } = useParams({ from: "/trainer/exercises/$exerciseId" });
@@ -36,6 +39,7 @@ function ExerciseDetail() {
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [primary, setPrimary] = useState<string>("none");
   const [secondary, setSecondary] = useState<MuscleGroup[]>([]);
+  const [equipment, setEquipment] = useState<string>("");
   const hasLoaded = useRef(false);
   const lastSaved = useRef<string>("");
 
@@ -50,12 +54,14 @@ function ExerciseDetail() {
     setVideoUrl(data.video_url ?? "");
     setPrimary(d.primary_muscle_group ?? "none");
     setSecondary(((d.secondary_muscle_groups ?? []) as MuscleGroup[]));
+    setEquipment(d.equipment ?? "");
     lastSaved.current = JSON.stringify({
       name: data.name,
       description: data.description ?? "",
       video_url: data.video_url ?? "",
       primary_muscle_group: d.primary_muscle_group ?? "none",
       secondary_muscle_groups: (d.secondary_muscle_groups ?? []),
+      equipment: d.equipment ?? "",
     });
     hasLoaded.current = true;
   };
@@ -66,23 +72,24 @@ function ExerciseDetail() {
       name, description: desc || null, video_url: videoUrl || null,
       primary_muscle_group: primary === "none" ? null : primary,
       secondary_muscle_groups: secondary,
+      equipment: equipment || null,
     } as any).eq("id", exerciseId);
     if (error) { setStatus("error"); return; }
-    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary });
+    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary, equipment });
     setStatus("saved");
     setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
   };
 
   useEffect(() => {
     if (!hasLoaded.current) return;
-    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary });
+    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary, equipment });
     if (current === lastSaved.current) return;
-    if (!name.trim()) { setStatus("error"); return; }
+    if (!name.trim() || !equipment) { setStatus("error"); return; }
     setStatus("saving");
     const t = setTimeout(() => { doSave(); }, 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, desc, videoUrl, primary, secondary]);
+  }, [name, desc, videoUrl, primary, secondary, equipment]);
 
   const toggleSecondary = (m: MuscleGroup) => {
     setSecondary((prev) => {
