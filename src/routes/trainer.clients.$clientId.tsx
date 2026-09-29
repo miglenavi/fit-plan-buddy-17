@@ -280,7 +280,7 @@ function ClientDetail() {
                   <div className="flex items-center gap-3">
                     {s.status === "completed" ? <CheckCircle2 className="size-4 text-primary" /> : <Clock className="size-4 text-muted-foreground" />}
                     <div>
-                      <div className="font-medium">{s.trainings?.name ?? "Training"}</div>
+                      <div className="font-medium">{s.custom_name ?? s.trainings?.name ?? "Custom session"}</div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(s.started_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                         {s.logged_by === "trainer" ? " · logged by you" : " · logged by client"}
