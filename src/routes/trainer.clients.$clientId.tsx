@@ -38,12 +38,12 @@ function ClientDetail() {
       supabase.from("profiles").select("*").eq("id", clientId).maybeSingle(),
       supabase.from("client_programs").select("*, plans(id, name, description)").eq("client_id", clientId).order("start_date", { ascending: false }),
       supabase.from("training_sessions")
-        .select("id, started_at, completed_at, status, logged_by, trainings(name)")
+        .select("id, started_at, completed_at, status, logged_by, custom_name, trainings(name)")
         .eq("client_id", clientId)
         .order("started_at", { ascending: false })
         .limit(20),
       supabase.from("training_sessions")
-        .select("id, training_id, trainings(name)")
+        .select("id, training_id, custom_name, trainings(name)")
         .eq("client_id", clientId)
         .eq("status", "in_progress")
         .order("started_at", { ascending: false })
