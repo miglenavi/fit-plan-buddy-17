@@ -152,6 +152,77 @@ describe("core trainer/client workflow", () => {
     ]);
   });
 
+  it("trainer can run an improvised session with no plan day, and its sets stay in the client's exercise history", async () => {
+    // Improvised session: no training_id, just a name.
+    const session = await trainer.client
+      .from("training_sessions")
+      .insert({
+        training_id: null,
+        custom_name: "Injury rehab / deload",
+        client_id: client.id,
+        trainer_id: trainer.id,
+        status: "in_progress",
+        logged_by: "trainer",
+      })
+      .select("id, custom_name, training_id")
+      .single();
+    expect(session.error).toBeNull();
+    expect(session.data!.training_id).toBeNull();
+    expect(session.data!.custom_name).toBe("Injury rehab / deload");
+    const sessionId = session.data!.id;
+
+    // Exercise added mid-session from the library.
+    const se = await trainer.client
+      .from("session_exercises")
+      .insert({ session_id: sessionId, exercise_id: exerciseId, order_index: 0, target_sets: 2 })
+      .select("id")
+      .single();
+    expect(se.error).toBeNull();
+
+    const logs = await trainer.client.from("set_logs").insert([
+      { session_exercise_id: se.data!.id, set_index: 0, reps: 12, weight: 70, completed: true },
+      { session_exercise_id: se.data!.id, set_index: 1, reps: 10, weight: 72.5, completed: true },
+    ]);
+    expect(logs.error).toBeNull();
+
+    const finish = await trainer.client
+      .from("training_sessions")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("id", sessionId);
+    expect(finish.error).toBeNull();
+
+    // Progress lookup is exercise-first: a later plan workout must find these
+    // numbers even though they were logged outside any plan day.
+    const prevSessions = await trainer.client
+      .from("training_sessions")
+      .select("id, completed_at")
+      .eq("client_id", client.id)
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false })
+      .limit(50);
+    expect(prevSessions.error).toBeNull();
+    const sessIds = (prevSessions.data ?? []).map((s) => s.id);
+    expect(sessIds).toContain(sessionId);
+
+    const history = await trainer.client
+      .from("session_exercises")
+      .select("session_id, exercise_id, set_logs(set_index, reps, weight)")
+      .in("session_id", sessIds)
+      .eq("exercise_id", exerciseId);
+    expect(history.error).toBeNull();
+    const fromCustom = (history.data ?? []).find((h: any) => h.session_id === sessionId);
+    expect(fromCustom).toBeTruthy();
+    expect(
+      (fromCustom!.set_logs as any[]).sort((a, b) => a.set_index - b.set_index).map((l) => ({ reps: l.reps, weight: l.weight })),
+    ).toEqual([
+      { reps: 12, weight: 70 },
+      { reps: 10, weight: 72.5 },
+    ]);
+
+    // And the plan-based session logged earlier is still in the same history.
+    expect((history.data ?? []).length).toBeGreaterThan(1);
+  });
+
   it("a client cannot read another client's sessions", async () => {
     const other = await createTestUser("other-core", "client");
     const res = await other.client.from("training_sessions").select("id").eq("client_id", client.id);
@@ -160,3 +231,4 @@ describe("core trainer/client workflow", () => {
     await cleanupUsers([other.id]);
   }, 60_000);
 });
+

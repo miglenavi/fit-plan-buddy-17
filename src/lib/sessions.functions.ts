@@ -6,14 +6,24 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * Start a new training session. If called by a trainer, clientId must be
  * one of their clients (enforced via RLS + is_trainer_of).
  * Snapshots the current training_exercises into session_exercises.
+ *
+ * Two modes:
+ *  - trainingId: a plan training day, exercises are copied from the template.
+ *  - customName: an improvised/ad-hoc session (no plan day), starts empty.
  */
 export const startSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      trainingId: z.string().uuid(),
-      clientId: z.string().uuid().optional(), // omit = self (client logging own)
-    }).parse(input),
+    z
+      .object({
+        trainingId: z.string().uuid().optional(),
+        customName: z.string().trim().min(1).max(80).optional(),
+        clientId: z.string().uuid().optional(), // omit = self (client logging own)
+      })
+      .refine((v) => !!v.trainingId || !!v.customName, {
+        message: "Either a training day or a session name is required",
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -22,32 +32,41 @@ export const startSession = createServerFn({ method: "POST" })
     const clientId = data.clientId ?? userId;
     const loggedBy: "client" | "trainer" = clientId === userId ? "client" : "trainer";
     const trainerId = loggedBy === "trainer" ? userId : null;
+    const isCustom = !data.trainingId;
 
     // If an in-progress session already exists for this client+training, resume it.
-    const { data: existing } = await supabase
+    // For improvised sessions, resume any in-progress session with no training day.
+    let existingQ = supabase
       .from("training_sessions")
       .select("id")
       .eq("client_id", clientId)
-      .eq("training_id", data.trainingId)
       .eq("status", "in_progress")
       .order("started_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    existingQ = isCustom
+      ? existingQ.is("training_id", null)
+      : existingQ.eq("training_id", data.trainingId!);
+    const { data: existing } = await existingQ.maybeSingle();
     if (existing?.id) return { sessionId: existing.id };
 
-    // Load template exercises
-    const { data: tplExs, error: tplErr } = await supabase
-      .from("training_exercises")
-      .select("id, exercise_id, alternative_exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes, alt_target_sets, alt_target_reps_min, alt_target_reps_max, alt_target_weight")
-      .eq("training_id", data.trainingId)
-      .order("order_index");
-    if (tplErr) throw new Error(tplErr.message);
+    // Load template exercises (plan-based sessions only)
+    let tplExs: any[] | null = null;
+    if (!isCustom) {
+      const { data: rows, error: tplErr } = await supabase
+        .from("training_exercises")
+        .select("id, exercise_id, alternative_exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes, alt_target_sets, alt_target_reps_min, alt_target_reps_max, alt_target_weight")
+        .eq("training_id", data.trainingId!)
+        .order("order_index");
+      if (tplErr) throw new Error(tplErr.message);
+      tplExs = rows ?? [];
+    }
 
     // Create session
     const { data: session, error: sErr } = await supabase
       .from("training_sessions")
       .insert({
-        training_id: data.trainingId,
+        training_id: data.trainingId ?? null,
+        custom_name: isCustom ? (data.customName ?? "Custom session") : null,
         client_id: clientId,
         trainer_id: trainerId,
         logged_by: loggedBy,
@@ -56,6 +75,7 @@ export const startSession = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (sErr || !session) throw new Error(sErr?.message ?? "Failed to create session");
+
 
     if (tplExs && tplExs.length > 0) {
       const seRows = tplExs.map((t: any) => ({
@@ -110,7 +130,7 @@ export const startSession = createServerFn({ method: "POST" })
           .from("bookings")
           .update({
             training_session_id: session.id,
-            ...(match.training_id ? {} : { training_id: data.trainingId }),
+            ...(match.training_id || !data.trainingId ? {} : { training_id: data.trainingId }),
           })
           .eq("id", match.id);
       }

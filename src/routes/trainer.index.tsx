@@ -33,7 +33,7 @@ function Dashboard() {
         supabase.from("plans").select("id", { count: "exact", head: true }),
         supabase.from("training_sessions").select("id", { count: "exact", head: true }).gte("started_at", weekAgo),
         supabase.from("training_sessions")
-          .select("id, started_at, status, logged_by, client_id, trainings(name), profiles!training_sessions_client_id_fkey(full_name)")
+          .select("id, started_at, status, logged_by, client_id, custom_name, trainings(name), profiles!training_sessions_client_id_fkey(full_name)")
           .order("started_at", { ascending: false })
           .limit(8),
       ]);
@@ -97,7 +97,7 @@ function Dashboard() {
                 <li key={s.id} className="py-3 flex items-center gap-3">
                   {s.status === "completed" ? <CheckCircle2 className="size-4 text-primary" /> : <Clock className="size-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{s.profiles?.full_name ?? "Client"} · {s.trainings?.name ?? "Training"}</div>
+                    <div className="font-medium truncate">{s.profiles?.full_name ?? "Client"} · {s.custom_name ?? s.trainings?.name ?? "Custom session"}</div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(s.started_at).toLocaleDateString()} · {s.status.replace("_", " ")} · {s.logged_by === "trainer" ? "logged by you" : "logged by client"}
                     </div>

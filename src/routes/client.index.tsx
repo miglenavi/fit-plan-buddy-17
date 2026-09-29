@@ -28,7 +28,7 @@ function ClientToday() {
   const [program, setProgram] = useState<any>(null);
   const [trainings, setTrainings] = useState<any[]>([]);
   const [lastDone, setLastDone] = useState<string | null>(null);
-  const [inProgress, setInProgress] = useState<{ id: string; training_id: string } | null>(null);
+  const [inProgress, setInProgress] = useState<{ id: string; training_id: string | null } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
   const [hasTrainer, setHasTrainer] = useState<boolean | null>(null);
   const [todayBooking, setTodayBooking] = useState<any>(null);
@@ -51,10 +51,12 @@ function ClientToday() {
           .order("order_index");
         setTrainings(t ?? []);
       }
+      // Improvised sessions have no plan day, so they never shift the rotation.
       const { data: last } = await supabase
         .from("training_sessions")
         .select("training_id, completed_at")
         .eq("status", "completed")
+        .not("training_id", "is", null)
         .order("completed_at", { ascending: false })
         .limit(1);
       setLastDone(last?.[0]?.training_id ?? null);

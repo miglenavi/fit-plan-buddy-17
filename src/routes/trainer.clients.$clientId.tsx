@@ -6,7 +6,9 @@ import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Play, CheckCircle2, Clock, Archive, StickyNote } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Plus, Play, CheckCircle2, Clock, Archive, StickyNote, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
 
@@ -23,23 +25,25 @@ function ClientDetail() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [trainings, setTrainings] = useState<any[]>([]);
-  const [inProgress, setInProgress] = useState<{ id: string; training_id: string; trainings: { name: string } | null } | null>(null);
+  const [inProgress, setInProgress] = useState<{ id: string; training_id: string | null; custom_name: string | null; trainings: { name: string } | null } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [noteBody, setNoteBody] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customName, setCustomName] = useState("");
 
   const load = async () => {
     const [{ data: p }, { data: pr }, { data: ss }, { data: ip }, { data: ns }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", clientId).maybeSingle(),
       supabase.from("client_programs").select("*, plans(id, name, description)").eq("client_id", clientId).order("start_date", { ascending: false }),
       supabase.from("training_sessions")
-        .select("id, started_at, completed_at, status, logged_by, trainings(name)")
+        .select("id, started_at, completed_at, status, logged_by, custom_name, trainings(name)")
         .eq("client_id", clientId)
         .order("started_at", { ascending: false })
         .limit(20),
       supabase.from("training_sessions")
-        .select("id, training_id, trainings(name)")
+        .select("id, training_id, custom_name, trainings(name)")
         .eq("client_id", clientId)
         .eq("status", "in_progress")
         .order("started_at", { ascending: false })
@@ -92,6 +96,21 @@ function ClientDetail() {
     setStarting(trainingId);
     try {
       const res = await start({ data: { trainingId, clientId } });
+      navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: res.sessionId } });
+    } catch (e: any) {
+      setStarting(null);
+      toast.error(e.message ?? "Couldn't start session");
+    }
+  };
+
+  // Improvised session: no plan day, starts empty, exercises added as you go.
+  const startCustom = async (name: string) => {
+    if (starting) return;
+    setStarting("custom");
+    try {
+      const res = await start({ data: { customName: name, clientId } });
+      setCustomOpen(false);
+      setCustomName("");
       navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: res.sessionId } });
     } catch (e: any) {
       setStarting(null);
@@ -162,7 +181,7 @@ function ClientDetail() {
           <CardContent className="p-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-xs uppercase tracking-wider text-primary font-semibold">Session in progress</div>
-              <div className="font-semibold truncate">{inProgress.trainings?.name ?? "Training"}</div>
+              <div className="font-semibold truncate">{inProgress.custom_name ?? inProgress.trainings?.name ?? "Custom session"}</div>
             </div>
             <Button onClick={() => navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: inProgress.id } })}>
               Resume
@@ -171,10 +190,10 @@ function ClientDetail() {
         </Card>
       )}
 
-      {trainings.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Start a training for {profile?.full_name?.split(" ")[0] ?? "this client"}</CardTitle></CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader><CardTitle>Start a session for {profile?.full_name?.split(" ")[0] ?? "this client"}</CardTitle></CardHeader>
+        <CardContent>
+          {trainings.length > 0 ? (
             <div className="grid sm:grid-cols-2 gap-2">
               {trainings.map((t) => {
                 const resumeHere = inProgress?.training_id === t.id;
@@ -195,10 +214,59 @@ function ClientDetail() {
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground mt-3">Log the session yourself during in-person coaching.</p>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <p className="text-muted-foreground text-sm">No plan days available — you can still run a session from scratch.</p>
+          )}
+
+          <div className="mt-3 pt-3 border-t">
+            <Button
+              variant="secondary"
+              className="w-full justify-between h-auto py-3"
+              disabled={starting === "custom"}
+              onClick={() => setCustomOpen(true)}
+            >
+              <span className="text-left">
+                <span className="block">Start a session from scratch</span>
+                <span className="block text-xs font-normal text-muted-foreground">Sore, injured, or improvising — add exercises as you go</span>
+              </span>
+              <Sparkles className="size-4 shrink-0" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">Every exercise you log keeps the client's history, whichever way you start.</p>
+        </CardContent>
+      </Card>
+
+      <Dialog open={customOpen} onOpenChange={(o) => { setCustomOpen(o); if (!o) setCustomName(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Session from scratch</DialogTitle>
+            <DialogDescription>Give it a name, then add exercises during the session.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {["Mobility & stretch", "Injury rehab / deload", "Improvised session"].map((p) => (
+                <Button key={p} type="button" size="sm" variant={customName === p ? "default" : "outline"} onClick={() => setCustomName(p)}>
+                  {p}
+                </Button>
+              ))}
+            </div>
+            <Input
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Or type your own name"
+              maxLength={80}
+            />
+            <Button
+              className="w-full"
+              disabled={starting === "custom"}
+              onClick={() => startCustom(customName.trim() || "Custom session")}
+            >
+              {starting === "custom" ? "Starting…" : "Start session"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       <Card>
         <CardHeader><CardTitle>Recent sessions</CardTitle></CardHeader>
@@ -212,7 +280,7 @@ function ClientDetail() {
                   <div className="flex items-center gap-3">
                     {s.status === "completed" ? <CheckCircle2 className="size-4 text-primary" /> : <Clock className="size-4 text-muted-foreground" />}
                     <div>
-                      <div className="font-medium">{s.trainings?.name ?? "Training"}</div>
+                      <div className="font-medium">{s.custom_name ?? s.trainings?.name ?? "Custom session"}</div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(s.started_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                         {s.logged_by === "trainer" ? " · logged by you" : " · logged by client"}
