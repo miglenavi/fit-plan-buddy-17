@@ -27,6 +27,7 @@ function TrainingDetail() {
   const [items, setItems] = useState<any[]>([]);
   const [exercises, setExercises] = useState<any[]>([]);
   const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const prettyEquipment = (e: string) => e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const loaded = useRef(false);
   const lastSaved = useRef("");
@@ -52,7 +53,7 @@ function TrainingDetail() {
     const [{ data: t }, { data: it }, { data: ex }] = await Promise.all([
       supabase.from("trainings").select("*").eq("id", trainingId).maybeSingle(),
       supabase.from("training_exercises").select("*, exercises!exercise_id(name, primary_muscle_group, secondary_muscle_groups)").eq("training_id", trainingId).order("order_index"),
-      supabase.from("exercises").select("id, name, primary_muscle_group").order("name"),
+      supabase.from("exercises").select("id, name, primary_muscle_group, equipment").order("name"),
     ]);
     setTraining(t);
     if (t) {
@@ -198,10 +199,19 @@ function TrainingDetail() {
                 const filtered = excludeId ? g.items.filter((e) => e.id !== excludeId) : g.items;
                 if (filtered.length === 0) return null;
                 return (
-                  <SelectGroup key={g.id}>
-                    <SelectLabel>{g.name}</SelectLabel>
-                    {filtered.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
-                  </SelectGroup>
+                    <SelectGroup key={g.id}>
+                      <SelectLabel>{g.name}</SelectLabel>
+                      {filtered.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.name}
+                          {(e as any).equipment && (
+                            <span className="ml-2 text-xs text-muted-foreground font-normal">
+                              {prettyEquipment((e as any).equipment)}
+                            </span>
+                          )}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                 );
               });
               return (
@@ -285,6 +295,7 @@ function TrainingDetail() {
         item={editing}
         exercises={exercises}
         prettyMuscle={prettyMuscle}
+        prettyEquipment={prettyEquipment}
         onClose={() => setEditing(null)}
         onSave={saveEdit}
       />
