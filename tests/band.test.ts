@@ -11,11 +11,16 @@ describe("band levels on assisted band exercises", () => {
   afterAll(async () => { await cleanupUsers([trainer.id, client.id]); }, 60_000);
 
   it("persists band_level and swaps band targets with the alternative", async () => {
-    const { data: exs } = await admin.from("exercises").select("id, name, is_assisted")
-      .in("name", ["Band Assisted Pull-Up", "Machine Assisted Pull-Up"]);
-    const band = exs!.find((e) => e.name === "Band Assisted Pull-Up")!;
-    const machine = exs!.find((e) => e.name === "Machine Assisted Pull-Up")!;
+    const { data: b } = await admin.from("exercises").select("id, is_assisted").eq("name", "Band Assisted Pull-Up").is("trainer_id", null).single();
+    const band = b!;
     expect(band.is_assisted).toBe(true);
+    // Trainers can mark their own custom exercises as assisted.
+    const m = await trainer.client.from("exercises").insert({
+      trainer_id: trainer.id, name: "QA Assisted Machine", muscle_groups: ["lats"], primary_muscle_group: "lats",
+      secondary_muscle_groups: [], equipment: "machine", is_assisted: true,
+    }).select("id, is_assisted").single();
+    expect(m.error).toBeNull();
+    const machine = m.data!;
     expect(machine.is_assisted).toBe(true);
 
     const s = await client.client.from("training_sessions").insert({ client_id: client.id, status: "in_progress", logged_by: "client", custom_name: "QA band" }).select("id").single();
