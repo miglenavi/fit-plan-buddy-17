@@ -130,7 +130,7 @@ export const startSession = createServerFn({ method: "POST" })
           .from("bookings")
           .update({
             training_session_id: session.id,
-            ...(match.training_id ? {} : { training_id: data.trainingId }),
+            ...(match.training_id || !data.trainingId ? {} : { training_id: data.trainingId }),
           })
           .eq("id", match.id);
       }
