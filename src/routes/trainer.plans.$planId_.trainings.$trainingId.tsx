@@ -320,7 +320,7 @@ function SortableExerciseRow({
         <button
           type="button"
           aria-label="Drag to reorder"
-          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-1 -ml-1"
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-2 -ml-2"
           {...attributes}
           {...listeners}
         >
