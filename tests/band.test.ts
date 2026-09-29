@@ -12,7 +12,7 @@ describe("band levels on assisted band exercises", () => {
 
   it("persists band_level and swaps band targets with the alternative", async () => {
     const { data: exs } = await admin.from("exercises").select("id, name, is_assisted")
-      .in("name", ["Band Assisted Pull-Up", "Machine Assisted Pull-Up"]).is("trainer_id", null);
+      .in("name", ["Band Assisted Pull-Up", "Machine Assisted Pull-Up"]);
     const band = exs!.find((e) => e.name === "Band Assisted Pull-Up")!;
     const machine = exs!.find((e) => e.name === "Machine Assisted Pull-Up")!;
     expect(band.is_assisted).toBe(true);
