@@ -42,6 +42,7 @@ function ExercisesList() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [assisted, setAssisted] = useState(false);
   const [eqFilter, setEqFilter] = useState<string>("all");
   const [equipment, setEquipment] = useState<EquipmentOption | "">("");
   const [search, setSearch] = useState("");
@@ -69,13 +70,14 @@ function ExercisesList() {
       primary_muscle_group: primary,
       secondary_muscle_groups: secondary,
       equipment,
+      is_assisted: assisted,
       video_url: videoUrl || null,
       image_url: imageUrl || null,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Exercise added");
-      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setEquipment(""); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
+      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setEquipment(""); setAssisted(false); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
     }
   };
 
@@ -191,6 +193,10 @@ function ExercisesList() {
                   </SelectContent>
                 </Select>
               </div>
+              <label className="flex items-start gap-2 text-sm cursor-pointer">
+                <input type="checkbox" className="mt-1" checked={assisted} onChange={(e) => setAssisted(e.target.checked)} />
+                <span>Assisted exercise<span className="block text-xs text-muted-foreground">The logged weight or band is assistance, so less counts as progress.</span></span>
+              </label>
               <div className="space-y-2">
                 <Label>Secondary muscle groups <span className="text-xs text-muted-foreground font-normal">(up to 3)</span></Label>
                 <div className="flex flex-wrap gap-2">
@@ -345,6 +351,9 @@ function ExercisesList() {
                             <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border">
                               {prettyEquipment(ex.equipment)}
                             </span>
+                          )}
+                          {ex.is_assisted && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border">Assisted</span>
                           )}
                         </div>
                         {!ex.trainer_id && <Badge variant="secondary" className="mt-1 text-[10px]">Built-in</Badge>}
