@@ -120,19 +120,20 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       if (firstChoice) setExpandedId((cur) => cur ?? firstChoice.id);
 
 
-      // "Last time"
+      // "Last time" — history follows the EXERCISE, not the routine it was in.
+      // So an improvised session sees the client's real previous numbers, and a
+      // plan workout sees numbers logged during an improvised session.
       const exIds = (se ?? []).map((r: any) => r.exercise_id);
       const last: Record<string, { sets: SetLog[]; date: string } | null> = {};
-      if (exIds.length && s.training_id) {
+      if (exIds.length) {
         const { data: prevSessions } = await supabase
           .from("training_sessions")
           .select("id, completed_at")
           .eq("client_id", s.client_id)
-          .eq("training_id", s.training_id)
           .eq("status", "completed")
           .neq("id", sessionId)
           .order("completed_at", { ascending: false })
-          .limit(20);
+          .limit(50);
         const sessIds = (prevSessions ?? []).map((x) => x.id);
         if (sessIds.length) {
           const { data: prevSEs } = await supabase
@@ -156,6 +157,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         }
       }
       setLastTimeByEx(last);
+
 
       const firstUndone = (se ?? []).find((r: any) => !(logs[r.id] ?? []).every((sl) => sl.completed));
       setExpandedId(firstUndone?.id ?? null);
