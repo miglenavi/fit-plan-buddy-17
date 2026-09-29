@@ -174,12 +174,20 @@ function ExercisesList() {
             <form onSubmit={create} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
               <div className="space-y-2"><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div className="space-y-2">
-                <Label>Primary muscle group</Label>
+                <Label>Primary muscle group <span className="text-destructive">*</span></Label>
                 <Select value={primary} onValueChange={setPrimary}>
-                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select muscle group" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
                     {MUSCLE_GROUPS.map((m) => <SelectItem key={m} value={m}>{prettyMuscle(m)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Equipment <span className="text-destructive">*</span></Label>
+                <Select value={equipment} onValueChange={setEquipment}>
+                  <SelectTrigger><SelectValue placeholder="Select equipment" /></SelectTrigger>
+                  <SelectContent>
+                    {EQUIPMENT_OPTIONS.map((e) => <SelectItem key={e} value={e}>{prettyEquipment(e)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -293,6 +301,25 @@ function ExercisesList() {
         </button>
       </div>
 
+      {/* Equipment filter chips (combinable with muscle group) */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setEqFilter("all")}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${eqFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+        >
+          All equipment
+        </button>
+        {EQUIPMENT_OPTIONS.map((e) => (
+          <button
+            key={e}
+            onClick={() => setEqFilter(e)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${eqFilter === e ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+          >
+            {prettyEquipment(e)}
+          </button>
+        ))}
+      </div>
+
       {grouped.length === 0 && <p className="text-muted-foreground text-sm">No exercises yet.</p>}
 
       {grouped.map((g) => (
@@ -312,7 +339,14 @@ function ExercisesList() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold truncate">{ex.name}</div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="font-semibold truncate">{ex.name}</div>
+                          {ex.equipment && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border">
+                              {prettyEquipment(ex.equipment)}
+                            </span>
+                          )}
+                        </div>
                         {!ex.trainer_id && <Badge variant="secondary" className="mt-1 text-[10px]">Built-in</Badge>}
                         {(ex.primary_muscle_group || (ex.secondary_muscle_groups?.length ?? 0) > 0) && (
                           <div className="flex flex-wrap gap-1 mt-2">
