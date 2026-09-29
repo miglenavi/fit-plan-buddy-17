@@ -404,7 +404,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   return (
     <div className="space-y-5 pb-40">
       <div>
-        <h2 className="text-xl font-bold tracking-tight">{session.trainings?.name}</h2>
+        <h2 className="text-xl font-bold tracking-tight">{session.custom_name ?? session.trainings?.name ?? "Custom session"}</h2>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
         {session.status === "completed" && (
           <p className="text-xs text-primary mt-1 font-medium">

@@ -21,7 +21,7 @@ function HistoryView() {
     (async () => {
       const { data } = await supabase
         .from("training_sessions")
-        .select("id, started_at, completed_at, status, logged_by, trainings(name)")
+        .select("id, started_at, completed_at, status, logged_by, custom_name, trainings(name)")
         .order("started_at", { ascending: false });
       setItems(data ?? []);
     })();
@@ -55,7 +55,7 @@ function HistoryView() {
                         ? <CheckCircle2 className="size-5 text-primary shrink-0" />
                         : <Clock className="size-5 text-muted-foreground shrink-0" />}
                       <div>
-                        <div className="font-medium text-sm">{s.trainings?.name ?? "Training"}</div>
+                        <div className="font-medium text-sm">{s.custom_name ?? s.trainings?.name ?? "Custom session"}</div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(s.completed_at || s.started_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
                           {s.logged_by === "trainer" ? " · logged by trainer" : ""}
