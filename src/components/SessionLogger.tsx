@@ -57,6 +57,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const [finishing, setFinishing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState("");
+  const [pickerEquipment, setPickerEquipment] = useState("all");
   const [exerciseResults, setExerciseResults] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -253,13 +254,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     if (!pickerOpen) return;
     let cancelled = false;
     const t = setTimeout(async () => {
-      let q = supabase.from("exercises").select("id, name, description").order("name").limit(30);
+      let q = supabase.from("exercises").select("id, name, description, equipment").order("name").limit(30);
       if (exerciseSearch.trim()) q = q.ilike("name", `%${exerciseSearch.trim()}%`);
+      if (pickerEquipment !== "all") q = q.eq("equipment", pickerEquipment);
       const { data } = await q;
       if (!cancelled) setExerciseResults(data ?? []);
     }, 150);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [pickerOpen, exerciseSearch]);
+  }, [pickerOpen, exerciseSearch, pickerEquipment]);
 
   const addExercise = async (exerciseId: string) => {
     if (adding) return;
@@ -277,6 +279,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     if (error) return toast.error(error.message);
     setPickerOpen(false);
     setExerciseSearch("");
+    setPickerEquipment("all");
     toast.success("Exercise added");
     await load();
   };
