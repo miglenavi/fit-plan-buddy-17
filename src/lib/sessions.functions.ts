@@ -54,7 +54,7 @@ export const startSession = createServerFn({ method: "POST" })
     if (!isCustom) {
       const { data: rows, error: tplErr } = await supabase
         .from("training_exercises")
-        .select("id, exercise_id, alternative_exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes, alt_target_sets, alt_target_reps_min, alt_target_reps_max, alt_target_weight")
+        .select("id, exercise_id, alternative_exercise_id, order_index, target_sets, target_reps_min, target_reps_max, target_weight, coach_notes, alt_target_sets, alt_target_reps_min, alt_target_reps_max, alt_target_weight, target_band_level, alt_target_band_level")
         .eq("training_id", data.trainingId!)
         .order("order_index");
       if (tplErr) throw new Error(tplErr.message);
@@ -92,6 +92,8 @@ export const startSession = createServerFn({ method: "POST" })
         alt_target_reps_min: t.alt_target_reps_min,
         alt_target_reps_max: t.alt_target_reps_max,
         alt_target_weight: t.alt_target_weight,
+        target_band_level: t.target_band_level,
+        alt_target_band_level: t.alt_target_band_level,
         notes: t.coach_notes,
       }));
       const { error: seErr } = await supabase.from("session_exercises").insert(seRows);

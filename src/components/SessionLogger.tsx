@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted } from "@/lib/progress";
 import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw } from "lucide-react";
 
-type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean };
+type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null };
 
 const isSetDone = (s: { completed: boolean; reps: string | number | null }) =>
   s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0);
@@ -29,9 +30,10 @@ function fmtSigned(n: number, unit = ""): string {
   if (n === 0) return `on target${unit ? "" : ""}`;
   return `${n > 0 ? "+" : ""}${Number.isInteger(n) ? n : n.toFixed(1)}${unit}`;
 }
-function DeltaChip({ label, value, unit = "" }: { label: string; value: number | null; unit?: string }) {
+function DeltaChip({ label, value, unit = "", invert = false }: { label: string; value: number | null; unit?: string; invert?: boolean }) {
   if (value == null) return null;
-  const tone = value === 0 ? "bg-muted text-muted-foreground" : value > 0 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-amber-500/15 text-amber-700 dark:text-amber-500";
+  const good = invert ? value < 0 : value > 0;
+  const tone = value === 0 ? "bg-muted text-muted-foreground" : good ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-amber-500/15 text-amber-700 dark:text-amber-500";
   const Icon = value === 0 ? Minus : value > 0 ? TrendingUp : TrendingDown;
   return (
     <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums ${tone}`}>
@@ -82,7 +84,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
       const { data: se, error: seErr } = await supabase
         .from("session_exercises")
-        .select("*, exercise:exercises!exercise_id(name, description, image_url, video_url, default_rest_seconds), alternative:exercises!alternative_exercise_id(name), set_logs(*)")
+        .select("*, exercise:exercises!exercise_id(name, description, image_url, video_url, default_rest_seconds, is_assisted, equipment), alternative:exercises!alternative_exercise_id(name, is_assisted, equipment), set_logs(*)")
         .eq("session_id", sessionId)
         .order("order_index");
       if (seErr) throw seErr;
@@ -94,16 +96,16 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       for (const row of se ?? []) {
         meta[row.id] = row.exercise;
         const existing: SetLog[] = (row.set_logs ?? []).map((l: any) => ({
-          id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed,
+          id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level,
         })).sort((a: SetLog, b: SetLog) => a.set_index - b.set_index);
         const target = row.target_sets ?? 3;
         // Never reuse an index that already exists in the DB — a deleted set can
         // leave gaps, and duplicate indices would make the upsert overwrite logs.
         let nextIndex = existing.reduce((m: number, l: SetLog) => Math.max(m, l.set_index), -1) + 1;
-        while (existing.length < target) existing.push({ set_index: nextIndex++, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false });
+        while (existing.length < target) existing.push({ set_index: nextIndex++, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false, band_level: row.target_band_level ?? null });
         logs[row.id] = existing;
         // If no alternative, the question doesn't apply. If any log has data, treat as picked.
-        const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null);
+        const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null || l.band_level != null);
         picked[row.id] = !row.alternative_exercise_id || hasAnyLogged;
       }
       setSetLogsByEx(logs);
@@ -139,7 +141,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         if (sessIds.length) {
           const { data: prevSEs } = await supabase
             .from("session_exercises")
-            .select("id, session_id, exercise_id, set_logs(set_index, reps, weight, rpe, completed)")
+            .select("id, session_id, exercise_id, set_logs(set_index, reps, weight, rpe, completed, band_level)")
             .in("session_id", sessIds)
             .in("exercise_id", exIds);
           for (const cur of se ?? []) {
@@ -148,7 +150,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
               if (match && (match.set_logs?.length ?? 0) > 0) {
                 last[cur.id] = {
                   date: ps.completed_at ?? "",
-                  sets: match.set_logs.map((l: any) => ({ set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed })).sort((a: any, b: any) => a.set_index - b.set_index),
+                  sets: match.set_logs.map((l: any) => ({ set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level })).sort((a: any, b: any) => a.set_index - b.set_index),
                 };
                 break;
               }
@@ -205,6 +207,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       reps: s.reps === "" || s.reps == null ? null : Number(s.reps),
       weight: weightVal,
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
+      band_level: s.band_level == null ? null : Number(s.band_level),
       completed: !!s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0),
     };
     const { data, error } = await supabase
@@ -383,20 +386,30 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const durationMin = session.started_at && session.completed_at
     ? Math.max(0, Math.round((new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 60000))
     : null;
-  let repsOver = 0, repsUnder = 0, kgOver = 0, kgUnder = 0, deltaSetCount = 0;
+  let repsOver = 0, repsUnder = 0, kgOver = 0, kgUnder = 0, deltaSetCount = 0, bandAhead = 0, bandBehind = 0;
   for (const se of sessionExercises) {
     const usingAlt = !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
     const tMin = usingAlt ? se.alt_target_reps_min : se.target_reps_min;
     const tMax = usingAlt ? se.alt_target_reps_max : se.target_reps_max;
     const tW = usingAlt ? se.alt_target_weight : se.target_weight;
+    const tB = usingAlt ? (se.alt_target_band_level ?? se.target_band_level) : se.target_band_level;
+    const exM = exerciseMeta[se.id] ?? se.exercise;
+    const dir = betterDirection(exM);
+    const band = usesBand(exM);
     for (const s of setLogsByEx[se.id] ?? []) {
       if (!isSetDone(s)) continue;
       const r = s.reps == null || s.reps === "" ? null : Number(s.reps);
       const rd = repsDelta(r, tMin ?? null, tMax ?? null);
       if (rd != null) { if (rd > 0) repsOver += rd; else if (rd < 0) repsUnder += rd; }
       const w = s.weight == null || s.weight === "" ? null : Number(String(s.weight).replace(",", "."));
-      if (w != null && tW != null) {
-        const wd = w - Number(tW);
+      if (band) {
+        if (s.band_level != null && tB != null) {
+          const bd = (Number(s.band_level) - Number(tB)) * dir;
+          if (bd > 0) bandAhead++; else if (bd < 0) bandBehind++;
+        }
+      } else if (w != null && tW != null) {
+        // Normalised so positive always means "ahead of plan" (less assistance for assisted).
+        const wd = (w - Number(tW)) * dir;
         if (wd > 0) kgOver += wd; else if (wd < 0) kgUnder += wd;
       }
       deltaSetCount++;
@@ -455,7 +468,13 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                   </span>
                   <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border tabular-nums">
                     Weight vs plan: <b className={kgUnder < 0 ? "text-amber-600" : ""}>{kgUnder.toFixed(1)}kg</b> / <b className={kgOver > 0 ? "text-emerald-600" : ""}>+{kgOver.toFixed(1)}kg</b>
+                    <span className="text-muted-foreground">(behind / ahead; less assistance counts as ahead)</span>
                   </span>
+                  {(bandAhead > 0 || bandBehind > 0) && (
+                    <span className="inline-flex items-center gap-1 rounded bg-background px-2 py-1 border tabular-nums">
+                      Band vs plan: <b className={bandBehind > 0 ? "text-amber-600" : ""}>{bandBehind} behind</b> / <b className={bandAhead > 0 ? "text-emerald-600" : ""}>{bandAhead} ahead</b>
+                    </span>
+                  )}
                   <span className="text-muted-foreground">across {deltaSetCount} sets</span>
                 </>
               ) : (
@@ -480,11 +499,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           let suggestion: string | null = null;
           if (last && last.sets.length > 0 && se.target_reps_max) {
             const allHitTop = last.sets.every((s) => (s.reps ?? 0) >= (se.target_reps_max ?? 0));
-            const weights = last.sets.map((s) => Number(s.weight ?? 0));
-            const maxW = Math.max(...weights);
-            if (allHitTop && maxW > 0) {
-              const bump = maxW >= 60 ? 2.5 : maxW >= 20 ? 2 : 1;
-              suggestion = `You hit the top of the rep range last time — try ${maxW + bump}kg today.`;
+            const hint = allHitTop ? progressionHint(last.sets, ex) : null;
+            if (hint) {
+              suggestion = hint;
             } else if (!allHitTop) {
               suggestion = `Aim to add a rep on each set today.`;
             }
@@ -498,8 +515,11 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           const altMaxV = se.alt_target_reps_max ?? se.target_reps_max;
           const altWV = se.alt_target_weight ?? se.target_weight;
           const altTargetReps = altMinV === altMaxV ? `${altMinV}` : `${altMinV}–${altMaxV}`;
-          const primaryLine = `${se.target_sets} × ${targetReps}${se.target_weight ? ` @ ${se.target_weight}kg` : ""}`;
-          const altLine = `${altSetsV} × ${altTargetReps}${altWV ? ` @ ${altWV}kg` : ""}`;
+          const altEx = se.alternative ?? {};
+          const primaryLine = `${se.target_sets} × ${targetReps}${formatLoad({ weight: se.target_weight, band_level: se.target_band_level }, ex)}`;
+          const altLine = `${altSetsV} × ${altTargetReps}${formatLoad({ weight: altWV, band_level: se.alt_target_band_level ?? se.target_band_level }, altEx)}`;
+          const band = usesBand(ex);
+          const assisted = isAssisted(ex);
 
           return (
             <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : needsChoice ? "border-amber-500/60" : ""}>
@@ -573,11 +593,17 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         <div className="space-y-0.5">
                           {last.sets.map((s) => (
                             <div key={s.set_index} className="tabular-nums">
-                              Set {s.set_index + 1}: {s.reps ?? "–"} reps{s.weight ? ` @ ${s.weight}kg` : ""}
+                              Set {s.set_index + 1}: {s.reps ?? "–"} reps{formatLoad(s, ex)}
                             </div>
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {assisted && canEdit && picked && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {band ? "Pick the band that helps you. A lighter band means you're getting stronger." : "Log the assistance weight. Less assistance means you're getting stronger."}
+                      </p>
                     )}
 
                     {suggestion && (
@@ -591,7 +617,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Today's sets</Label>
                       <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_minmax(2.5rem,1fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] sm:gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
-                        <span></span><span>Reps</span><span>Weight</span><span>RPE</span><span></span><span></span>
+                        <span></span><span>Reps</span><span>{weightHeader(ex)}</span><span>RPE</span><span></span><span></span>
                       </div>
                       {sets.map((s, idx) => {
                         const usingAlt = hasAlt && picked && pickedByEx[se.id] && !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
@@ -601,13 +627,29 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         const actualReps = s.reps == null || s.reps === "" ? null : Number(s.reps);
                         const actualW = s.weight == null || s.weight === "" ? null : Number(String(s.weight).replace(",", "."));
                         const rd = isSetDone(s) ? repsDelta(actualReps, tMin ?? null, tMax ?? null) : null;
-                        const wd = isSetDone(s) && actualW != null && tW != null ? actualW - Number(tW) : null;
+                        const tB = usingAlt ? (se.alt_target_band_level ?? se.target_band_level) : se.target_band_level;
+                        const wd = band
+                          ? (isSetDone(s) && s.band_level != null && tB != null ? Number(s.band_level) - Number(tB) : null)
+                          : (isSetDone(s) && actualW != null && tW != null ? actualW - Number(tW) : null);
                         return (
                         <div key={idx} className="space-y-1">
                         <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_minmax(2.5rem,1fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] sm:gap-2 items-center">
                           <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
                           <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Input className="min-w-0 px-2 text-center tabular-nums" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
+                          {band ? (
+                            <select
+                              aria-label="Band level"
+                              className="min-w-0 h-9 rounded-md border border-input bg-background px-1 text-xs"
+                              disabled={!canEdit}
+                              value={s.band_level ?? ""}
+                              onChange={(e) => { updateSet(se.id, idx, "band_level", e.target.value === "" ? null : Number(e.target.value)); setTimeout(() => saveSet(se.id, idx), 0); }}
+                            >
+                              <option value="">–</option>
+                              {BAND_LEVELS.map((b) => <option key={b.level} value={b.level}>{b.name} ({b.color})</option>)}
+                            </select>
+                          ) : (
+                            <Input aria-label={assisted ? "Assistance (kg)" : "Weight (kg)"} className="min-w-0 px-2 text-center tabular-nums" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
+                          )}
                           <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           <Checkbox checked={s.completed} disabled={!canEdit} onCheckedChange={(v) => { if (!canEdit) return; updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
                           {canEdit ? (
@@ -619,7 +661,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         {isTrainer && (rd != null || wd != null) && (
                           <div className="pl-10 flex flex-wrap gap-1.5">
                             <DeltaChip label="reps" value={rd} />
-                            <DeltaChip label="kg" value={wd} unit="kg" />
+                            <DeltaChip label={band ? "band" : assisted ? "assist" : "kg"} value={wd} unit={band ? "" : "kg"} invert={assisted} />
                           </div>
                         )}
                         </div>

@@ -40,6 +40,7 @@ function ExerciseDetail() {
   const [primary, setPrimary] = useState<string>("none");
   const [secondary, setSecondary] = useState<MuscleGroup[]>([]);
   const [equipment, setEquipment] = useState<string>("");
+  const [assisted, setAssisted] = useState(false);
   const hasLoaded = useRef(false);
   const lastSaved = useRef<string>("");
 
@@ -55,6 +56,7 @@ function ExerciseDetail() {
     setPrimary(d.primary_muscle_group ?? "none");
     setSecondary(((d.secondary_muscle_groups ?? []) as MuscleGroup[]));
     setEquipment(d.equipment ?? "");
+    setAssisted(!!d.is_assisted);
     lastSaved.current = JSON.stringify({
       name: data.name,
       description: data.description ?? "",
@@ -62,6 +64,7 @@ function ExerciseDetail() {
       primary_muscle_group: d.primary_muscle_group ?? "none",
       secondary_muscle_groups: (d.secondary_muscle_groups ?? []),
       equipment: d.equipment ?? "",
+      is_assisted: !!d.is_assisted,
     });
     hasLoaded.current = true;
   };
@@ -73,23 +76,24 @@ function ExerciseDetail() {
       primary_muscle_group: primary === "none" ? null : primary,
       secondary_muscle_groups: secondary,
       equipment: equipment || null,
+      is_assisted: assisted,
     } as any).eq("id", exerciseId);
     if (error) { setStatus("error"); return; }
-    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary, equipment });
+    lastSaved.current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary, equipment, is_assisted: assisted });
     setStatus("saved");
     setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
   };
 
   useEffect(() => {
     if (!hasLoaded.current) return;
-    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary, equipment });
+    const current = JSON.stringify({ name, description: desc, video_url: videoUrl, primary_muscle_group: primary, secondary_muscle_groups: secondary, equipment, is_assisted: assisted });
     if (current === lastSaved.current) return;
-    if (!name.trim() || !equipment) { setStatus("error"); return; }
+    if (!name.trim() || !equipment || primary === "none") { setStatus("error"); return; }
     setStatus("saving");
     const t = setTimeout(() => { doSave(); }, 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, desc, videoUrl, primary, secondary, equipment]);
+  }, [name, desc, videoUrl, primary, secondary, equipment, assisted]);
 
   const toggleSecondary = (m: MuscleGroup) => {
     setSecondary((prev) => {
@@ -171,6 +175,9 @@ function ExerciseDetail() {
                   {prettyEquipment(equipment)}
                 </span>
               )}
+              {assisted && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border">Assisted</span>
+              )}
               {primary !== "none" && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/15 text-primary border border-primary/30">
                   {prettyMuscle(primary)}
@@ -192,6 +199,8 @@ function ExerciseDetail() {
               ? <span className="text-destructive">Name is required</span>
               : !equipment
                 ? <span className="text-destructive">Equipment is required</span>
+                : primary === "none"
+                ? <span className="text-destructive">Primary muscle group is required</span>
                 : <button onClick={doSave} className="text-destructive hover:underline">Couldn't save — retry</button>)}
           </div>
           <Button variant="outline" size="sm" onClick={remove}>
@@ -223,6 +232,10 @@ function ExerciseDetail() {
                 </SelectContent>
               </Select>
             </div>
+            <label className="flex items-start gap-2 text-sm cursor-pointer">
+              <input type="checkbox" className="mt-1" checked={assisted} onChange={(e) => setAssisted(e.target.checked)} />
+              <span>Assisted exercise<span className="block text-xs text-muted-foreground">The logged weight or band is assistance, so less counts as progress.</span></span>
+            </label>
             <div className="space-y-2">
               <Label>Secondary muscle groups <span className="text-xs text-muted-foreground font-normal">(up to 3)</span></Label>
               <div className="flex flex-wrap gap-2">

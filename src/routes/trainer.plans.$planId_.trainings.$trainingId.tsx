@@ -14,6 +14,27 @@ import { DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor, 
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { BAND_LEVELS, formatLoad, usesBand, weightLabel } from "@/lib/progress";
+
+/** Target load field: kg input normally, "Assistance (kg)" for assisted, band dropdown for band exercises. */
+function LoadField({ ex, weight, setWeight, band, setBand, placeholder, className }: {
+  ex: any; weight: string; setWeight: (v: string) => void; band: string; setBand: (v: string) => void; placeholder?: string; className?: string;
+}) {
+  return (
+    <div className={`space-y-2 ${className ?? ""}`}>
+      <Label>{weightLabel(ex)}</Label>
+      {usesBand(ex) ? (
+        <select className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={band} onChange={(e) => setBand(e.target.value)}>
+          <option value="">optional</option>
+          {BAND_LEVELS.map((b) => <option key={b.level} value={b.level}>{b.name} ({b.color})</option>)}
+        </select>
+      ) : (
+        <Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={placeholder ?? "optional"} />
+      )}
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/trainer/plans/$planId_/trainings/$trainingId")({
   ssr: false,
   component: TrainingDetail,
@@ -48,12 +69,14 @@ function TrainingDetail() {
   const [altWeight, setAltWeight] = useState<string>("");
   const [altRest, setAltRest] = useState<string>("");
   const [altCoachNotes, setAltCoachNotes] = useState<string>("");
+  const [band, setBand] = useState("");
+  const [altBand, setAltBand] = useState("");
 
   const load = async () => {
     const [{ data: t }, { data: it }, { data: ex }] = await Promise.all([
       supabase.from("trainings").select("*").eq("id", trainingId).maybeSingle(),
-      supabase.from("training_exercises").select("*, exercises!exercise_id(name, primary_muscle_group, secondary_muscle_groups)").eq("training_id", trainingId).order("order_index"),
-      supabase.from("exercises").select("id, name, primary_muscle_group, equipment").order("name"),
+      supabase.from("training_exercises").select("*, exercises!exercise_id(name, primary_muscle_group, secondary_muscle_groups, is_assisted, equipment)").eq("training_id", trainingId).order("order_index"),
+      supabase.from("exercises").select("id, name, primary_muscle_group, equipment, is_assisted").order("name"),
     ]);
     setTraining(t);
     if (t) {
@@ -109,12 +132,14 @@ function TrainingDetail() {
       alt_target_weight: hasAlt && altWeight ? Number(altWeight) : null,
       alt_rest_seconds: hasAlt && altRest ? Number(altRest) : null,
       alt_coach_notes: hasAlt ? (altCoachNotes || null) : null,
+      target_band_level: band ? Number(band) : null,
+      alt_target_band_level: hasAlt && altBand ? Number(altBand) : null,
       order_index: items.length,
     } as any);
     if (error) toast.error(error.message);
     else {
       setExId(""); setAltExId(""); setWeight(""); setRest(""); setCoachNotes("");
-      setAltSets(""); setAltRepsMin(""); setAltRepsMax(""); setAltWeight(""); setAltRest(""); setAltCoachNotes("");
+      setAltSets(""); setAltRepsMin(""); setAltRepsMax(""); setAltWeight(""); setAltRest(""); setAltCoachNotes(""); setBand(""); setAltBand("");
       toast.success("Added");
       load();
     }
@@ -239,7 +264,7 @@ function TrainingDetail() {
             <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps min</Label><Input type="number" min="1" value={repsMin} onChange={(e) => setRepsMin(+e.target.value)} /></div>
             <div className="space-y-2"><Label>Reps max</Label><Input type="number" min="1" value={repsMax} onChange={(e) => setRepsMax(+e.target.value)} /></div>
-            <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
+            <LoadField ex={exercises.find((e) => e.id === exId)} weight={weight} setWeight={setWeight} band={band} setBand={setBand} />
             <div className="space-y-2"><Label>Rest (sec)</Label><Input type="number" min="0" value={rest} onChange={(e) => setRest(e.target.value)} placeholder="optional" /></div>
             <div className="space-y-2 sm:col-span-4"><Label>Coach notes</Label><Input value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} placeholder="Cues, tempo, etc." /></div>
             {altExId && (
@@ -254,7 +279,7 @@ function TrainingDetail() {
                   <div className="space-y-2"><Label>Sets</Label><Input type="number" min="1" value={altSets} onChange={(e) => setAltSets(e.target.value)} placeholder={String(sets)} /></div>
                   <div className="space-y-2"><Label>Reps min</Label><Input type="number" min="1" value={altRepsMin} onChange={(e) => setAltRepsMin(e.target.value)} placeholder={String(repsMin)} /></div>
                   <div className="space-y-2"><Label>Reps max</Label><Input type="number" min="1" value={altRepsMax} onChange={(e) => setAltRepsMax(e.target.value)} placeholder={String(repsMax)} /></div>
-                  <div className="space-y-2"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={altWeight} onChange={(e) => setAltWeight(e.target.value)} placeholder={weight || "optional"} /></div>
+                  <LoadField ex={exercises.find((e) => e.id === altExId)} weight={altWeight} setWeight={setAltWeight} band={altBand} setBand={setAltBand} placeholder={weight || "optional"} />
                   <div className="space-y-2"><Label>Rest (sec)</Label><Input type="number" min="0" value={altRest} onChange={(e) => setAltRest(e.target.value)} placeholder={rest || "optional"} /></div>
                   <div className="space-y-2 sm:col-span-6"><Label>Alt coach notes</Label><Input value={altCoachNotes} onChange={(e) => setAltCoachNotes(e.target.value)} placeholder="Cues for the alternative" /></div>
                 </div>
@@ -346,7 +371,7 @@ function SortableExerciseRow({
           <div className="text-xs text-muted-foreground">
             {altName && <span className="font-medium text-foreground/70">{it.exercises?.name}: </span>}
             {it.target_sets} × {it.target_reps_min === it.target_reps_max ? it.target_reps_min : `${it.target_reps_min}–${it.target_reps_max}`}
-            {it.target_weight ? ` @ ${it.target_weight}kg` : ""}
+            {formatLoad({ weight: it.target_weight, band_level: it.target_band_level }, it.exercises)}
             {it.rest_seconds ? ` · rest ${it.rest_seconds}s` : ""}
             {it.coach_notes ? ` · ${it.coach_notes}` : ""}
           </div>
@@ -354,7 +379,7 @@ function SortableExerciseRow({
             <div className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground/70">{altName}: </span>
               {altSetsV} × {altMinV === altMaxV ? altMinV : `${altMinV}–${altMaxV}`}
-              {altWV ? ` @ ${altWV}kg` : ""}
+              {formatLoad({ weight: altWV, band_level: it.alt_target_band_level ?? it.target_band_level }, exercises.find((e) => e.id === it.alternative_exercise_id))}
               {altRestV ? ` · rest ${altRestV}s` : ""}
               {it.alt_coach_notes ? ` · ${it.alt_coach_notes}` : ""}
               {!hasAltTargets && <span className="italic"> (same as primary)</span>}
@@ -399,6 +424,10 @@ function EditExerciseDialog({
   const [altWeight, setAltWeight] = useState("");
   const [altRest, setAltRest] = useState("");
   const [altCoachNotes, setAltCoachNotes] = useState("");
+  const [band, setBand] = useState("");
+  const [altBand, setAltBand] = useState("");
+  const exObj = exercises.find((e) => e.id === exId);
+  const altExObj = exercises.find((e) => e.id === altExId);
 
   useEffect(() => {
     if (!item) return;
@@ -416,6 +445,8 @@ function EditExerciseDialog({
     setAltWeight(item.alt_target_weight != null ? String(item.alt_target_weight) : "");
     setAltRest(item.alt_rest_seconds != null ? String(item.alt_rest_seconds) : "");
     setAltCoachNotes(item.alt_coach_notes ?? "");
+    setBand(item.target_band_level != null ? String(item.target_band_level) : "");
+    setAltBand(item.alt_target_band_level != null ? String(item.alt_target_band_level) : "");
   }, [item]);
 
   const byGroup = new Map<string, any[]>();
@@ -474,6 +505,8 @@ function EditExerciseDialog({
       alt_target_weight: hasAlt && altWeight ? Number(altWeight) : null,
       alt_rest_seconds: hasAlt && altRest ? Number(altRest) : null,
       alt_coach_notes: hasAlt ? (altCoachNotes || null) : null,
+      target_band_level: band ? Number(band) : null,
+      alt_target_band_level: hasAlt && altBand ? Number(altBand) : null,
     });
   };
 
@@ -502,7 +535,7 @@ function EditExerciseDialog({
           <div className="space-y-2 sm:col-span-2"><Label>Sets</Label><Input type="number" min="1" value={sets} onChange={(e) => setSets(+e.target.value)} /></div>
           <div className="space-y-2 sm:col-span-2"><Label>Reps min</Label><Input type="number" min="1" value={repsMin} onChange={(e) => setRepsMin(+e.target.value)} /></div>
           <div className="space-y-2 sm:col-span-2"><Label>Reps max</Label><Input type="number" min="1" value={repsMax} onChange={(e) => setRepsMax(+e.target.value)} /></div>
-          <div className="space-y-2 sm:col-span-3"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="optional" /></div>
+          <LoadField className="sm:col-span-3" ex={exObj} weight={weight} setWeight={setWeight} band={band} setBand={setBand} />
           <div className="space-y-2 sm:col-span-3"><Label>Rest (sec)</Label><Input type="number" min="0" value={rest} onChange={(e) => setRest(e.target.value)} placeholder="optional" /></div>
           <div className="space-y-2 sm:col-span-6"><Label>Coach notes</Label><Input value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} placeholder="Cues, tempo, etc." /></div>
           {altExId && (
@@ -515,7 +548,7 @@ function EditExerciseDialog({
                 <div className="space-y-2 sm:col-span-2"><Label>Sets</Label><Input type="number" min="1" value={altSets} onChange={(e) => setAltSets(e.target.value)} placeholder={String(sets)} /></div>
                 <div className="space-y-2 sm:col-span-2"><Label>Reps min</Label><Input type="number" min="1" value={altRepsMin} onChange={(e) => setAltRepsMin(e.target.value)} placeholder={String(repsMin)} /></div>
                 <div className="space-y-2 sm:col-span-2"><Label>Reps max</Label><Input type="number" min="1" value={altRepsMax} onChange={(e) => setAltRepsMax(e.target.value)} placeholder={String(repsMax)} /></div>
-                <div className="space-y-2 sm:col-span-3"><Label>Weight (kg)</Label><Input type="number" step="0.5" value={altWeight} onChange={(e) => setAltWeight(e.target.value)} placeholder={weight || "optional"} /></div>
+                <LoadField className="sm:col-span-3" ex={altExObj} weight={altWeight} setWeight={setAltWeight} band={altBand} setBand={setAltBand} placeholder={weight || "optional"} />
                 <div className="space-y-2 sm:col-span-3"><Label>Rest (sec)</Label><Input type="number" min="0" value={altRest} onChange={(e) => setAltRest(e.target.value)} placeholder={rest || "optional"} /></div>
                 <div className="space-y-2 sm:col-span-6"><Label>Alt coach notes</Label><Input value={altCoachNotes} onChange={(e) => setAltCoachNotes(e.target.value)} placeholder="Cues for the alternative" /></div>
               </div>
