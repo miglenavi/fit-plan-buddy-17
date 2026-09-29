@@ -184,7 +184,7 @@ function ExercisesList() {
               </div>
               <div className="space-y-2">
                 <Label>Equipment <span className="text-destructive">*</span></Label>
-                <Select value={equipment} onValueChange={setEquipment}>
+                <Select value={equipment} onValueChange={(v) => setEquipment(v as EquipmentOption)}>
                   <SelectTrigger><SelectValue placeholder="Select equipment" /></SelectTrigger>
                   <SelectContent>
                     {EQUIPMENT_OPTIONS.map((e) => <SelectItem key={e} value={e}>{prettyEquipment(e)}</SelectItem>)}

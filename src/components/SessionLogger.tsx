@@ -256,7 +256,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     const t = setTimeout(async () => {
       let q = supabase.from("exercises").select("id, name, description, equipment").order("name").limit(30);
       if (exerciseSearch.trim()) q = q.ilike("name", `%${exerciseSearch.trim()}%`);
-      if (pickerEquipment !== "all") q = q.eq("equipment", pickerEquipment);
+      if (pickerEquipment !== "all") q = q.eq("equipment", pickerEquipment as any);
       const { data } = await q;
       if (!cancelled) setExerciseResults(data ?? []);
     }, 150);
