@@ -693,13 +693,14 @@ export type Database = {
           client_notes: string | null
           completed_at: string | null
           created_at: string
+          custom_name: string | null
           id: string
           logged_by: string
           started_at: string
           status: string
           trainer_id: string | null
           trainer_notes: string | null
-          training_id: string
+          training_id: string | null
           updated_at: string
         }
         Insert: {
@@ -707,13 +708,14 @@ export type Database = {
           client_notes?: string | null
           completed_at?: string | null
           created_at?: string
+          custom_name?: string | null
           id?: string
           logged_by?: string
           started_at?: string
           status?: string
           trainer_id?: string | null
           trainer_notes?: string | null
-          training_id: string
+          training_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -721,13 +723,14 @@ export type Database = {
           client_notes?: string | null
           completed_at?: string | null
           created_at?: string
+          custom_name?: string | null
           id?: string
           logged_by?: string
           started_at?: string
           status?: string
           trainer_id?: string | null
           trainer_notes?: string | null
-          training_id?: string
+          training_id?: string | null
           updated_at?: string
         }
         Relationships: [
