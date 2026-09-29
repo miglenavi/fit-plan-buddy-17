@@ -103,6 +103,21 @@ function ClientDetail() {
     }
   };
 
+  // Improvised session: no plan day, starts empty, exercises added as you go.
+  const startCustom = async (name: string) => {
+    if (starting) return;
+    setStarting("custom");
+    try {
+      const res = await start({ data: { customName: name, clientId } });
+      setCustomOpen(false);
+      setCustomName("");
+      navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: res.sessionId } });
+    } catch (e: any) {
+      setStarting(null);
+      toast.error(e.message ?? "Couldn't start session");
+    }
+  };
+
   const archiveClient = async () => {
     if (!confirm("Archive this client? They'll be hidden from your active list. Their workout history is kept.")) return;
     const { error } = await supabase
