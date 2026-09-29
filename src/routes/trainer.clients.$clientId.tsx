@@ -225,14 +225,10 @@ function ClientDetail() {
               disabled={starting === "custom"}
               onClick={() => setCustomOpen(true)}
             >
-              <span className="text-left">
-                <span className="block">Start a session from scratch</span>
-                <span className="block text-xs font-normal text-muted-foreground">Sore, injured, or improvising — add exercises as you go</span>
-              </span>
+              <span>Start a session from scratch</span>
               <Sparkles className="size-4 shrink-0" />
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">Every exercise you log keeps the client's history, whichever way you start.</p>
         </CardContent>
       </Card>
 
@@ -240,20 +236,12 @@ function ClientDetail() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Session from scratch</DialogTitle>
-            <DialogDescription>Give it a name, then add exercises during the session.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {["Mobility & stretch", "Injury rehab / deload", "Improvised session"].map((p) => (
-                <Button key={p} type="button" size="sm" variant={customName === p ? "default" : "outline"} onClick={() => setCustomName(p)}>
-                  {p}
-                </Button>
-              ))}
-            </div>
             <Input
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Or type your own name"
+              placeholder="Session name (optional)"
               maxLength={80}
             />
             <Button
