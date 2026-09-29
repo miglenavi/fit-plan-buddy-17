@@ -244,6 +244,7 @@ export type Database = {
           created_at: string
           default_rest_seconds: number | null
           description: string | null
+          equipment: Database["public"]["Enums"]["equipment_type"] | null
           id: string
           image_url: string | null
           muscle_groups: Database["public"]["Enums"]["muscle_group"][]
@@ -259,6 +260,7 @@ export type Database = {
           created_at?: string
           default_rest_seconds?: number | null
           description?: string | null
+          equipment?: Database["public"]["Enums"]["equipment_type"] | null
           id?: string
           image_url?: string | null
           muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
@@ -274,6 +276,7 @@ export type Database = {
           created_at?: string
           default_rest_seconds?: number | null
           description?: string | null
+          equipment?: Database["public"]["Enums"]["equipment_type"] | null
           id?: string
           image_url?: string | null
           muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
@@ -900,6 +903,14 @@ export type Database = {
     }
     Enums: {
       app_role: "trainer" | "client" | "super_admin"
+      equipment_type:
+        | "barbell"
+        | "dumbbell"
+        | "kettlebell"
+        | "cable"
+        | "machine"
+        | "bodyweight"
+        | "resistance_band"
       muscle_group:
         | "chest"
         | "upper_back"
@@ -913,6 +924,7 @@ export type Database = {
         | "calves"
         | "core"
         | "full_body"
+        | "lats"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1041,6 +1053,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["trainer", "client", "super_admin"],
+      equipment_type: [
+        "barbell",
+        "dumbbell",
+        "kettlebell",
+        "cable",
+        "machine",
+        "bodyweight",
+        "resistance_band",
+      ],
       muscle_group: [
         "chest",
         "upper_back",
@@ -1054,6 +1075,7 @@ export const Constants = {
         "calves",
         "core",
         "full_body",
+        "lats",
       ],
     },
   },

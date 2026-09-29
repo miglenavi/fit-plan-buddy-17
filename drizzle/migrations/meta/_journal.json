@@ -8,6 +8,13 @@
       "when": 1790706482868,
       "tag": "0000_allow_custom_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790707952032,
+      "tag": "0001_exercise_categorization_lats_equipment",
+      "breakpoints": true
     }
   ]
 }
