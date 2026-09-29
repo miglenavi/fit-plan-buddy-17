@@ -247,6 +247,7 @@ export type Database = {
           equipment: Database["public"]["Enums"]["equipment_type"] | null
           id: string
           image_url: string | null
+          is_assisted: boolean
           muscle_groups: Database["public"]["Enums"]["muscle_group"][]
           name: string
           primary_muscle_group:
@@ -263,6 +264,7 @@ export type Database = {
           equipment?: Database["public"]["Enums"]["equipment_type"] | null
           id?: string
           image_url?: string | null
+          is_assisted?: boolean
           muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
           name: string
           primary_muscle_group?:
@@ -279,6 +281,7 @@ export type Database = {
           equipment?: Database["public"]["Enums"]["equipment_type"] | null
           id?: string
           image_url?: string | null
+          is_assisted?: boolean
           muscle_groups?: Database["public"]["Enums"]["muscle_group"][]
           name?: string
           primary_muscle_group?:
@@ -343,6 +346,7 @@ export type Database = {
       }
       session_exercises: {
         Row: {
+          alt_target_band_level: number | null
           alt_target_reps_max: number | null
           alt_target_reps_min: number | null
           alt_target_sets: number | null
@@ -353,6 +357,7 @@ export type Database = {
           notes: string | null
           order_index: number
           session_id: string
+          target_band_level: number | null
           target_reps_max: number | null
           target_reps_min: number | null
           target_sets: number | null
@@ -360,6 +365,7 @@ export type Database = {
           training_exercise_id: string | null
         }
         Insert: {
+          alt_target_band_level?: number | null
           alt_target_reps_max?: number | null
           alt_target_reps_min?: number | null
           alt_target_sets?: number | null
@@ -370,6 +376,7 @@ export type Database = {
           notes?: string | null
           order_index?: number
           session_id: string
+          target_band_level?: number | null
           target_reps_max?: number | null
           target_reps_min?: number | null
           target_sets?: number | null
@@ -377,6 +384,7 @@ export type Database = {
           training_exercise_id?: string | null
         }
         Update: {
+          alt_target_band_level?: number | null
           alt_target_reps_max?: number | null
           alt_target_reps_min?: number | null
           alt_target_sets?: number | null
@@ -387,6 +395,7 @@ export type Database = {
           notes?: string | null
           order_index?: number
           session_id?: string
+          target_band_level?: number | null
           target_reps_max?: number | null
           target_reps_min?: number | null
           target_sets?: number | null
@@ -426,6 +435,7 @@ export type Database = {
       }
       set_logs: {
         Row: {
+          band_level: number | null
           completed: boolean
           created_at: string
           id: string
@@ -437,6 +447,7 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          band_level?: number | null
           completed?: boolean
           created_at?: string
           id?: string
@@ -448,6 +459,7 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          band_level?: number | null
           completed?: boolean
           created_at?: string
           id?: string
@@ -612,6 +624,7 @@ export type Database = {
         Row: {
           alt_coach_notes: string | null
           alt_rest_seconds: number | null
+          alt_target_band_level: number | null
           alt_target_reps_max: number | null
           alt_target_reps_min: number | null
           alt_target_sets: number | null
@@ -622,6 +635,7 @@ export type Database = {
           id: string
           order_index: number
           rest_seconds: number | null
+          target_band_level: number | null
           target_reps_max: number
           target_reps_min: number
           target_sets: number
@@ -631,6 +645,7 @@ export type Database = {
         Insert: {
           alt_coach_notes?: string | null
           alt_rest_seconds?: number | null
+          alt_target_band_level?: number | null
           alt_target_reps_max?: number | null
           alt_target_reps_min?: number | null
           alt_target_sets?: number | null
@@ -641,6 +656,7 @@ export type Database = {
           id?: string
           order_index?: number
           rest_seconds?: number | null
+          target_band_level?: number | null
           target_reps_max?: number
           target_reps_min?: number
           target_sets?: number
@@ -650,6 +666,7 @@ export type Database = {
         Update: {
           alt_coach_notes?: string | null
           alt_rest_seconds?: number | null
+          alt_target_band_level?: number | null
           alt_target_reps_max?: number | null
           alt_target_reps_min?: number | null
           alt_target_sets?: number | null
@@ -660,6 +677,7 @@ export type Database = {
           id?: string
           order_index?: number
           rest_seconds?: number | null
+          target_band_level?: number | null
           target_reps_max?: number
           target_reps_min?: number
           target_sets?: number

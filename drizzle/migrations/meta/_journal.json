@@ -15,6 +15,13 @@
       "when": 1790707952032,
       "tag": "0001_exercise_categorization_lats_equipment",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790708694705,
+      "tag": "0002_assisted_and_band_levels",
+      "breakpoints": true
     }
   ]
 }
