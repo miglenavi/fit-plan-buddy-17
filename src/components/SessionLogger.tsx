@@ -418,7 +418,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const showSummary = isTrainer && (durationMin != null || deltaSetCount > 0);
 
   return (
-    <div className="space-y-5 pb-40">
+    <div className="space-y-5 pb-[calc(13rem+env(safe-area-inset-bottom))] md:pb-32">
       <div>
         <h2 className="text-xl font-bold tracking-tight">{session.custom_name ?? session.trainings?.name ?? "Custom session"}</h2>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
@@ -699,7 +699,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       )}
 
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="inset-0 left-0 top-0 translate-x-0 translate-y-0 h-[100dvh] max-w-none w-full rounded-none p-0 gap-0 flex flex-col sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:h-auto sm:max-h-[85vh] sm:max-w-md sm:rounded-lg">
+          <div className="shrink-0 space-y-3 p-4 pr-12 border-b">
           <DialogHeader>
             <DialogTitle>Add exercise to session</DialogTitle>
           </DialogHeader>
@@ -721,7 +722,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
               </button>
             ))}
           </div>
-          <div className="max-h-80 overflow-y-auto space-y-1">
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-1 p-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {exerciseResults.length === 0 && (
               <p className="text-sm text-muted-foreground py-4 text-center">No exercises found.</p>
             )}
@@ -748,7 +750,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         </DialogContent>
       </Dialog>
 
-      {canEdit && (
+      {canEdit && !pickerOpen && !confirmFinishOpen && (
         <div className={`fixed inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-[55] ${isTrainer ? "bottom-[68px] md:bottom-0" : "bottom-0"}`}>
           <div className="max-w-md mx-auto">
             <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
