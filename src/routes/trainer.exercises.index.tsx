@@ -18,11 +18,16 @@ export const Route = createFileRoute("/trainer/exercises/")({
 });
 
 const MUSCLE_GROUPS = [
-  "chest", "upper_back", "lower_back", "shoulders", "biceps", "triceps",
+  "chest", "lats", "upper_back", "lower_back", "shoulders", "biceps", "triceps",
   "quads", "hamstrings", "glutes", "calves", "core", "full_body",
 ] as const;
 type MuscleGroup = typeof MUSCLE_GROUPS[number];
 const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const EQUIPMENT_OPTIONS = ["barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "resistance_band"] as const;
+type EquipmentOption = typeof EQUIPMENT_OPTIONS[number];
+const prettyEquipment = (e: string) => e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const toTitleCase = (s: string) => s.trim().replace(/\S+/g, (w) => (w.charAt(0).toUpperCase() + w.slice(1)));
 
 function ExercisesList() {
   const [list, setList] = useState<any[]>([]);
@@ -37,6 +42,8 @@ function ExercisesList() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [eqFilter, setEqFilter] = useState<string>("all");
+  const [equipment, setEquipment] = useState<EquipmentOption | "">("");
   const [search, setSearch] = useState("");
 
 
@@ -51,20 +58,24 @@ function ExercisesList() {
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (primary === "none") { toast.error("Pick a primary muscle group"); return; }
+    if (!equipment) { toast.error("Pick the equipment for this exercise"); return; }
+    const formattedName = toTitleCase(name);
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("exercises").insert({
       trainer_id: u.user!.id,
-      name,
+      name: formattedName,
       description: desc || null,
-      primary_muscle_group: primary === "none" ? null : primary,
+      primary_muscle_group: primary,
       secondary_muscle_groups: secondary,
+      equipment,
       video_url: videoUrl || null,
       image_url: imageUrl || null,
     } as any);
     if (error) toast.error(error.message);
     else {
       toast.success("Exercise added");
-      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
+      setName(""); setDesc(""); setPrimary("none"); setSecondary([]); setEquipment(""); setVideoUrl(""); setImageUrl(""); setOpen(false); load();
     }
   };
 
@@ -125,12 +136,14 @@ function ExercisesList() {
         filter === "unset" ? !ex.primary_muscle_group :
         ex.primary_muscle_group === filter;
       if (!matchesFilter) return false;
+      if (eqFilter !== "all" && ex.equipment !== eqFilter) return false;
       if (!q) return true;
       const haystack = [
         ex.name,
         ex.description,
         ex.primary_muscle_group ? prettyMuscle(ex.primary_muscle_group) : "",
         ...(ex.secondary_muscle_groups ?? []).map((m: string) => prettyMuscle(m)),
+        ex.equipment ? prettyEquipment(ex.equipment) : "",
       ].join(" ").toLowerCase();
       return haystack.includes(q);
     });
@@ -143,7 +156,7 @@ function ExercisesList() {
     return Array.from(byGroup.entries())
       .map(([id, items]) => ({ id, name: id === "__none__" ? "Unassigned" : prettyMuscle(id), items }))
       .sort((a, b) => (a.name === "Unassigned" ? 1 : b.name === "Unassigned" ? -1 : a.name.localeCompare(b.name)));
-  }, [list, filter, search]);
+  }, [list, filter, eqFilter, search]);
 
 
   return (
