@@ -28,7 +28,7 @@ function ClientToday() {
   const [program, setProgram] = useState<any>(null);
   const [trainings, setTrainings] = useState<any[]>([]);
   const [lastDone, setLastDone] = useState<string | null>(null);
-  const [inProgress, setInProgress] = useState<{ id: string; training_id: string } | null>(null);
+  const [inProgress, setInProgress] = useState<{ id: string; training_id: string | null } | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
   const [hasTrainer, setHasTrainer] = useState<boolean | null>(null);
   const [todayBooking, setTodayBooking] = useState<any>(null);
