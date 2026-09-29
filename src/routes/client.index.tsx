@@ -51,10 +51,12 @@ function ClientToday() {
           .order("order_index");
         setTrainings(t ?? []);
       }
+      // Improvised sessions have no plan day, so they never shift the rotation.
       const { data: last } = await supabase
         .from("training_sessions")
         .select("training_id, completed_at")
         .eq("status", "completed")
+        .not("training_id", "is", null)
         .order("completed_at", { ascending: false })
         .limit(1);
       setLastDone(last?.[0]?.training_id ?? null);
