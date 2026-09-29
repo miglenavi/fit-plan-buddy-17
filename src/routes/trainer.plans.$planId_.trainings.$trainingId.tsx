@@ -374,12 +374,14 @@ function EditExerciseDialog({
   item,
   exercises,
   prettyMuscle,
+  prettyEquipment,
   onClose,
   onSave,
 }: {
   item: any;
   exercises: any[];
   prettyMuscle: (m: string) => string;
+  prettyEquipment: (e: string) => string;
   onClose: () => void;
   onSave: (patch: any) => void;
 }) {
@@ -433,7 +435,16 @@ function EditExerciseDialog({
     return (
       <SelectGroup key={g.id}>
         <SelectLabel>{g.name}</SelectLabel>
-        {filtered.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+        {filtered.map((e) => (
+          <SelectItem key={e.id} value={e.id}>
+            {e.name}
+            {(e as any).equipment && (
+              <span className="ml-2 text-xs text-muted-foreground font-normal">
+                {prettyEquipment((e as any).equipment)}
+              </span>
+            )}
+          </SelectItem>
+        ))}
       </SelectGroup>
     );
   });
