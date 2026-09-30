@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Plus, Play, CheckCircle2, Clock, Archive, StickyNote, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/trainer/clients/$clientId")({
   ssr: false,
@@ -21,6 +22,7 @@ function ClientDetail() {
   const { clientId } = useParams({ from: "/trainer/clients/$clientId" });
   const navigate = useNavigate();
   const start = useServerFn(startSession);
+  const { isImpersonating } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [programs, setPrograms] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -71,15 +73,20 @@ function ClientDetail() {
   const addNote = async () => {
     const body = noteBody.trim();
     if (!body) return;
+    if (isImpersonating) return toast.error("Notes can't be added while viewing as another user.");
     setSavingNote(true);
     const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) { setSavingNote(false); return toast.error("Your session expired — please sign in again."); }
     const { error } = await supabase.from("client_notes").insert({
-      trainer_id: auth.user?.id as string,
+      trainer_id: auth.user.id,
       client_id: clientId,
       body,
     });
     setSavingNote(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const rls = /row-level security/i.test(error.message);
+      return toast.error(rls ? "Couldn't save the note — this client isn't linked to your account." : error.message);
+    }
     setNoteBody("");
     toast.success("Note added");
     load();
