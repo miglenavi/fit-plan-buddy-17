@@ -19,7 +19,7 @@ describe("dropsets", () => {
     const seId = se.data!.id;
 
     const ins = await trainer.client.from("set_logs").insert([
-      { session_exercise_id: seId, set_index: 0, reps: 10, weight: 40, completed: true },
+      { session_exercise_id: seId, set_index: 0, reps: 10, weight: 40, completed: true, is_dropset: false },
       { session_exercise_id: seId, set_index: 2, reps: 2, weight: 40, completed: true, is_dropset: true },
     ]).select("set_index, is_dropset");
     expect(ins.error).toBeNull();
