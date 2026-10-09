@@ -183,8 +183,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     });
   };
 
-  const saveSet = async (seId: string, idx: number) => {
-    const s = setLogsByEx[seId]?.[idx];
+  const saveSet = async (seId: string, idx: number, override?: Partial<SetLog>) => {
+    const base = setLogsByEx[seId]?.[idx];
+    const s = base && override ? { ...base, ...override } : base;
     if (!s) return;
 
     let weightVal: number | null = null;
@@ -644,8 +645,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => { updateSet(se.id, idx, "is_dropset", false); setTimeout(() => saveSet(se.id, idx), 0); }}>Normal set</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { updateSet(se.id, idx, "is_dropset", true); setTimeout(() => saveSet(se.id, idx), 0); }}>Dropset</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { updateSet(se.id, idx, "is_dropset", false); saveSet(se.id, idx, { is_dropset: false }); }}>Normal set</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { updateSet(se.id, idx, "is_dropset", true); saveSet(se.id, idx, { is_dropset: true }); }}>Dropset</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
