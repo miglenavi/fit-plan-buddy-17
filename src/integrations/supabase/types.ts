@@ -439,6 +439,7 @@ export type Database = {
           completed: boolean
           created_at: string
           id: string
+          is_dropset: boolean
           reps: number | null
           rpe: number | null
           session_exercise_id: string
@@ -451,6 +452,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           id?: string
+          is_dropset?: boolean
           reps?: number | null
           rpe?: number | null
           session_exercise_id: string
@@ -463,6 +465,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           id?: string
+          is_dropset?: boolean
           reps?: number | null
           rpe?: number | null
           session_exercise_id?: string
