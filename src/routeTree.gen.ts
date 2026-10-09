@@ -9,61 +9,46 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as PendingRouteImport } from './routes/pending'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TrainerIndexRouteImport } from './routes/trainer.index'
-import { Route as ClientIndexRouteImport } from './routes/client.index'
-import { Route as BlogIndexRouteImport } from './routes/blog/index'
-import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
-import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
-import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
-import { Route as TrainerCalendarRouteImport } from './routes/trainer.calendar'
-import { Route as JoinTokenRouteImport } from './routes/join.$token'
-import { Route as ClientTrainerRouteImport } from './routes/client.trainer'
-import { Route as ClientProfileRouteImport } from './routes/client.profile'
-import { Route as ClientHistoryRouteImport } from './routes/client.history'
-import { Route as ClientBookRouteImport } from './routes/client.book'
-import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
-import { Route as AdminWaitlistRouteImport } from './routes/admin.waitlist'
-import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
-import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as PendingRouteImport } from './routes/pending'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as TrainerPlansIndexRouteImport } from './routes/trainer.plans.index'
-import { Route as TrainerExercisesIndexRouteImport } from './routes/trainer.exercises.index'
-import { Route as TrainerClientsIndexRouteImport } from './routes/trainer.clients.index'
-import { Route as TrainerPlansPlanIdRouteImport } from './routes/trainer.plans.$planId'
-import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer.exercises.$exerciseId'
-import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
-import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.sessions.$sessionId'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
+import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
+import { Route as AdminWaitlistRouteImport } from './routes/admin.waitlist'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as ClientIndexRouteImport } from './routes/client.index'
+import { Route as ClientBookRouteImport } from './routes/client.book'
+import { Route as ClientHistoryRouteImport } from './routes/client.history'
+import { Route as ClientProfileRouteImport } from './routes/client.profile'
+import { Route as ClientTrainerRouteImport } from './routes/client.trainer'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as TrainerIndexRouteImport } from './routes/trainer.index'
+import { Route as TrainerCalendarRouteImport } from './routes/trainer.calendar'
+import { Route as TrainerClientsRouteImport } from './routes/trainer.clients'
+import { Route as TrainerExercisesRouteImport } from './routes/trainer.exercises'
+import { Route as TrainerPlansRouteImport } from './routes/trainer.plans'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as ClientSessionsSessionIdRouteImport } from './routes/client.sessions.$sessionId'
+import { Route as TrainerClientsIndexRouteImport } from './routes/trainer.clients.index'
+import { Route as TrainerClientsClientIdRouteImport } from './routes/trainer.clients.$clientId'
+import { Route as TrainerExercisesIndexRouteImport } from './routes/trainer.exercises.index'
+import { Route as TrainerExercisesExerciseIdRouteImport } from './routes/trainer.exercises.$exerciseId'
+import { Route as TrainerPlansIndexRouteImport } from './routes/trainer.plans.index'
+import { Route as TrainerPlansPlanIdRouteImport } from './routes/trainer.plans.$planId'
 import { Route as ApiPublicHooksBookingRemindersRouteImport } from './routes/api/public/hooks/booking-reminders'
-import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
 import { Route as TrainerClientsClientIdSessionsSessionIdRouteImport } from './routes/trainer.clients.$clientId_.sessions.$sessionId'
+import { Route as TrainerPlansPlanIdTrainingsTrainingIdRouteImport } from './routes/trainer.plans.$planId_.trainings.$trainingId'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PendingRoute = PendingRouteImport.update({
-  id: '/pending',
-  path: '/pending',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -71,79 +56,41 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrainerIndexRoute = TrainerIndexRouteImport.update({
-  id: '/trainer/',
-  path: '/trainer/',
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClientIndexRoute = ClientIndexRouteImport.update({
-  id: '/client/',
-  path: '/client/',
+const PendingRoute = PendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BlogIndexRoute = BlogIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => BlogRoute,
-} as any)
-const TrainerPlansRoute = TrainerPlansRouteImport.update({
-  id: '/trainer/plans',
-  path: '/trainer/plans',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrainerExercisesRoute = TrainerExercisesRouteImport.update({
-  id: '/trainer/exercises',
-  path: '/trainer/exercises',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrainerClientsRoute = TrainerClientsRouteImport.update({
-  id: '/trainer/clients',
-  path: '/trainer/clients',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrainerCalendarRoute = TrainerCalendarRouteImport.update({
-  id: '/trainer/calendar',
-  path: '/trainer/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const JoinTokenRoute = JoinTokenRouteImport.update({
-  id: '/join/$token',
-  path: '/join/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClientTrainerRoute = ClientTrainerRouteImport.update({
-  id: '/client/trainer',
-  path: '/client/trainer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClientProfileRoute = ClientProfileRouteImport.update({
-  id: '/client/profile',
-  path: '/client/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClientHistoryRoute = ClientHistoryRouteImport.update({
-  id: '/client/history',
-  path: '/client/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClientBookRoute = ClientBookRouteImport.update({
-  id: '/client/book',
-  path: '/client/book',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
-} as any)
-const AdminWaitlistRoute = AdminWaitlistRouteImport.update({
-  id: '/admin/waitlist',
-  path: '/admin/waitlist',
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/admin/applications',
+  path: '/admin/applications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTrainersRoute = AdminTrainersRouteImport.update({
@@ -151,57 +98,79 @@ const AdminTrainersRoute = AdminTrainersRouteImport.update({
   path: '/admin/trainers',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
-  id: '/admin/applications',
-  path: '/admin/applications',
+const AdminWaitlistRoute = AdminWaitlistRouteImport.update({
+  id: '/admin/waitlist',
+  path: '/admin/waitlist',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const TrainerPlansIndexRoute = TrainerPlansIndexRouteImport.update({
+const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => TrainerPlansRoute,
+  getParentRoute: () => BlogRoute,
 } as any)
-const TrainerExercisesIndexRoute = TrainerExercisesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => TrainerExercisesRoute,
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
-const TrainerClientsIndexRoute = TrainerClientsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => TrainerClientsRoute,
+const ClientIndexRoute = ClientIndexRouteImport.update({
+  id: '/client/',
+  path: '/client/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const TrainerPlansPlanIdRoute = TrainerPlansPlanIdRouteImport.update({
-  id: '/$planId',
-  path: '/$planId',
-  getParentRoute: () => TrainerPlansRoute,
+const ClientBookRoute = ClientBookRouteImport.update({
+  id: '/client/book',
+  path: '/client/book',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const TrainerExercisesExerciseIdRoute =
-  TrainerExercisesExerciseIdRouteImport.update({
-    id: '/$exerciseId',
-    path: '/$exerciseId',
-    getParentRoute: () => TrainerExercisesRoute,
-  } as any)
-const TrainerClientsClientIdRoute = TrainerClientsClientIdRouteImport.update({
-  id: '/$clientId',
-  path: '/$clientId',
-  getParentRoute: () => TrainerClientsRoute,
+const ClientHistoryRoute = ClientHistoryRouteImport.update({
+  id: '/client/history',
+  path: '/client/history',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ClientSessionsSessionIdRoute = ClientSessionsSessionIdRouteImport.update({
-  id: '/client/sessions/$sessionId',
-  path: '/client/sessions/$sessionId',
+const ClientProfileRoute = ClientProfileRouteImport.update({
+  id: '/client/profile',
+  path: '/client/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientTrainerRoute = ClientTrainerRouteImport.update({
+  id: '/client/trainer',
+  path: '/client/trainer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerIndexRoute = TrainerIndexRouteImport.update({
+  id: '/trainer/',
+  path: '/trainer/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerCalendarRoute = TrainerCalendarRouteImport.update({
+  id: '/trainer/calendar',
+  path: '/trainer/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerClientsRoute = TrainerClientsRouteImport.update({
+  id: '/trainer/clients',
+  path: '/trainer/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerExercisesRoute = TrainerExercisesRouteImport.update({
+  id: '/trainer/exercises',
+  path: '/trainer/exercises',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerPlansRoute = TrainerPlansRouteImport.update({
+  id: '/trainer/plans',
+  path: '/trainer/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -210,10 +179,41 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
+const ClientSessionsSessionIdRoute = ClientSessionsSessionIdRouteImport.update({
+  id: '/client/sessions/$sessionId',
+  path: '/client/sessions/$sessionId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerClientsIndexRoute = TrainerClientsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TrainerClientsRoute,
+} as any)
+const TrainerClientsClientIdRoute = TrainerClientsClientIdRouteImport.update({
+  id: '/$clientId',
+  path: '/$clientId',
+  getParentRoute: () => TrainerClientsRoute,
+} as any)
+const TrainerExercisesIndexRoute = TrainerExercisesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TrainerExercisesRoute,
+} as any)
+const TrainerExercisesExerciseIdRoute =
+  TrainerExercisesExerciseIdRouteImport.update({
+    id: '/$exerciseId',
+    path: '/$exerciseId',
+    getParentRoute: () => TrainerExercisesRoute,
+  } as any)
+const TrainerPlansIndexRoute = TrainerPlansIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TrainerPlansRoute,
+} as any)
+const TrainerPlansPlanIdRoute = TrainerPlansPlanIdRouteImport.update({
+  id: '/$planId',
+  path: '/$planId',
+  getParentRoute: () => TrainerPlansRoute,
 } as any)
 const ApiPublicHooksBookingRemindersRoute =
   ApiPublicHooksBookingRemindersRouteImport.update({
@@ -221,17 +221,17 @@ const ApiPublicHooksBookingRemindersRoute =
     path: '/api/public/hooks/booking-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
-const TrainerPlansPlanIdTrainingsTrainingIdRoute =
-  TrainerPlansPlanIdTrainingsTrainingIdRouteImport.update({
-    id: '/$planId_/trainings/$trainingId',
-    path: '/$planId/trainings/$trainingId',
-    getParentRoute: () => TrainerPlansRoute,
-  } as any)
 const TrainerClientsClientIdSessionsSessionIdRoute =
   TrainerClientsClientIdSessionsSessionIdRouteImport.update({
     id: '/$clientId_/sessions/$sessionId',
     path: '/$clientId/sessions/$sessionId',
     getParentRoute: () => TrainerClientsRoute,
+  } as any)
+const TrainerPlansPlanIdTrainingsTrainingIdRoute =
+  TrainerPlansPlanIdTrainingsTrainingIdRouteImport.update({
+    id: '/$planId_/trainings/$trainingId',
+    path: '/$planId/trainings/$trainingId',
+    getParentRoute: () => TrainerPlansRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -489,32 +489,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pending': {
-      id: '/pending'
-      path: '/pending'
-      fullPath: '/pending'
-      preLoaderRoute: typeof PendingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -524,130 +503,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trainer/': {
-      id: '/trainer/'
-      path: '/trainer'
-      fullPath: '/trainer/'
-      preLoaderRoute: typeof TrainerIndexRouteImport
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/client/': {
-      id: '/client/'
-      path: '/client'
-      fullPath: '/client/'
-      preLoaderRoute: typeof ClientIndexRouteImport
+    '/pending': {
+      id: '/pending'
+      path: '/pending'
+      fullPath: '/pending'
+      preLoaderRoute: typeof PendingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/': {
-      id: '/blog/'
-      path: '/'
-      fullPath: '/blog/'
-      preLoaderRoute: typeof BlogIndexRouteImport
-      parentRoute: typeof BlogRoute
-    }
-    '/trainer/plans': {
-      id: '/trainer/plans'
-      path: '/trainer/plans'
-      fullPath: '/trainer/plans'
-      preLoaderRoute: typeof TrainerPlansRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trainer/exercises': {
-      id: '/trainer/exercises'
-      path: '/trainer/exercises'
-      fullPath: '/trainer/exercises'
-      preLoaderRoute: typeof TrainerExercisesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trainer/clients': {
-      id: '/trainer/clients'
-      path: '/trainer/clients'
-      fullPath: '/trainer/clients'
-      preLoaderRoute: typeof TrainerClientsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trainer/calendar': {
-      id: '/trainer/calendar'
-      path: '/trainer/calendar'
-      fullPath: '/trainer/calendar'
-      preLoaderRoute: typeof TrainerCalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/join/$token': {
-      id: '/join/$token'
-      path: '/join/$token'
-      fullPath: '/join/$token'
-      preLoaderRoute: typeof JoinTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/client/trainer': {
-      id: '/client/trainer'
-      path: '/client/trainer'
-      fullPath: '/client/trainer'
-      preLoaderRoute: typeof ClientTrainerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/client/profile': {
-      id: '/client/profile'
-      path: '/client/profile'
-      fullPath: '/client/profile'
-      preLoaderRoute: typeof ClientProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/client/history': {
-      id: '/client/history'
-      path: '/client/history'
-      fullPath: '/client/history'
-      preLoaderRoute: typeof ClientHistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/client/book': {
-      id: '/client/book'
-      path: '/client/book'
-      fullPath: '/client/book'
-      preLoaderRoute: typeof ClientBookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
-    }
-    '/admin/waitlist': {
-      id: '/admin/waitlist'
-      path: '/admin/waitlist'
-      fullPath: '/admin/waitlist'
-      preLoaderRoute: typeof AdminWaitlistRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/trainers': {
-      id: '/admin/trainers'
-      path: '/admin/trainers'
-      fullPath: '/admin/trainers'
-      preLoaderRoute: typeof AdminTrainersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/applications': {
-      id: '/admin/applications'
-      path: '/admin/applications'
-      fullPath: '/admin/applications'
-      preLoaderRoute: typeof AdminApplicationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -657,60 +538,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trainer/plans/': {
-      id: '/trainer/plans/'
-      path: '/'
-      fullPath: '/trainer/plans/'
-      preLoaderRoute: typeof TrainerPlansIndexRouteImport
-      parentRoute: typeof TrainerPlansRoute
-    }
-    '/trainer/exercises/': {
-      id: '/trainer/exercises/'
-      path: '/'
-      fullPath: '/trainer/exercises/'
-      preLoaderRoute: typeof TrainerExercisesIndexRouteImport
-      parentRoute: typeof TrainerExercisesRoute
-    }
-    '/trainer/clients/': {
-      id: '/trainer/clients/'
-      path: '/'
-      fullPath: '/trainer/clients/'
-      preLoaderRoute: typeof TrainerClientsIndexRouteImport
-      parentRoute: typeof TrainerClientsRoute
-    }
-    '/trainer/plans/$planId': {
-      id: '/trainer/plans/$planId'
-      path: '/$planId'
-      fullPath: '/trainer/plans/$planId'
-      preLoaderRoute: typeof TrainerPlansPlanIdRouteImport
-      parentRoute: typeof TrainerPlansRoute
-    }
-    '/trainer/exercises/$exerciseId': {
-      id: '/trainer/exercises/$exerciseId'
-      path: '/$exerciseId'
-      fullPath: '/trainer/exercises/$exerciseId'
-      preLoaderRoute: typeof TrainerExercisesExerciseIdRouteImport
-      parentRoute: typeof TrainerExercisesRoute
-    }
-    '/trainer/clients/$clientId': {
-      id: '/trainer/clients/$clientId'
-      path: '/$clientId'
-      fullPath: '/trainer/clients/$clientId'
-      preLoaderRoute: typeof TrainerClientsClientIdRouteImport
-      parentRoute: typeof TrainerClientsRoute
-    }
-    '/client/sessions/$sessionId': {
-      id: '/client/sessions/$sessionId'
-      path: '/client/sessions/$sessionId'
-      fullPath: '/client/sessions/$sessionId'
-      preLoaderRoute: typeof ClientSessionsSessionIdRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/admin/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/trainers': {
+      id: '/admin/trainers'
+      path: '/admin/trainers'
+      fullPath: '/admin/trainers'
+      preLoaderRoute: typeof AdminTrainersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/waitlist': {
+      id: '/admin/waitlist'
+      path: '/admin/waitlist'
+      fullPath: '/admin/waitlist'
+      preLoaderRoute: typeof AdminWaitlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/client/': {
+      id: '/client/'
+      path: '/client'
+      fullPath: '/client/'
+      preLoaderRoute: typeof ClientIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/book': {
+      id: '/client/book'
+      path: '/client/book'
+      fullPath: '/client/book'
+      preLoaderRoute: typeof ClientBookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/history': {
+      id: '/client/history'
+      path: '/client/history'
+      fullPath: '/client/history'
+      preLoaderRoute: typeof ClientHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/profile': {
+      id: '/client/profile'
+      path: '/client/profile'
+      fullPath: '/client/profile'
+      preLoaderRoute: typeof ClientProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/trainer': {
+      id: '/client/trainer'
+      path: '/client/trainer'
+      fullPath: '/client/trainer'
+      preLoaderRoute: typeof ClientTrainerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/': {
+      id: '/trainer/'
+      path: '/trainer'
+      fullPath: '/trainer/'
+      preLoaderRoute: typeof TrainerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/calendar': {
+      id: '/trainer/calendar'
+      path: '/trainer/calendar'
+      fullPath: '/trainer/calendar'
+      preLoaderRoute: typeof TrainerCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/clients': {
+      id: '/trainer/clients'
+      path: '/trainer/clients'
+      fullPath: '/trainer/clients'
+      preLoaderRoute: typeof TrainerClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/exercises': {
+      id: '/trainer/exercises'
+      path: '/trainer/exercises'
+      fullPath: '/trainer/exercises'
+      preLoaderRoute: typeof TrainerExercisesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/plans': {
+      id: '/trainer/plans'
+      path: '/trainer/plans'
+      fullPath: '/trainer/plans'
+      preLoaderRoute: typeof TrainerPlansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
@@ -720,6 +664,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/sessions/$sessionId': {
+      id: '/client/sessions/$sessionId'
+      path: '/client/sessions/$sessionId'
+      fullPath: '/client/sessions/$sessionId'
+      preLoaderRoute: typeof ClientSessionsSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/clients/': {
+      id: '/trainer/clients/'
+      path: '/'
+      fullPath: '/trainer/clients/'
+      preLoaderRoute: typeof TrainerClientsIndexRouteImport
+      parentRoute: typeof TrainerClientsRoute
+    }
+    '/trainer/clients/$clientId': {
+      id: '/trainer/clients/$clientId'
+      path: '/$clientId'
+      fullPath: '/trainer/clients/$clientId'
+      preLoaderRoute: typeof TrainerClientsClientIdRouteImport
+      parentRoute: typeof TrainerClientsRoute
+    }
+    '/trainer/exercises/': {
+      id: '/trainer/exercises/'
+      path: '/'
+      fullPath: '/trainer/exercises/'
+      preLoaderRoute: typeof TrainerExercisesIndexRouteImport
+      parentRoute: typeof TrainerExercisesRoute
+    }
+    '/trainer/exercises/$exerciseId': {
+      id: '/trainer/exercises/$exerciseId'
+      path: '/$exerciseId'
+      fullPath: '/trainer/exercises/$exerciseId'
+      preLoaderRoute: typeof TrainerExercisesExerciseIdRouteImport
+      parentRoute: typeof TrainerExercisesRoute
+    }
+    '/trainer/plans/': {
+      id: '/trainer/plans/'
+      path: '/'
+      fullPath: '/trainer/plans/'
+      preLoaderRoute: typeof TrainerPlansIndexRouteImport
+      parentRoute: typeof TrainerPlansRoute
+    }
+    '/trainer/plans/$planId': {
+      id: '/trainer/plans/$planId'
+      path: '/$planId'
+      fullPath: '/trainer/plans/$planId'
+      preLoaderRoute: typeof TrainerPlansPlanIdRouteImport
+      parentRoute: typeof TrainerPlansRoute
+    }
     '/api/public/hooks/booking-reminders': {
       id: '/api/public/hooks/booking-reminders'
       path: '/api/public/hooks/booking-reminders'
@@ -727,19 +727,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBookingRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trainer/plans/$planId_/trainings/$trainingId': {
-      id: '/trainer/plans/$planId_/trainings/$trainingId'
-      path: '/$planId/trainings/$trainingId'
-      fullPath: '/trainer/plans/$planId/trainings/$trainingId'
-      preLoaderRoute: typeof TrainerPlansPlanIdTrainingsTrainingIdRouteImport
-      parentRoute: typeof TrainerPlansRoute
-    }
     '/trainer/clients/$clientId_/sessions/$sessionId': {
       id: '/trainer/clients/$clientId_/sessions/$sessionId'
       path: '/$clientId/sessions/$sessionId'
       fullPath: '/trainer/clients/$clientId/sessions/$sessionId'
       preLoaderRoute: typeof TrainerClientsClientIdSessionsSessionIdRouteImport
       parentRoute: typeof TrainerClientsRoute
+    }
+    '/trainer/plans/$planId_/trainings/$trainingId': {
+      id: '/trainer/plans/$planId_/trainings/$trainingId'
+      path: '/$planId/trainings/$trainingId'
+      fullPath: '/trainer/plans/$planId/trainings/$trainingId'
+      preLoaderRoute: typeof TrainerPlansPlanIdTrainingsTrainingIdRouteImport
+      parentRoute: typeof TrainerPlansRoute
     }
   }
 }
