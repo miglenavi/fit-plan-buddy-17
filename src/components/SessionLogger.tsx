@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted } from "@/lib/progress";
 import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw } from "lucide-react";
 
-type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null };
+type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean };
 
 const isSetDone = (s: { completed: boolean; reps: string | number | null }) =>
   s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0);
@@ -96,7 +97,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       for (const row of se ?? []) {
         meta[row.id] = row.exercise;
         const existing: SetLog[] = (row.set_logs ?? []).map((l: any) => ({
-          id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level,
+          id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level, is_dropset: !!l.is_dropset,
         })).sort((a: SetLog, b: SetLog) => a.set_index - b.set_index);
         const target = row.target_sets ?? 3;
         // Never reuse an index that already exists in the DB — a deleted set can
@@ -141,7 +142,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         if (sessIds.length) {
           const { data: prevSEs } = await supabase
             .from("session_exercises")
-            .select("id, session_id, exercise_id, set_logs(set_index, reps, weight, rpe, completed, band_level)")
+            .select("id, session_id, exercise_id, set_logs(set_index, reps, weight, rpe, completed, band_level, is_dropset)")
             .in("session_id", sessIds)
             .in("exercise_id", exIds);
           for (const cur of se ?? []) {
@@ -150,7 +151,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
               if (match && (match.set_logs?.length ?? 0) > 0) {
                 last[cur.id] = {
                   date: ps.completed_at ?? "",
-                  sets: match.set_logs.map((l: any) => ({ set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level })).sort((a: any, b: any) => a.set_index - b.set_index),
+                  sets: match.set_logs.map((l: any) => ({ set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level, is_dropset: !!l.is_dropset })).sort((a: any, b: any) => a.set_index - b.set_index),
                 };
                 break;
               }
@@ -208,6 +209,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       weight: weightVal,
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
       band_level: s.band_level == null ? null : Number(s.band_level),
+      is_dropset: !!s.is_dropset,
       completed: !!s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0),
     };
     const { data, error } = await supabase
@@ -593,7 +595,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         <div className="space-y-0.5">
                           {last.sets.map((s) => (
                             <div key={s.set_index} className="tabular-nums">
-                              Set {s.set_index + 1}: {s.reps ?? "–"} reps{formatLoad(s, ex)}
+                              {s.is_dropset ? "Dropset" : `Set ${s.set_index + 1}`}: {s.reps ?? "–"} reps{formatLoad(s, ex)}
                             </div>
                           ))}
                         </div>
@@ -634,7 +636,21 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                         return (
                         <div key={idx} className="space-y-1">
                         <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_minmax(2.5rem,1fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] sm:gap-2 items-center">
-                          <span className="text-xs text-muted-foreground tabular-nums">#{idx + 1}</span>
+                          {canEdit ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button type="button" aria-label={`Set ${idx + 1} type`} className={`h-9 rounded-md text-xs tabular-nums ${s.is_dropset ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold" : "text-muted-foreground hover:bg-accent"}`}>
+                                  {s.is_dropset ? "D" : `#${idx + 1}`}
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => { updateSet(se.id, idx, "is_dropset", false); setTimeout(() => saveSet(se.id, idx), 0); }}>Normal set</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { updateSet(se.id, idx, "is_dropset", true); setTimeout(() => saveSet(se.id, idx), 0); }}>Dropset</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <span className={`text-xs tabular-nums ${s.is_dropset ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-muted-foreground"}`}>{s.is_dropset ? "D" : `#${idx + 1}`}</span>
+                          )}
                           <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           {band ? (
                             <select
