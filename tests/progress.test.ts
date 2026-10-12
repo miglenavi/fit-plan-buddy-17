@@ -22,3 +22,10 @@ describe("assisted progress rules", () => {
     expect(progressionHint([{ weight: 60 }], normal)).toContain("62.5kg");
   });
 });
+
+import { workingSetNumber } from "../src/lib/progress";
+import { test as t2, expect as e2 } from "vitest";
+t2("dropset does not advance working set number", () => {
+  const sets = [{ is_dropset: false }, { is_dropset: false }, { is_dropset: true }, { is_dropset: false }];
+  e2(sets.map((_, i) => workingSetNumber(sets, i))).toEqual([1, 2, 2, 3]);
+});
