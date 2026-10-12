@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted } from "@/lib/progress";
+import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted, workingSetNumber } from "@/lib/progress";
 import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw } from "lucide-react";
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean };
@@ -594,9 +594,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       <div className="rounded-md bg-muted/50 p-3 text-xs">
                         <div className="font-semibold text-muted-foreground mb-1.5">Last time ({new Date(last.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })})</div>
                         <div className="space-y-0.5">
-                          {last.sets.map((s) => (
+                          {last.sets.map((s, li) => (
                             <div key={s.set_index} className="tabular-nums">
-                              {s.is_dropset ? "Dropset" : `Set ${s.set_index + 1}`}: {s.reps ?? "–"} reps{formatLoad(s, ex)}
+                              {s.is_dropset ? "Dropset" : `Set ${workingSetNumber(last.sets, li)}`}: {s.reps ?? "–"} reps{formatLoad(s, ex)}
                             </div>
                           ))}
                         </div>
@@ -640,8 +640,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                           {canEdit ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button type="button" aria-label={`Set ${idx + 1} type`} className={`h-9 rounded-md text-xs tabular-nums ${s.is_dropset ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold" : "text-muted-foreground hover:bg-accent"}`}>
-                                  {s.is_dropset ? "D" : `#${idx + 1}`}
+                                <button type="button" aria-label={`Set ${workingSetNumber(sets, idx)} type`} className={`h-9 rounded-md text-xs tabular-nums ${s.is_dropset ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold" : "text-muted-foreground hover:bg-accent"}`}>
+                                  {s.is_dropset ? "D" : `#${workingSetNumber(sets, idx)}`}
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
@@ -650,7 +650,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                            <span className={`text-xs tabular-nums ${s.is_dropset ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-muted-foreground"}`}>{s.is_dropset ? "D" : `#${idx + 1}`}</span>
+                            <span className={`text-xs tabular-nums ${s.is_dropset ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-muted-foreground"}`}>{s.is_dropset ? "D" : `#${workingSetNumber(sets, idx)}`}</span>
                           )}
                           <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
                           {band ? (
