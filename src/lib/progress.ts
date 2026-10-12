@@ -72,3 +72,10 @@ export const progressionHint = (
   const bump = maxW >= 60 ? 2.5 : maxW >= 20 ? 2 : 1;
   return `You hit the top of the rep range last time — try ${maxW + bump}kg today.`;
 };
+
+/** Working-set number for row `idx`: dropsets don't advance the counter. */
+export function workingSetNumber(sets: { is_dropset?: boolean | null }[], idx: number): number {
+  let n = 0;
+  for (let i = 0; i <= idx && i < sets.length; i++) if (!sets[i]?.is_dropset) n++;
+  return Math.max(n, 1);
+}
