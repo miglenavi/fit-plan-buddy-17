@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Play, CheckCircle2, Clock, Archive, StickyNote, Sparkles } from "lucide-react";
+import { Plus, Play, CheckCircle2, Clock, Archive, StickyNote, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
 import { useAuth } from "@/lib/auth";
@@ -34,6 +34,14 @@ function ClientDetail() {
   const [savingNote, setSavingNote] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const [customName, setCustomName] = useState("");
+
+  const deleteSession = async (id: string, completed: boolean) => {
+    if (!confirm(completed ? "Delete this session and all its logged sets?" : "Close this session without saving?")) return;
+    const { error, count } = await supabase.from("training_sessions").delete({ count: "exact" }).eq("id", id);
+    if (error || count === 0) return toast.error("Couldn't remove this session.");
+    toast.success("Session removed");
+    load();
+  };
 
   const load = async () => {
     const [{ data: p }, { data: pr }, { data: ss }, { data: ip }, { data: ns }] = await Promise.all([
@@ -283,9 +291,14 @@ function ClientDetail() {
                       </div>
                     </div>
                   </div>
+                  <div className="flex items-center shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/trainer/clients/$clientId/sessions/$sessionId", params: { clientId, sessionId: s.id } })}>
                     Open
                   </Button>
+                  <Button size="icon" variant="ghost" className="size-8 text-muted-foreground shrink-0" aria-label="Delete session" onClick={() => deleteSession(s.id, s.status === "completed")}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                  </div>
                 </li>
               ))}
             </ul>
