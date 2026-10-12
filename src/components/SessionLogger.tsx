@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted, workingSetNumber } from "@/lib/progress";
-import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw, ArrowUp, ArrowDown, X } from "lucide-react";
 
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean };
 
@@ -325,6 +325,38 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
 
 
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [reordering, setReordering] = useState(false);
+
+  const moveExercise = async (idx: number, dir: -1 | 1) => {
+    const j = idx + dir;
+    if (j < 0 || j >= sessionExercises.length || reordering) return;
+    const next = [...sessionExercises];
+    [next[idx], next[j]] = [next[j], next[idx]];
+    const prev = sessionExercises;
+    setSessionExercises(next);
+    setReordering(true);
+    const results = await Promise.all(
+      next.map((r, k) => r.order_index === k ? null : supabase.from("session_exercises").update({ order_index: k }).eq("id", r.id)),
+    );
+    setReordering(false);
+    const err = results.find((r) => r?.error)?.error;
+    if (err) { setSessionExercises(prev); return toast.error("Couldn't change the order. Please try again."); }
+    setSessionExercises(next.map((r, k) => ({ ...r, order_index: k })));
+  };
+
+  const deleteSession = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    const { error, count } = await supabase.from("training_sessions").delete({ count: "exact" }).eq("id", sessionId);
+    setDeleting(false);
+    if (error || count === 0) return toast.error("Couldn't remove this session.");
+    setConfirmDeleteOpen(false);
+    toast.success(session?.status === "completed" ? "Session deleted" : "Session closed without saving");
+    if (isTrainer && session?.client_id) nav({ to: "/trainer/clients/$clientId", params: { clientId: session.client_id } });
+    else nav({ to: "/client" });
+  };
 
   const doFinish = async () => {
     if (finishing) return;
@@ -384,6 +416,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const done = sessionExercises.filter((se) => (setLogsByEx[se.id] ?? []).length > 0 && (setLogsByEx[se.id] ?? []).every(isSetDone)).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const canEdit = forceReadOnly ? false : session.status !== "completed";
+  // Trainers can remove any of their clients' sessions; clients only ones they logged themselves.
+  const canDelete = !forceReadOnly && (isTrainer || (isClient && session.logged_by === "client" && !session.trainer_id));
 
   // Trainer-facing summary: duration + aggregate target-vs-actual deltas.
   const durationMin = session.started_at && session.completed_at
@@ -423,7 +457,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   return (
     <div className="space-y-5 pb-[calc(13rem+env(safe-area-inset-bottom))] md:pb-32">
       <div>
-        <h2 className="text-xl font-bold tracking-tight">{session.custom_name ?? session.trainings?.name ?? "Custom session"}</h2>
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-xl font-bold tracking-tight">{session.custom_name ?? session.trainings?.name ?? "Custom session"}</h2>
+          {canDelete && (
+            <Button type="button" variant="ghost" size="sm" className="shrink-0 text-muted-foreground" onClick={() => setConfirmDeleteOpen(true)}>
+              {session.status === "completed" ? <><Trash2 className="size-4 mr-1" /> Delete</> : <><X className="size-4 mr-1" /> Close without saving</>}
+            </Button>
+          )}
+        </div>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
         {session.status === "completed" && (
           <p className="text-xs text-primary mt-1 font-medium">
@@ -527,8 +568,21 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           return (
             <Card key={se.id} className={allDone ? "border-primary/60 bg-primary/5" : needsChoice ? "border-amber-500/60" : ""}>
               <CardContent className="p-0">
+                <div className="flex items-stretch">
+                {canEdit && sessionExercises.length > 1 && (
+                  <div className="flex flex-col justify-center pl-2 gap-1">
+                    <Button type="button" size="icon" variant="ghost" className="size-8" aria-label="Move exercise up"
+                      disabled={i === 0 || reordering} onClick={() => moveExercise(i, -1)}>
+                      <ArrowUp className="size-4" />
+                    </Button>
+                    <Button type="button" size="icon" variant="ghost" className="size-8" aria-label="Move exercise down"
+                      disabled={i === sessionExercises.length - 1 || reordering} onClick={() => moveExercise(i, 1)}>
+                      <ArrowDown className="size-4" />
+                    </Button>
+                  </div>
+                )}
                 <button type="button" onClick={() => setExpandedId(isOpen ? null : se.id)}
-                  className="w-full flex items-center gap-3 p-4 text-left">
+                  className="flex-1 min-w-0 flex items-center gap-3 p-4 text-left">
                   <span className={`size-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${allDone ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"}`}>
                     {allDone ? <CheckCircle2 className="size-4" /> : i + 1}
                   </span>
@@ -547,6 +601,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                   </div>
                   {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                 </button>
+                </div>
 
 
                 {isOpen && (
