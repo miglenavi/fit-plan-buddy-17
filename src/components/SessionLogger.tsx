@@ -822,7 +822,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         </DialogContent>
       </Dialog>
 
-      {canEdit && !pickerOpen && !confirmFinishOpen && (
+      {canEdit && !pickerOpen && !confirmFinishOpen && !confirmDeleteOpen && (
         <div className={`fixed inset-x-0 bg-background/95 backdrop-blur border-t p-3 z-[55] ${isTrainer ? "bottom-[68px] md:bottom-0" : "bottom-0"}`}>
           <div className="max-w-md mx-auto">
             <Button onClick={finish} disabled={finishing} className="w-full" size="lg">
@@ -845,6 +845,24 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
             <Button variant="outline" onClick={() => setConfirmFinishOpen(false)}>Keep logging</Button>
             <Button onClick={() => { setConfirmFinishOpen(false); doFinish(); }} disabled={finishing}>
               Finish anyway
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{session.status === "completed" ? "Delete this session?" : "Close without saving?"}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {session.status === "completed"
+              ? "This session and all its logged sets will be permanently removed from history."
+              : "This workout and any sets logged in it will be discarded."}
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={deleteSession} disabled={deleting}>
+              {deleting ? "Removing…" : session.status === "completed" ? "Delete" : "Discard"}
             </Button>
           </div>
         </DialogContent>
