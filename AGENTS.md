@@ -1,1 +1,2 @@
 - Session set saving goes through src/lib/setSaveQueue.ts (revisioned per-set queue + per-user/session local drafts); don't write set_logs directly from UI handlers — keeps stale responses, failures and refreshes from losing edits.
+- Screen reads go through useLoader (src/lib/useLoader.ts) + must() + LoadGate/Unavailable (src/components/LoadStatus.tsx); never treat a failed query as empty — failures must show an error with Retry, not a false 'nothing here'.
