@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice } from "@/components/LoadStatus";
 import { CheckCircle2, Clock, Search, UserRoundSearch, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/client/trainer")({
@@ -46,10 +49,10 @@ function ClientTrainer() {
   const [selected, setSelected] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const L = useLoader();
 
-  const load = async () => {
-    const [{ data: t }, { data: r }, { data: link }] = await Promise.all([
+  const load = () => L.run(async (cur) => {
+    const [tR, rR, linkR] = await Promise.all([
       supabase.rpc("list_trainers"),
       supabase
         .from("trainer_requests")
@@ -57,11 +60,12 @@ function ClientTrainer() {
         .order("created_at", { ascending: false }),
       supabase.from("trainer_clients").select("trainer_id").is("archived_at", null).limit(1),
     ]);
+    const t = must(tR), r = must(rR), link = must(linkR);
+    if (!cur()) return;
     setTrainers((t as Trainer[]) ?? []);
     setRequests((r as Request[]) ?? []);
     setLinkedTrainerId(link?.[0]?.trainer_id ?? null);
-    setLoading(false);
-  };
+  });
 
   useEffect(() => {
     load();
@@ -94,7 +98,8 @@ function ClientTrainer() {
     load();
   };
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (L.view === "loading") return <LoadingText what="your trainer" />;
+  if (L.view === "error") return <LoadError what="your trainer connection" onRetry={load} />;
 
   if (linkedTrainerId) {
     return (
@@ -117,6 +122,7 @@ function ClientTrainer() {
 
   return (
     <div className="space-y-5">
+      {L.view === "content-stale" && <StaleNotice what="your trainer connection" onRetry={load} />}
       {pending ? (
         <Card className="border-primary/60 bg-primary/5">
           <CardContent className="p-5 space-y-3">

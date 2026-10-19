@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Upload, Trash2, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice, Unavailable } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
   ssr: false,
@@ -44,10 +47,13 @@ function ExerciseDetail() {
   const hasLoaded = useRef(false);
   const lastSaved = useRef<string>("");
 
-  const load = async () => {
-    const { data, error } = await supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle();
-    if (error) { toast.error(error.message); return; }
-    if (!data) return;
+  const L = useLoader();
+  const load = (opts?: { reset?: boolean }) => L.run(async (cur) => {
+    const data = must(await supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle());
+    if (!cur()) return;
+    // A missing/inaccessible record ends in the "unavailable" state (only before the first load;
+    // later refreshes keep what's on screen).
+    if (!data) { if (!hasLoaded.current) setEx(null); return; }
     const d = data as any;
     setEx(data);
     setName(data.name);
@@ -67,8 +73,8 @@ function ExerciseDetail() {
       is_assisted: !!d.is_assisted,
     });
     hasLoaded.current = true;
-  };
-  useEffect(() => { load(); }, [exerciseId]);
+  }, opts);
+  useEffect(() => { hasLoaded.current = false; load({ reset: true }); }, [exerciseId]);
 
   const doSave = async () => {
     const { error } = await supabase.from("exercises").update({
@@ -153,13 +159,16 @@ function ExerciseDetail() {
     else { toast.success("Deleted"); navigate({ to: "/trainer/exercises" }); }
   };
 
-  if (!ex) return <p className="text-muted-foreground">Loading...</p>;
+  if (L.view === "loading") return <LoadingText what="exercise" />;
+  if (L.view === "error") return <LoadError what="this exercise" onRetry={() => load({ reset: true })} />;
+  if (!ex) return <Unavailable what="exercise" backTo="/trainer/exercises" backLabel="Back to exercises" onRetry={() => load({ reset: true })} />;
 
   const isYoutube = videoUrl && /(?:youtube\.com|youtu\.be)/.test(videoUrl);
   const ytId = isYoutube ? videoUrl.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/)?.[1] : null;
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {L.view === "content-stale" && <StaleNotice what="this exercise" onRetry={() => load({ reset: true })} />}
       <Link to="/trainer/exercises" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4 mr-1" /> Back to exercises
       </Link>

@@ -5,6 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronRight, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadGate } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/plans/")({
   ssr: false,
@@ -16,13 +19,14 @@ function Plans() {
   const [list, setList] = useState<any[]>([]);
   const [creating, setCreating] = useState(false);
 
-  const load = async () => {
-    const { data } = await supabase
+  const L = useLoader();
+  const load = () => L.run(async (cur) => {
+    const data = must(await supabase
       .from("plans")
       .select("id, name, description, status, trainings(id)")
-      .order("created_at", { ascending: false });
-    setList(data ?? []);
-  };
+      .order("created_at", { ascending: false }));
+    if (cur()) setList(data ?? []);
+  });
   useEffect(() => { load(); }, []);
 
   const create = async () => {
@@ -57,6 +61,7 @@ function Plans() {
         </Button>
       </div>
 
+      <LoadGate view={L.view} what="your plans" onRetry={load}>
       <div className="grid sm:grid-cols-2 gap-3">
         {list.map((p) => (
           <Card key={p.id} className="hover:border-primary transition-colors">
@@ -77,6 +82,7 @@ function Plans() {
         ))}
         {list.length === 0 && <p className="text-muted-foreground text-sm">No plans yet.</p>}
       </div>
+      </LoadGate>
     </div>
   );
 }

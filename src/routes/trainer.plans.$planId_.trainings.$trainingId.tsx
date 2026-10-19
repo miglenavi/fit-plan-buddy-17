@@ -15,6 +15,9 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 
 import { BAND_LEVELS, formatLoad, hidesLoad, usesBand, weightLabel } from "@/lib/progress";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice, Unavailable } from "@/components/LoadStatus";
 
 /** Target load field: kg input normally, "Assistance (kg)" for assisted, band dropdown for band exercises. */
 function LoadField({ ex, weight, setWeight, band, setBand, placeholder, className }: {
@@ -73,12 +76,15 @@ function TrainingDetail() {
   const [band, setBand] = useState("");
   const [altBand, setAltBand] = useState("");
 
-  const load = async () => {
-    const [{ data: t }, { data: it }, { data: ex }] = await Promise.all([
+  const L = useLoader();
+  const load = (opts?: { reset?: boolean }) => L.run(async (cur) => {
+    const [tR, itR, exR] = await Promise.all([
       supabase.from("trainings").select("*").eq("id", trainingId).maybeSingle(),
       supabase.from("training_exercises").select("*, exercises!exercise_id(name, primary_muscle_group, secondary_muscle_groups, is_assisted, equipment)").eq("training_id", trainingId).order("order_index"),
       supabase.from("exercises").select("id, name, primary_muscle_group, equipment, is_assisted").order("name"),
     ]);
+    const t = must(tR), it = must(itR), ex = must(exR);
+    if (!cur()) return;
     setTraining(t);
     if (t) {
       setName(t.name ?? "");
@@ -88,8 +94,8 @@ function TrainingDetail() {
     }
     setItems(it ?? []);
     setExercises(ex ?? []);
-  };
-  useEffect(() => { load(); }, [trainingId]);
+  }, opts);
+  useEffect(() => { loaded.current = false; load({ reset: true }); }, [trainingId]);
 
   useEffect(() => {
     if (!loaded.current) return;
@@ -188,8 +194,13 @@ function TrainingDetail() {
 
 
 
+  if (L.view === "loading") return <LoadingText what="workout" />;
+  if (L.view === "error") return <LoadError what="this workout" onRetry={() => load()} />;
+  if (!training) return <Unavailable what="workout" backTo={`/trainer/plans/${planId}`} backLabel="Back to plan" onRetry={() => load()} />;
+
   return (
     <div className="space-y-6">
+      {L.view === "content-stale" && <StaleNotice what="this workout" onRetry={() => load()} />}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Training name (e.g. Lower Body A)"

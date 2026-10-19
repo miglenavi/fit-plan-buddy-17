@@ -19,6 +19,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadGate, LoadingText } from "@/components/LoadStatus";
 import { addDays, fmtWeekRange, weekStart } from "@/lib/week";
 import { useAuth } from "@/lib/auth";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Plus, Repeat, Trash2, X } from "lucide-react";
@@ -99,7 +102,6 @@ function TrainerCalendar() {
   const [avail, setAvail] = useState<Availability[]>([]);
   const [series, setSeries] = useState<Series[]>([]);
   const [clients, setClients] = useState<ClientRow[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [dow, setDow] = useState("1");
   const [start, setStart] = useState("09:00");
@@ -119,10 +121,14 @@ function TrainerCalendar() {
 
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
 
-  const load = useCallback(async () => {
+  const L = useLoader();
+  // Which week the shown bookings belong to, so a new week never shows the old week's rows.
+  const [loadedWeek, setLoadedWeek] = useState<string | null>(null);
+
+  const load = useCallback(() => L.run(async (cur) => {
     const from = new Date(`${monday}T00:00:00`);
     const to = addDays(from, 7);
-    const [{ data: b, error: be }, { data: a }, { data: s }, { data: c }] = await Promise.all([
+    const [bR, aR, sR, cR] = await Promise.all([
       supabase
         .from("bookings")
         .select("id, client_id, start_at, end_at, status, client_note, series_id")
@@ -142,15 +148,16 @@ function TrainerCalendar() {
         .select("client_id, profiles!trainer_clients_client_profile_fk(full_name)")
         .is("archived_at", null),
     ]);
-    if (be) toast.error(be.message);
+    const b = must(bR), a = must(aR), s = must(sR), c = must(cR);
+    if (!cur()) return;
     setBookings((b as unknown as Booking[]) ?? []);
     setAvail((a as Availability[]) ?? []);
     setSeries((s as Series[]) ?? []);
     setClients(
       ((c as any[]) ?? []).map((r) => ({ client_id: r.client_id, full_name: r.profiles?.full_name ?? null })),
     );
-    setLoading(false);
-  }, [monday]);
+    setLoadedWeek(monday);
+  }), [monday]);
 
   useEffect(() => {
     load();
@@ -366,6 +373,7 @@ function TrainerCalendar() {
         </Dialog>
       </div>
 
+      <LoadGate view={L.view} what="your calendar" onRetry={load}>
       <Tabs defaultValue="week">
         <TabsList>
           <TabsTrigger value="week">Week</TabsTrigger>
@@ -385,8 +393,10 @@ function TrainerCalendar() {
             <Button variant="ghost" size="sm" onClick={() => setMonday(weekStart(new Date()))}>Today</Button>
           </div>
 
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+          {loadedWeek !== monday ? (
+            L.status === "error"
+              ? <LoadError what="this week's bookings" onRetry={load} />
+              : <LoadingText what="this week" />
           ) : (
             <div className="grid gap-3 md:grid-cols-7">
               {days.map((d) => {
@@ -530,6 +540,7 @@ function TrainerCalendar() {
           </Card>
         </TabsContent>
       </Tabs>
+      </LoadGate>
 
       <Dialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
         <DialogContent>

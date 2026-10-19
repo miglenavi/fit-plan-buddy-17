@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Loader2, Check, ChevronRight, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice, Unavailable } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
   ssr: false,
@@ -27,8 +30,9 @@ function PlanDetail() {
   const loaded = useRef(false);
   const lastSaved = useRef("");
 
-  const load = async () => {
-    const [{ data: p }, { data: t }, { data: a }] = await Promise.all([
+  const L = useLoader();
+  const load = (opts?: { reset?: boolean }) => L.run(async (cur) => {
+    const [pR, tR, aR] = await Promise.all([
       supabase.from("plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("trainings").select("id, name, description, order_index, training_exercises(id)").eq("plan_id", planId).order("order_index"),
       supabase.from("client_programs")
@@ -36,6 +40,14 @@ function PlanDetail() {
         .eq("plan_id", planId)
         .order("start_date", { ascending: false }),
     ]);
+    const p = must(pR), t = must(tR) ?? [], a = must(aR) ?? [];
+    const ids = Array.from(new Set(a.map((r: any) => r.client_id)));
+    let names: Record<string, string> = {};
+    if (ids.length > 0) {
+      const profs = must(await supabase.from("profiles").select("id, full_name").in("id", ids));
+      names = Object.fromEntries((profs ?? []).map((x: any) => [x.id, x.full_name ?? "Unnamed"]));
+    }
+    if (!cur()) return;
     setPlan(p);
     if (p) {
       setName(p.name ?? "");
@@ -43,17 +55,10 @@ function PlanDetail() {
       lastSaved.current = JSON.stringify({ name: p.name ?? "", description: p.description ?? "" });
       loaded.current = true;
     }
-    setTrainings(t ?? []);
-
-    const ids = Array.from(new Set((a ?? []).map((r: any) => r.client_id)));
-    let names: Record<string, string> = {};
-    if (ids.length > 0) {
-      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
-      names = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name ?? "Unnamed"]));
-    }
-    setAssignments((a ?? []).map((r: any) => ({ ...r, full_name: names[r.client_id] ?? "Unnamed" })));
-  };
-  useEffect(() => { load(); }, [planId]);
+    setTrainings(t);
+    setAssignments(a.map((r: any) => ({ ...r, full_name: names[r.client_id] ?? "Unnamed" })));
+  }, opts);
+  useEffect(() => { loaded.current = false; load({ reset: true }); }, [planId]);
 
   useEffect(() => {
     if (!loaded.current) return;
@@ -93,8 +98,13 @@ function PlanDetail() {
     if (error) toast.error(error.message); else load();
   };
 
+  if (L.view === "loading") return <LoadingText what="plan" />;
+  if (L.view === "error") return <LoadError what="this plan" onRetry={() => load()} />;
+  if (!plan) return <Unavailable what="plan" backTo="/trainer/plans" backLabel="Back to plans" onRetry={() => load()} />;
+
   return (
     <div className="space-y-6">
+      {L.view === "content-stale" && <StaleNotice what="this plan" onRetry={() => load()} />}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Plan name"

@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, Video, ImageIcon, Search, X, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadGate } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/exercises/")({
   ssr: false,
@@ -49,12 +52,14 @@ function ExercisesList() {
 
 
 
-  const load = async () => {
+  const L = useLoader();
+  const load = () => L.run(async (cur) => {
     const { data: u } = await supabase.auth.getUser();
+    const ex = must(await supabase.from("exercises").select("*").order("name"));
+    if (!cur()) return;
     setUid(u.user?.id ?? null);
-    const { data: ex } = await supabase.from("exercises").select("*").order("name");
     setList(ex ?? []);
-  };
+  });
   useEffect(() => { load(); }, []);
 
   const create = async (e: React.FormEvent) => {
@@ -326,6 +331,7 @@ function ExercisesList() {
         ))}
       </div>
 
+      <LoadGate view={L.view} what="exercises" onRetry={load}>
       {grouped.length === 0 && <p className="text-muted-foreground text-sm">No exercises yet.</p>}
 
       {grouped.map((g) => (
@@ -390,6 +396,7 @@ function ExercisesList() {
           </div>
         </section>
       ))}
+      </LoadGate>
     </div>
   );
 }

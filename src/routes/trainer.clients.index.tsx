@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { resendClientInvite, listPendingClients } from "@/lib/clients.functions";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { loadPendingRequests, type PendingRequest } from "@/lib/accessRequests";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadGate } from "@/components/LoadStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,42 +43,46 @@ function Clients() {
     }
   };
 
-  const load = async () => {
+  const CL = useLoader();
+  const load = () => {
     loadRequests();
-    const [{ data }, { data: invs }] = await Promise.all([
-      supabase
-        .from("trainer_clients")
-        .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
-        .is("archived_at", null)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("client_invites")
-        .select("id, token, full_name, created_at")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false }),
-    ]);
-    setClients(data ?? []);
-    setLinks(invs ?? []);
-    const ids = (data ?? []).map((c: any) => c.client_id);
-    if (ids.length > 0) {
-      const { data: ss } = await supabase
-        .from("training_sessions")
-        .select("client_id, completed_at")
-        .eq("status", "completed")
-        .in("client_id", ids)
-        .order("completed_at", { ascending: false });
+    return CL.run(async (cur) => {
+      const [cR, iR] = await Promise.all([
+        supabase
+          .from("trainer_clients")
+          .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
+          .is("archived_at", null)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("client_invites")
+          .select("id, token, full_name, created_at")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+      ]);
+      const data = must(cR) ?? [];
+      const invs = must(iR) ?? [];
+      const ids = data.map((c: any) => c.client_id);
       const map: Record<string, string> = {};
-      for (const s of ss ?? []) if (!map[s.client_id] && s.completed_at) map[s.client_id] = s.completed_at;
+      if (ids.length > 0) {
+        const ss = must(await supabase
+          .from("training_sessions")
+          .select("client_id, completed_at")
+          .eq("status", "completed")
+          .in("client_id", ids)
+          .order("completed_at", { ascending: false }));
+        for (const s of ss ?? []) if (!map[s.client_id] && s.completed_at) map[s.client_id] = s.completed_at;
+      }
+      if (!cur()) return;
+      setClients(data);
+      setLinks(invs);
       setLastSession(map);
-    } else {
-      setLastSession({});
-    }
-    try {
-      const res = await loadPending({ data: {} } as any);
-      setPendingFirstLogin(res.pending ?? []);
-    } catch {
-      setPendingFirstLogin([]);
-    }
+      try {
+        const res = await loadPending({ data: {} } as any);
+        if (cur()) setPendingFirstLogin(res.pending ?? []);
+      } catch {
+        if (cur()) setPendingFirstLogin([]);
+      }
+    });
   };
 
   const lastSessionLabel = (clientId: string) => {
@@ -260,6 +267,7 @@ function Clients() {
 
 
 
+      <LoadGate view={CL.view} what="your clients" onRetry={load}>
       <div className="grid sm:grid-cols-2 gap-3">
         {clients.map((c) => (
           <Card key={c.client_id} className="hover:border-primary transition-colors">
@@ -311,6 +319,7 @@ function Clients() {
         ))}
         {clients.length === 0 && <p className="text-muted-foreground text-sm">No clients yet.</p>}
       </div>
+      </LoadGate>
     </div>
   );
 }
