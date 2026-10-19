@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { resendClientInvite, listPendingClients } from "@/lib/clients.functions";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
+import { loadPendingRequests, type PendingRequest } from "@/lib/accessRequests";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/trainer/clients/")({
 
 function Clients() {
   const [clients, setClients] = useState<any[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<PendingRequest[]>([]);
+  const [requestsState, setRequestsState] = useState<"loading" | "ok" | "error">("loading");
   const [links, setLinks] = useState<any[]>([]);
   const [linkName, setLinkName] = useState("");
   const [creatingLink, setCreatingLink] = useState(false);
@@ -28,17 +30,23 @@ function Clients() {
   const loadPending = useServerFn(listPendingClients);
 
 
+  const loadRequests = async () => {
+    setRequestsState("loading");
+    try {
+      setRequests(await loadPendingRequests(supabase));
+      setRequestsState("ok");
+    } catch {
+      setRequestsState("error");
+    }
+  };
+
   const load = async () => {
-    const [{ data }, { data: reqs }, { data: invs }] = await Promise.all([
+    loadRequests();
+    const [{ data }, { data: invs }] = await Promise.all([
       supabase
         .from("trainer_clients")
         .select("client_id, created_at, profiles!trainer_clients_client_profile_fk(id, full_name)")
         .is("archived_at", null)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("trainer_requests")
-        .select("id, client_id, note, created_at, profiles:client_id(full_name)")
-        .eq("status", "pending")
         .order("created_at", { ascending: false }),
       supabase
         .from("client_invites")
@@ -47,7 +55,6 @@ function Clients() {
         .order("created_at", { ascending: false }),
     ]);
     setClients(data ?? []);
-    setRequests(reqs ?? []);
     setLinks(invs ?? []);
     const ids = (data ?? []).map((c: any) => c.client_id);
     if (ids.length > 0) {
@@ -167,6 +174,17 @@ function Clients() {
         </p>
       </div>
 
+      {requestsState === "loading" && requests.length === 0 && (
+        <p className="text-sm text-muted-foreground" role="status">Checking for access requests…</p>
+      )}
+
+      {requestsState === "error" && (
+        <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+          <span className="text-muted-foreground">Couldn't load access requests.</span>
+          <Button type="button" size="sm" variant="outline" onClick={loadRequests}>Retry</Button>
+        </div>
+      )}
+
       {requests.length > 0 && (
         <Card className="border-primary/60 bg-primary/5">
           <CardHeader>
@@ -178,7 +196,7 @@ function Clients() {
             {requests.map((r) => (
               <div key={r.id} className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
                 <div className="min-w-0">
-                  <div className="font-medium">{r.profiles?.full_name ?? "New client"}</div>
+                  <div className="font-medium">{r.full_name ?? "New client"}</div>
                   {r.note && <p className="text-xs text-muted-foreground mt-0.5">{r.note}</p>}
                   <div className="text-xs text-muted-foreground mt-0.5">
                     Requested {new Date(r.created_at).toLocaleDateString()}
