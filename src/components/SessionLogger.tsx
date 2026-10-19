@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { SetSaveQueue, localDraftStore, draftIsNewer } from "@/lib/setSaveQueue";
-import { defaultLoad, latestPerformed, performedRegular, regularOrdinal, type HistSet, type LoadKind } from "@/lib/lastLoads";
+import { defaultLoad, latestPerformed, performedRegular, regularOrdinal, type HistSet, type LoadKind, type LastTime, fetchLastTimeByExercise } from "@/lib/lastLoads";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
@@ -100,31 +100,15 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       // a small bounded window, then the latest one with real performed sets.
       const last: Record<string, { sets: SetLog[]; date: string } | null> = {};
       const exIds = Array.from(new Set((se ?? []).map((r: any) => r.exercise_id)));
-      const byEx: Record<string, { sets: SetLog[]; date: string } | null> = {};
+      let byEx: Record<string, LastTime | null> = {};
       try {
-        await Promise.all(exIds.map(async (exId) => {
-          const { data, error } = await supabase
-            .from("session_exercises")
-            .select("set_logs(set_index, reps, weight, rpe, completed, band_level, is_dropset), training_sessions!inner(completed_at, client_id, status)")
-            .eq("exercise_id", exId)
-            .eq("training_sessions.client_id", s.client_id)
-            .eq("training_sessions.status", "completed")
-            .neq("session_id", sessionId)
-            .order("training_sessions(completed_at)", { ascending: false } as any)
-            .limit(10);
-          if (error) throw error;
-          const hit = latestPerformed((data ?? []).map((r: any) => ({
-            date: r.training_sessions?.completed_at ?? "",
-            sets: (r.set_logs ?? []).map((l: any) => ({ ...l, is_dropset: !!l.is_dropset })).sort((x: any, y: any) => x.set_index - y.set_index),
-          })));
-          byEx[exId] = hit;
-        }));
+        byEx = await fetchLastTimeByExercise(supabase, s.client_id, exIds as string[], sessionId);
       } catch {
         // History is a convenience: without it, sets start from the plan target as before.
       }
       const prevReg: Record<string, HistSet[]> = {};
       for (const row of se ?? []) {
-        last[row.id] = byEx[row.exercise_id] ?? null;
+        last[row.id] = (byEx[row.exercise_id] as any) ?? null;
         prevReg[row.id] = performedRegular(last[row.id]?.sets ?? []);
       }
       prevRegRef.current = prevReg;

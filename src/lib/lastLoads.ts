@@ -51,3 +51,33 @@ export function regularOrdinal(sets: { set_index: number; is_dropset?: boolean |
 export function latestPerformed<T extends { sets: HistSet[] }>(newestFirst: T[]): T | null {
   return newestFirst.find((c) => c.sets.some(wasPerformed)) ?? null;
 }
+
+export type LastTime = { date: string; sets: HistSet[] };
+
+/**
+ * Latest completed performance per exercise for one client, excluding the current session.
+ * Per exercise it reads only the newest few completed sessions that contain it (bounded),
+ * so a long history never hides the true latest result.
+ */
+export async function fetchLastTimeByExercise(
+  db: any, clientId: string, exerciseIds: string[], excludeSessionId: string, window = 10,
+): Promise<Record<string, LastTime | null>> {
+  const out: Record<string, LastTime | null> = {};
+  await Promise.all(exerciseIds.map(async (exId) => {
+    const { data, error } = await db
+      .from("session_exercises")
+      .select("set_logs(set_index, reps, weight, rpe, completed, band_level, is_dropset), training_sessions!inner(completed_at, client_id, status)")
+      .eq("exercise_id", exId)
+      .eq("training_sessions.client_id", clientId)
+      .eq("training_sessions.status", "completed")
+      .neq("session_id", excludeSessionId)
+      .order("training_sessions(completed_at)", { ascending: false })
+      .limit(window);
+    if (error) throw error;
+    out[exId] = latestPerformed((data ?? []).map((r: any) => ({
+      date: r.training_sessions?.completed_at ?? "",
+      sets: (r.set_logs ?? []).map((l: any) => ({ ...l, is_dropset: !!l.is_dropset })).sort((x: HistSet, y: HistSet) => x.set_index - y.set_index),
+    })));
+  }));
+  return out;
+}
