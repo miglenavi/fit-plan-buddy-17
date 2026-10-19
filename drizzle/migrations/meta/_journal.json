@@ -36,6 +36,13 @@
       "when": 1792433983202,
       "tag": "0004_one_active_program_per_client",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792434369304,
+      "tag": "0005_assign_program_refuse_foreign_active",
+      "breakpoints": true
     }
   ]
 }
