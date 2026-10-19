@@ -49,12 +49,14 @@ function ExercisesList() {
 
 
 
-  const load = async () => {
+  const L = useLoader();
+  const load = () => L.run(async (cur) => {
     const { data: u } = await supabase.auth.getUser();
+    const ex = must(await supabase.from("exercises").select("*").order("name"));
+    if (!cur()) return;
     setUid(u.user?.id ?? null);
-    const { data: ex } = await supabase.from("exercises").select("*").order("name");
     setList(ex ?? []);
-  };
+  });
   useEffect(() => { load(); }, []);
 
   const create = async (e: React.FormEvent) => {
