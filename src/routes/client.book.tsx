@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { addDays } from "@/lib/week";
 import { useAuth } from "@/lib/auth";
 import { CalendarClock, CalendarX2, Check, Repeat } from "lucide-react";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/client/book")({
   ssr: false,
@@ -179,7 +182,8 @@ function BookSession() {
     load();
   };
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (L.view === "loading") return <LoadingText what="open slots" />;
+  if (L.view === "error") return <LoadError what="your bookings and open slots" onRetry={load} />;
 
   if (!trainerId) {
     return (
