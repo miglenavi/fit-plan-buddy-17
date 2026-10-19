@@ -79,7 +79,7 @@ describe("latest result lookup (real database)", () => {
     training = (await admin.from("trainings").insert({ plan_id: plan, name: "LL1", order_index: 0 }).select("id").single()).data!.id;
 
     // 60 older sessions without exA (would push it out of the old 50-session window)…
-    const old = await sess(c, 30, { training });
+    const old = await sess(c.id, 30, { training });
     await log(old, exA, [{ set_index: 0, reps: 10, weight: 8, completed: true }]);
     const filler = Array.from({ length: 60 }, (_, i) => ({
       client_id: c.id, training_id: training, status: "completed", logged_by: "client",
@@ -87,16 +87,16 @@ describe("latest result lookup (real database)", () => {
     }));
     await admin.from("training_sessions").insert(filler);
     // …the newest exA result was a custom session; a newer blank leftover must be skipped.
-    const custom = await sess(c, 2);
+    const custom = await sess(c.id, 2);
     await log(custom, exA, [{ set_index: 0, reps: 12, weight: 14, completed: true }, { set_index: 1, reps: 12, weight: 14, completed: true }]);
-    const blank = await sess(c, 1, { training });
+    const blank = await sess(c.id, 1, { training });
     await log(blank, exA, [{ set_index: 0, reps: null, weight: 50, completed: false }]);
     // Alternative exercise has its own history; unfinished sessions and other clients don't count.
-    const alt = await sess(c, 3);
+    const alt = await sess(c.id, 3);
     await log(alt, exB, [{ set_index: 0, reps: 8, weight: 30, completed: true }]);
-    const ip = await sess(c, 0, { status: "in_progress" });
+    const ip = await sess(c.id, 0, { status: "in_progress" });
     await log(ip, exB, [{ set_index: 0, reps: 8, weight: 99, completed: true }]);
-    const other = await sess(c2, 0);
+    const other = await sess(c2.id, 0);
     await log(other, exA, [{ set_index: 0, reps: 8, weight: 77, completed: true }]);
   }, 120_000);
   afterAll(() => cleanupUsers(ids), 60_000);
