@@ -5,6 +5,9 @@ import { RoleGuard } from "@/components/RoleGuard";
 import { ClientShell } from "@/components/ClientShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Clock, ChevronRight } from "lucide-react";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadGate } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/client/history")({
   ssr: false,
@@ -17,15 +20,15 @@ function monthLabel(d: string) {
 
 function HistoryView() {
   const [items, setItems] = useState<any[]>([]);
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("training_sessions")
-        .select("id, started_at, completed_at, status, logged_by, custom_name, trainings(name)")
-        .order("started_at", { ascending: false });
-      setItems(data ?? []);
-    })();
-  }, []);
+  const L = useLoader();
+  const load = () => L.run(async (cur) => {
+    const data = must(await supabase
+      .from("training_sessions")
+      .select("id, started_at, completed_at, status, logged_by, custom_name, trainings(name)")
+      .order("started_at", { ascending: false }));
+    if (cur()) setItems(data ?? []);
+  });
+  useEffect(() => { load(); }, []);
 
   const sortKey = (a: any) => a.completed_at || a.started_at || "";
   const groups = items.reduce<Record<string, any[]>>((acc, it) => {
@@ -40,6 +43,7 @@ function HistoryView() {
         <h1 className="text-2xl font-bold tracking-tight">History</h1>
         <p className="text-sm text-muted-foreground mt-0.5">All your past training sessions</p>
       </div>
+      <LoadGate view={L.view} what="your sessions" onRetry={load}>
       {items.length === 0 && <p className="text-muted-foreground text-sm">No sessions yet.</p>}
       {Object.entries(groups).map(([month, list]) => (
         <section key={month}>
@@ -70,6 +74,7 @@ function HistoryView() {
           </CardContent></Card>
         </section>
       ))}
+      </LoadGate>
     </div>
   );
 }

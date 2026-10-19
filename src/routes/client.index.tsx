@@ -33,63 +33,64 @@ function ClientToday() {
   const [hasTrainer, setHasTrainer] = useState<boolean | null>(null);
   const [todayBooking, setTodayBooking] = useState<any>(null);
 
-  useEffect(() => {
-    (async () => {
-      const { data: progs } = await supabase
+  const L = useLoader();
+  const load = () => L.run(async (cur) => {
+    const now = new Date();
+    const dayEnd = new Date(now);
+    dayEnd.setHours(23, 59, 59, 999);
+    const [progsR, lastR, ipR, linkR, bkR] = await Promise.all([
+      supabase
         .from("client_programs")
         .select("id, plan_id, status, plans(id, name, description)")
         .eq("status", "active")
         .order("start_date", { ascending: false })
-        .limit(1);
-      const p = progs?.[0];
-      setProgram(p ?? null);
-      if (p?.plan_id) {
-        const { data: t } = await supabase
-          .from("trainings")
-          .select("id, name, description, order_index, training_exercises(id)")
-          .eq("plan_id", p.plan_id)
-          .order("order_index");
-        setTrainings(t ?? []);
-      }
+        .limit(1),
       // Improvised sessions have no plan day, so they never shift the rotation.
-      const { data: last } = await supabase
+      supabase
         .from("training_sessions")
         .select("training_id, completed_at")
         .eq("status", "completed")
         .not("training_id", "is", null)
         .order("completed_at", { ascending: false })
-        .limit(1);
-      setLastDone(last?.[0]?.training_id ?? null);
-
-      const { data: ip } = await supabase
+        .limit(1),
+      supabase
         .from("training_sessions")
         .select("id, training_id")
         .eq("status", "in_progress")
         .order("started_at", { ascending: false })
-        .limit(1);
-      setInProgress(ip?.[0] ?? null);
-
-      const { data: link } = await supabase
-        .from("trainer_clients")
-        .select("trainer_id")
-        .is("archived_at", null)
-        .limit(1);
-      setHasTrainer(!!link?.[0]);
-
-      const now = new Date();
-      const dayEnd = new Date(now);
-      dayEnd.setHours(23, 59, 59, 999);
-      const { data: bk } = await supabase
+        .limit(1),
+      supabase.from("trainer_clients").select("trainer_id").is("archived_at", null).limit(1),
+      supabase
         .from("bookings")
         .select("id, start_at, end_at, status")
         .eq("status", "booked")
         .gte("end_at", now.toISOString())
         .lte("start_at", dayEnd.toISOString())
         .order("start_at")
-        .limit(1);
-      setTodayBooking(bk?.[0] ?? null);
-    })();
-  }, []);
+        .limit(1),
+    ]);
+    const p = must(progsR)?.[0] ?? null;
+    const last = must(lastR);
+    const ip = must(ipR);
+    const link = must(linkR);
+    const bk = must(bkR);
+    let t: any[] = [];
+    if (p?.plan_id) {
+      t = must(await supabase
+        .from("trainings")
+        .select("id, name, description, order_index, training_exercises(id)")
+        .eq("plan_id", p.plan_id)
+        .order("order_index")) ?? [];
+    }
+    if (!cur()) return;
+    setProgram(p);
+    setTrainings(t);
+    setLastDone(last?.[0]?.training_id ?? null);
+    setInProgress(ip?.[0] ?? null);
+    setHasTrainer(!!link?.[0]);
+    setTodayBooking(bk?.[0] ?? null);
+  });
+  useEffect(() => { load(); }, []);
 
 
   // Next suggestion: the training after the last completed one, in order_index. Wraps around.
