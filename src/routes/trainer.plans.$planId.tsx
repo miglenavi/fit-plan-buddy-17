@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Loader2, Check, ChevronRight, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice, Unavailable } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/plans/$planId")({
   ssr: false,
@@ -95,8 +98,13 @@ function PlanDetail() {
     if (error) toast.error(error.message); else load();
   };
 
+  if (L.view === "loading") return <LoadingText what="plan" />;
+  if (L.view === "error") return <LoadError what="this plan" onRetry={() => load()} />;
+  if (!plan) return <Unavailable what="plan" backTo="/trainer/plans" backLabel="Back to plans" onRetry={() => load()} />;
+
   return (
     <div className="space-y-6">
+      {L.view === "content-stale" && <StaleNotice what="this plan" onRetry={() => load()} />}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Plan name"
