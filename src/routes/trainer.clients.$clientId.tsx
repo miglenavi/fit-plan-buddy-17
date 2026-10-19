@@ -43,8 +43,9 @@ function ClientDetail() {
     load();
   };
 
-  const load = async () => {
-    const [{ data: p }, { data: pr }, { data: ss }, { data: ip }, { data: ns }] = await Promise.all([
+  const L = useLoader();
+  const load = (opts?: { reset?: boolean }) => L.run(async (cur) => {
+    const [pR, prR, ssR, ipR, nsR] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", clientId).maybeSingle(),
       supabase.from("client_programs").select("*, plans(id, name, description)").eq("client_id", clientId).order("start_date", { ascending: false }),
       supabase.from("training_sessions")
@@ -63,18 +64,19 @@ function ClientDetail() {
         .eq("client_id", clientId)
         .order("created_at", { ascending: false }),
     ]);
-    setProfile(p); setPrograms(pr ?? []); setSessions(ss ?? []);
-    setInProgress((ip?.[0] as any) ?? null);
-    setNotes(ns ?? []);
-
+    const p = must(pR), pr = must(prR) ?? [], ss = must(ssR) ?? [], ip = must(ipR), ns = must(nsR) ?? [];
     // active program → trainings to start
-    const active = (pr ?? []).find((x: any) => x.status === "active");
-    if (active?.plan_id) {
-      const { data: t } = await supabase.from("trainings").select("id, name, order_index").eq("plan_id", active.plan_id).order("order_index");
-      setTrainings(t ?? []);
-    } else setTrainings([]);
-  };
-  useEffect(() => { load(); }, [clientId]);
+    const active = pr.find((x: any) => x.status === "active");
+    const t = active?.plan_id
+      ? must(await supabase.from("trainings").select("id, name, order_index").eq("plan_id", active.plan_id).order("order_index")) ?? []
+      : [];
+    if (!cur()) return;
+    setProfile(p); setPrograms(pr); setSessions(ss);
+    setInProgress((ip?.[0] as any) ?? null);
+    setNotes(ns);
+    setTrainings(t);
+  }, opts);
+  useEffect(() => { load({ reset: true }); }, [clientId]);
 
 
 
