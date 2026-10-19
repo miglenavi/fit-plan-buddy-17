@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
+import { SetSaveQueue, localDraftStore, draftIsNewer } from "@/lib/setSaveQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
@@ -47,7 +48,7 @@ function DeltaChip({ label, value, unit = "", invert = false }: { label: string;
 export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
   const startFreshSession = useServerFn(startSession);
-  const { isTrainer, isClient } = useAuth();
+  const { isTrainer, isClient, user } = useAuth();
   const [session, setSession] = useState<any>(null);
   const [sessionExercises, setSessionExercises] = useState<any[]>([]);
   const [exerciseMeta, setExerciseMeta] = useState<Record<string, any>>({});
@@ -180,11 +181,11 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   // Latest set values, readable synchronously by saves (avoids stale closures).
   const setsRef = useRef<Record<string, SetLog[]>>({});
   const commitSets = (next: Record<string, SetLog[]>) => { setsRef.current = next; setSetLogsByEx(next); };
-  const updateSet = (seId: string, idx: number, field: keyof SetLog, value: any) => {
-    const arr = [...(setsRef.current[seId] ?? [])];
-    if (!arr[idx]) return;
-    arr[idx] = { ...arr[idx], [field]: value };
-    commitSets({ ...setsRef.current, [seId]: arr });
+  const keyOf = (seId: string, setIndex: number) => `${seId}:${setIndex}`;
+  const findByKey = (key: string) => {
+    const cut = key.lastIndexOf(":");
+    const seId = key.slice(0, cut), setIndex = Number(key.slice(cut + 1));
+    return { seId, setIndex, row: (setsRef.current[seId] ?? []).find((x) => x.set_index === setIndex) };
   };
   const patchByIndex = (seId: string, setIndex: number, patch: Partial<SetLog>) => {
     const arr = [...(setsRef.current[seId] ?? [])];
@@ -194,26 +195,18 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     commitSets({ ...setsRef.current, [seId]: arr });
   };
 
-  // Saves for one set run strictly one after another, and each reads the latest
-  // values when it runs, so an older save can never overwrite a newer edit.
-  const chains = useRef<Record<string, Promise<void>>>({});
-  const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const keyOf = (seId: string, setIndex: number) => `${seId}:${setIndex}`;
-
-  const writeSet = async (seId: string, setIndex: number) => {
-    const s = (setsRef.current[seId] ?? []).find((x) => x.set_index === setIndex);
-    if (!s) return;
+  const writeSet = async (seId: string, s: SetLog): Promise<{ id?: string }> => {
     let weightVal: number | null = null;
     if (s.weight !== "" && s.weight != null) {
       const raw = String(s.weight).trim().replace(",", ".");
       if (!/^\d+(\.\d+)?$/.test(raw)) {
         toast.error("Weight must be a number (e.g. 20 or 0.5)");
-        return;
+        throw new Error("Invalid weight");
       }
       const n = Number(raw);
       if (!Number.isFinite(n) || n < 0 || n > 10000) {
         toast.error("Enter a weight between 0 and 10000");
-        return;
+        throw new Error("Invalid weight");
       }
       weightVal = n;
     }
@@ -232,55 +225,58 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       .upsert(payload, { onConflict: "session_exercise_id,set_index" })
       .select("id")
       .single();
-    if (error) toast.error(error.message);
-    else if (data?.id) patchByIndex(seId, setIndex, { id: data.id, completed: payload.completed });
+    if (error) { toast.error("Couldn't save a set. It's kept on this device — tap Retry."); throw error; }
+    return { id: data?.id };
   };
 
-  const queueSave = (seId: string, setIndex: number) => {
-    const k = keyOf(seId, setIndex);
-    if (timers.current[k]) { clearTimeout(timers.current[k]); delete timers.current[k]; }
-    const run = (chains.current[k] ?? Promise.resolve()).then(() => writeSet(seId, setIndex)).catch(() => {});
-    chains.current[k] = run;
-    return run;
+  const [saveErrors, setSaveErrors] = useState(0);
+  const queueRef = useRef<SetSaveQueue<SetLog> | null>(null);
+  const queueKeyRef = useRef("");
+  const qKey = `${user?.id ?? "anon"}:${sessionId}`;
+  if (!queueRef.current || queueKeyRef.current !== qKey) {
+    queueKeyRef.current = qKey;
+    queueRef.current = new SetSaveQueue<SetLog>({
+      getRow: (key) => findByKey(key).row,
+      write: (row) => { const se = Object.keys(setsRef.current).find((id) => setsRef.current[id]?.includes(row)); return writeSet(se!, row); },
+      onAck: (key, res) => { const { seId, setIndex } = findByKey(key); if (res.id) patchByIndex(seId, setIndex, { id: res.id }); },
+      onChange: () => setSaveErrors(queueRef.current?.errorCount ?? 0),
+      drafts: typeof window !== "undefined" ? localDraftStore(user?.id ?? "anon", sessionId) : undefined,
+    });
+  }
+  const queue = queueRef.current;
+
+  const updateSet = (seId: string, idx: number, field: keyof SetLog, value: any) => {
+    const arr = [...(setsRef.current[seId] ?? [])];
+    if (!arr[idx]) return;
+    arr[idx] = { ...arr[idx], [field]: value };
+    commitSets({ ...setsRef.current, [seId]: arr });
+    queue.edited(keyOf(seId, arr[idx].set_index));
   };
 
   /** Save now (blur, checkbox, menus). */
   const saveSet = (seId: string, idx: number, override?: Partial<SetLog>) => {
-    if (override) updateSet(seId, idx, Object.keys(override)[0] as keyof SetLog, Object.values(override)[0]);
+    if (override) for (const [f, v] of Object.entries(override)) updateSet(seId, idx, f as keyof SetLog, v);
     const s = setsRef.current[seId]?.[idx];
     if (!s) return Promise.resolve();
-    return queueSave(seId, s.set_index);
+    return queue.save(keyOf(seId, s.set_index));
   };
-  /** Save shortly after typing stops, so values survive a refresh without blur. */
+  /** Save shortly after typing stops. Drafts already protect against refresh. */
   const scheduleSave = (seId: string, idx: number) => {
     const s = setsRef.current[seId]?.[idx];
-    if (!s) return;
-    const k = keyOf(seId, s.set_index);
-    if (timers.current[k]) clearTimeout(timers.current[k]);
-    const setIndex = s.set_index;
-    timers.current[k] = setTimeout(() => { delete timers.current[k]; queueSave(seId, setIndex); }, 600);
+    if (s) queue.schedule(keyOf(seId, s.set_index));
   };
-  /** Write every pending edit and wait for all saves to finish. */
-  const flushSaves = async () => {
-    for (const k of Object.keys(timers.current)) {
-      clearTimeout(timers.current[k]);
-      delete timers.current[k];
-      const cut = k.lastIndexOf(":");
-      queueSave(k.slice(0, cut), Number(k.slice(cut + 1)));
-    }
-    await Promise.all(Object.values(chains.current));
+  /** Write every pending edit. Returns false (and tells the user) if anything is unsaved. */
+  const flushSaves = async (): Promise<boolean> => {
+    const r = await queue.flush();
+    if (!r.ok) toast.error("Some sets aren't saved yet. Check them and tap Retry.");
+    return r.ok;
   };
   useEffect(() => {
-    const onHide = () => { if (document.visibilityState === "hidden") void flushSaves(); };
-    const onPageHide = () => { void flushSaves(); };
+    // Best effort only; local drafts are what survive an immediate refresh.
+    const onHide = () => { if (document.visibilityState === "hidden") void queue.flush(); };
     document.addEventListener("visibilitychange", onHide);
-    window.addEventListener("pagehide", onPageHide);
-    return () => {
-      document.removeEventListener("visibilitychange", onHide);
-      window.removeEventListener("pagehide", onPageHide);
-      void flushSaves();
-    };
-  }, []);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [queue]);
 
   // Persist how many sets this exercise has, so add/remove survives a refresh.
   const persistSetCount = async (seId: string, count: number) => {
@@ -305,14 +301,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     // Let any pending save for this set land first, so its id is known and it
     // can't recreate the row after we delete it.
     const k = keyOf(seId, first.set_index);
-    if (timers.current[k]) { clearTimeout(timers.current[k]); delete timers.current[k]; }
-    await chains.current[k];
+    await queue.settle(k);
     const s = (setsRef.current[seId] ?? []).find((x) => x.set_index === first.set_index);
     if (!s) return;
     if (s.id) {
       const { error } = await supabase.from("set_logs").delete().eq("id", s.id);
       if (error) return toast.error(error.message);
     }
+    queue.forget(k);
     const arr = (setsRef.current[seId] ?? []).filter((x) => x.set_index !== s.set_index);
     commitSets({ ...setsRef.current, [seId]: arr });
     await persistSetCount(seId, arr.length);
