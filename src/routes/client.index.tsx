@@ -46,6 +46,9 @@ function ClientToday() {
         .from("client_programs")
         .select("id, plan_id, status, plans(id, name, description)")
         .eq("status", "active")
+        // Same UTC calendar-date convention the assignment check uses.
+        .lte("start_date", now.toISOString().slice(0, 10))
+        .or(`end_date.is.null,end_date.gte.${now.toISOString().slice(0, 10)}`)
         .order("start_date", { ascending: false })
         .limit(1),
       // Improvised sessions have no plan day, so they never shift the rotation.

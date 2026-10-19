@@ -29,6 +29,13 @@
       "when": 1791557848609,
       "tag": "0003_add_set_logs_is_dropset",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792433983202,
+      "tag": "0004_one_active_program_per_client",
+      "breakpoints": true
     }
   ]
 }

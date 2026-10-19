@@ -857,6 +857,15 @@ export type Database = {
     Functions: {
       accept_client_invite: { Args: { _token: string }; Returns: string }
       approve_trainer: { Args: { _user_id: string }; Returns: undefined }
+      assign_client_program: {
+        Args: {
+          _client_id: string
+          _end_date?: string
+          _plan_id: string
+          _start_date: string
+        }
+        Returns: string
+      }
       choose_session_exercise: {
         Args: { _se_id: string; _use_alternative: boolean }
         Returns: undefined
