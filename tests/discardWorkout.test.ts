@@ -26,6 +26,7 @@ describe("save queue when a workout is discarded", () => {
     let finished = false;
     const q = new SetSaveQueue<{ k: string }>({ getRow: (k) => ({ k }), write: () => new Promise((r) => setTimeout(() => { finished = true; r({}); }, 30)) });
     q.edited("a"); void q.save("a");
+    await new Promise((r) => setTimeout(r, 5)); // write is now in flight
     await q.pause();
     expect(finished).toBe(true);
   });
