@@ -93,6 +93,10 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       setSessionExercises(se ?? []);
 
       const meta: Record<string, any> = {};
+      const draftStore = localDraftStore(user?.id ?? "anon", sessionId);
+      const drafts = s.status === "completed" ? {} : draftStore.get();
+      const restored: string[] = [];
+      const staleDrafts: string[] = [];
       const logs: Record<string, SetLog[]> = {};
       const picked: Record<string, boolean> = {};
       for (const row of se ?? []) {
@@ -107,12 +111,28 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         // leave gaps, and duplicate indices would make the upsert overwrite logs.
         let nextIndex = existing.reduce((m: number, l: SetLog) => Math.max(m, l.set_index), -1) + 1;
         while (existing.length < target) existing.push({ set_index: nextIndex++, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false, band_level: row.target_band_level ?? null });
+        // Restore unsaved edits from this device (e.g. after an immediate refresh),
+        // but only when they're newer than what the server has.
+        for (const [k, d] of Object.entries(drafts)) {
+          const cut = k.lastIndexOf(":");
+          if (k.slice(0, cut) !== row.id) continue;
+          const setIndex = Number(k.slice(cut + 1));
+          const srv = (row.set_logs ?? []).find((l: any) => l.set_index === setIndex);
+          if (!draftIsNewer(d, srv?.updated_at)) { staleDrafts.push(k); continue; }
+          const i = existing.findIndex((x) => x.set_index === setIndex);
+          const restoredRow = { ...d.row, id: srv?.id ?? d.row.id };
+          if (i >= 0) existing[i] = restoredRow; else existing.push(restoredRow);
+          restored.push(k);
+        }
+        existing.sort((a, b) => a.set_index - b.set_index);
         logs[row.id] = existing;
         // If no alternative, the question doesn't apply. If any log has data, treat as picked.
         const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null || l.band_level != null);
         picked[row.id] = !row.alternative_exercise_id || hasAnyLogged;
       }
       commitSets(logs);
+      for (const k of staleDrafts) queueRef.current?.forget(k);
+      for (const k of restored) { queueRef.current?.edited(k); void queueRef.current?.save(k); }
       setExerciseMeta(meta);
       // Keep choices already made in this session view — reloading must not
       // reset the card back to "Choose one to start".
@@ -415,6 +435,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     setDeleting(false);
     if (error || count === 0) return toast.error("Couldn't remove this session.");
     setConfirmDeleteOpen(false);
+    localDraftStore(user?.id ?? "anon", sessionId).set({});
     toast.success(session?.status === "completed" ? "Session deleted" : "Session closed without saving");
     if (isTrainer && session?.client_id) nav({ to: "/trainer/clients/$clientId", params: { clientId: session.client_id } });
     else nav({ to: "/client" });
@@ -534,6 +555,12 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           )}
         </div>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
+        {saveErrors > 0 && (
+          <div role="status" className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <span>{saveErrors === 1 ? "1 set isn't saved yet." : `${saveErrors} sets aren't saved yet.`} It's kept on this device.</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => void flushSaves()}>Retry</Button>
+          </div>
+        )}
         {session.status === "completed" && (
           <p className="text-xs text-primary mt-1 font-medium">
             Completed{session.completed_at ? ` on ${new Date(session.completed_at).toLocaleDateString()}` : ""} · history only
