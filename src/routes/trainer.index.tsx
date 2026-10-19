@@ -80,6 +80,8 @@ function Dashboard() {
         </div>
       </div>
 
+      {SL.view === "error" && <LoadError what="your dashboard numbers" onRetry={loadStats} />}
+      {SL.view === "content-stale" && <StaleNotice what="your dashboard numbers" onRetry={loadStats} />}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => (
           <Link key={c.label} to={c.to} className="group">
