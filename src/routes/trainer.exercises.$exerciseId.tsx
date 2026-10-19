@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Upload, Trash2, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice, Unavailable } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/exercises/$exerciseId")({
   ssr: false,
@@ -165,6 +168,7 @@ function ExerciseDetail() {
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {L.view === "content-stale" && <StaleNotice what="this exercise" onRetry={() => load({ reset: true })} />}
       <Link to="/trainer/exercises" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4 mr-1" /> Back to exercises
       </Link>
