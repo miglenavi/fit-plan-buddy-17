@@ -1,0 +1,1 @@
+- Session set saving goes through src/lib/setSaveQueue.ts (revisioned per-set queue + per-user/session local drafts); don't write set_logs directly from UI handlers — keeps stale responses, failures and refreshes from losing edits.

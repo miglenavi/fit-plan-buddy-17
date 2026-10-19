@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
+import { SetSaveQueue, localDraftStore, draftIsNewer } from "@/lib/setSaveQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
@@ -47,7 +48,7 @@ function DeltaChip({ label, value, unit = "", invert = false }: { label: string;
 export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessionId: string; onFinished?: () => void; forceReadOnly?: boolean }) {
   const nav = useNavigate();
   const startFreshSession = useServerFn(startSession);
-  const { isTrainer, isClient } = useAuth();
+  const { isTrainer, isClient, user } = useAuth();
   const [session, setSession] = useState<any>(null);
   const [sessionExercises, setSessionExercises] = useState<any[]>([]);
   const [exerciseMeta, setExerciseMeta] = useState<Record<string, any>>({});
@@ -92,6 +93,10 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       setSessionExercises(se ?? []);
 
       const meta: Record<string, any> = {};
+      const draftStore = localDraftStore(user?.id ?? "anon", sessionId);
+      const drafts = s.status === "completed" ? {} : draftStore.get();
+      const restored: string[] = [];
+      const staleDrafts: string[] = [];
       const logs: Record<string, SetLog[]> = {};
       const picked: Record<string, boolean> = {};
       for (const row of se ?? []) {
@@ -106,12 +111,28 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         // leave gaps, and duplicate indices would make the upsert overwrite logs.
         let nextIndex = existing.reduce((m: number, l: SetLog) => Math.max(m, l.set_index), -1) + 1;
         while (existing.length < target) existing.push({ set_index: nextIndex++, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false, band_level: row.target_band_level ?? null });
+        // Restore unsaved edits from this device (e.g. after an immediate refresh),
+        // but only when they're newer than what the server has.
+        for (const [k, d] of Object.entries(drafts)) {
+          const cut = k.lastIndexOf(":");
+          if (k.slice(0, cut) !== row.id) continue;
+          const setIndex = Number(k.slice(cut + 1));
+          const srv = (row.set_logs ?? []).find((l: any) => l.set_index === setIndex);
+          if (!draftIsNewer(d, srv?.updated_at)) { staleDrafts.push(k); continue; }
+          const i = existing.findIndex((x) => x.set_index === setIndex);
+          const restoredRow = { ...d.row, id: srv?.id ?? d.row.id };
+          if (i >= 0) existing[i] = restoredRow; else existing.push(restoredRow);
+          restored.push(k);
+        }
+        existing.sort((a, b) => a.set_index - b.set_index);
         logs[row.id] = existing;
         // If no alternative, the question doesn't apply. If any log has data, treat as picked.
         const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null || l.band_level != null);
         picked[row.id] = !row.alternative_exercise_id || hasAnyLogged;
       }
       commitSets(logs);
+      for (const k of staleDrafts) queueRef.current?.forget(k);
+      for (const k of restored) { queueRef.current?.edited(k); void queueRef.current?.save(k); }
       setExerciseMeta(meta);
       // Keep choices already made in this session view — reloading must not
       // reset the card back to "Choose one to start".
@@ -175,16 +196,16 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       setLoading(false);
     }
   };
-  useEffect(() => { load(); }, [sessionId]);
+  useEffect(() => { load(); }, [sessionId, user?.id]);
 
   // Latest set values, readable synchronously by saves (avoids stale closures).
   const setsRef = useRef<Record<string, SetLog[]>>({});
   const commitSets = (next: Record<string, SetLog[]>) => { setsRef.current = next; setSetLogsByEx(next); };
-  const updateSet = (seId: string, idx: number, field: keyof SetLog, value: any) => {
-    const arr = [...(setsRef.current[seId] ?? [])];
-    if (!arr[idx]) return;
-    arr[idx] = { ...arr[idx], [field]: value };
-    commitSets({ ...setsRef.current, [seId]: arr });
+  const keyOf = (seId: string, setIndex: number) => `${seId}:${setIndex}`;
+  const findByKey = (key: string) => {
+    const cut = key.lastIndexOf(":");
+    const seId = key.slice(0, cut), setIndex = Number(key.slice(cut + 1));
+    return { seId, setIndex, row: (setsRef.current[seId] ?? []).find((x) => x.set_index === setIndex) };
   };
   const patchByIndex = (seId: string, setIndex: number, patch: Partial<SetLog>) => {
     const arr = [...(setsRef.current[seId] ?? [])];
@@ -194,26 +215,18 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     commitSets({ ...setsRef.current, [seId]: arr });
   };
 
-  // Saves for one set run strictly one after another, and each reads the latest
-  // values when it runs, so an older save can never overwrite a newer edit.
-  const chains = useRef<Record<string, Promise<void>>>({});
-  const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const keyOf = (seId: string, setIndex: number) => `${seId}:${setIndex}`;
-
-  const writeSet = async (seId: string, setIndex: number) => {
-    const s = (setsRef.current[seId] ?? []).find((x) => x.set_index === setIndex);
-    if (!s) return;
+  const writeSet = async (seId: string, s: SetLog): Promise<{ id?: string }> => {
     let weightVal: number | null = null;
     if (s.weight !== "" && s.weight != null) {
       const raw = String(s.weight).trim().replace(",", ".");
       if (!/^\d+(\.\d+)?$/.test(raw)) {
         toast.error("Weight must be a number (e.g. 20 or 0.5)");
-        return;
+        throw new Error("Invalid weight");
       }
       const n = Number(raw);
       if (!Number.isFinite(n) || n < 0 || n > 10000) {
         toast.error("Enter a weight between 0 and 10000");
-        return;
+        throw new Error("Invalid weight");
       }
       weightVal = n;
     }
@@ -232,55 +245,58 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       .upsert(payload, { onConflict: "session_exercise_id,set_index" })
       .select("id")
       .single();
-    if (error) toast.error(error.message);
-    else if (data?.id) patchByIndex(seId, setIndex, { id: data.id, completed: payload.completed });
+    if (error) { toast.error("Couldn't save a set. It's kept on this device — tap Retry."); throw error; }
+    return { id: data?.id };
   };
 
-  const queueSave = (seId: string, setIndex: number) => {
-    const k = keyOf(seId, setIndex);
-    if (timers.current[k]) { clearTimeout(timers.current[k]); delete timers.current[k]; }
-    const run = (chains.current[k] ?? Promise.resolve()).then(() => writeSet(seId, setIndex)).catch(() => {});
-    chains.current[k] = run;
-    return run;
+  const [saveErrors, setSaveErrors] = useState(0);
+  const queueRef = useRef<SetSaveQueue<SetLog> | null>(null);
+  const queueKeyRef = useRef("");
+  const qKey = `${user?.id ?? "anon"}:${sessionId}`;
+  if (!queueRef.current || queueKeyRef.current !== qKey) {
+    queueKeyRef.current = qKey;
+    queueRef.current = new SetSaveQueue<SetLog>({
+      getRow: (key) => findByKey(key).row,
+      write: (row) => { const se = Object.keys(setsRef.current).find((id) => setsRef.current[id]?.includes(row)); return writeSet(se!, row); },
+      onAck: (key, res) => { const { seId, setIndex } = findByKey(key); if (res.id) patchByIndex(seId, setIndex, { id: res.id }); },
+      onChange: () => setSaveErrors(queueRef.current?.errorCount ?? 0),
+      drafts: typeof window !== "undefined" ? localDraftStore(user?.id ?? "anon", sessionId) : undefined,
+    });
+  }
+  const queue = queueRef.current;
+
+  const updateSet = (seId: string, idx: number, field: keyof SetLog, value: any) => {
+    const arr = [...(setsRef.current[seId] ?? [])];
+    if (!arr[idx]) return;
+    arr[idx] = { ...arr[idx], [field]: value };
+    commitSets({ ...setsRef.current, [seId]: arr });
+    queue.edited(keyOf(seId, arr[idx].set_index));
   };
 
   /** Save now (blur, checkbox, menus). */
   const saveSet = (seId: string, idx: number, override?: Partial<SetLog>) => {
-    if (override) updateSet(seId, idx, Object.keys(override)[0] as keyof SetLog, Object.values(override)[0]);
+    if (override) for (const [f, v] of Object.entries(override)) updateSet(seId, idx, f as keyof SetLog, v);
     const s = setsRef.current[seId]?.[idx];
     if (!s) return Promise.resolve();
-    return queueSave(seId, s.set_index);
+    return queue.save(keyOf(seId, s.set_index));
   };
-  /** Save shortly after typing stops, so values survive a refresh without blur. */
+  /** Save shortly after typing stops. Drafts already protect against refresh. */
   const scheduleSave = (seId: string, idx: number) => {
     const s = setsRef.current[seId]?.[idx];
-    if (!s) return;
-    const k = keyOf(seId, s.set_index);
-    if (timers.current[k]) clearTimeout(timers.current[k]);
-    const setIndex = s.set_index;
-    timers.current[k] = setTimeout(() => { delete timers.current[k]; queueSave(seId, setIndex); }, 600);
+    if (s) queue.schedule(keyOf(seId, s.set_index));
   };
-  /** Write every pending edit and wait for all saves to finish. */
-  const flushSaves = async () => {
-    for (const k of Object.keys(timers.current)) {
-      clearTimeout(timers.current[k]);
-      delete timers.current[k];
-      const cut = k.lastIndexOf(":");
-      queueSave(k.slice(0, cut), Number(k.slice(cut + 1)));
-    }
-    await Promise.all(Object.values(chains.current));
+  /** Write every pending edit. Returns false (and tells the user) if anything is unsaved. */
+  const flushSaves = async (): Promise<boolean> => {
+    const r = await queue.flush();
+    if (!r.ok) toast.error("Some sets aren't saved yet. Check them and tap Retry.");
+    return r.ok;
   };
   useEffect(() => {
-    const onHide = () => { if (document.visibilityState === "hidden") void flushSaves(); };
-    const onPageHide = () => { void flushSaves(); };
+    // Best effort only; local drafts are what survive an immediate refresh.
+    const onHide = () => { if (document.visibilityState === "hidden") void queue.flush(); };
     document.addEventListener("visibilitychange", onHide);
-    window.addEventListener("pagehide", onPageHide);
-    return () => {
-      document.removeEventListener("visibilitychange", onHide);
-      window.removeEventListener("pagehide", onPageHide);
-      void flushSaves();
-    };
-  }, []);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [queue]);
 
   // Persist how many sets this exercise has, so add/remove survives a refresh.
   const persistSetCount = async (seId: string, count: number) => {
@@ -305,14 +321,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     // Let any pending save for this set land first, so its id is known and it
     // can't recreate the row after we delete it.
     const k = keyOf(seId, first.set_index);
-    if (timers.current[k]) { clearTimeout(timers.current[k]); delete timers.current[k]; }
-    await chains.current[k];
+    await queue.settle(k);
     const s = (setsRef.current[seId] ?? []).find((x) => x.set_index === first.set_index);
     if (!s) return;
     if (s.id) {
       const { error } = await supabase.from("set_logs").delete().eq("id", s.id);
       if (error) return toast.error(error.message);
     }
+    queue.forget(k);
     const arr = (setsRef.current[seId] ?? []).filter((x) => x.set_index !== s.set_index);
     commitSets({ ...setsRef.current, [seId]: arr });
     await persistSetCount(seId, arr.length);
@@ -335,7 +351,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const addExercise = async (exerciseId: string) => {
     if (adding) return;
     setAdding(true);
-    await flushSaves();
+    if (!(await flushSaves())) { setAdding(false); return; }
     const nextOrder = sessionExercises.reduce((m, r) => Math.max(m, r.order_index ?? 0), -1) + 1;
     const { error } = await supabase.from("session_exercises").insert({
       session_id: sessionId,
@@ -357,7 +373,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const removeExercise = async (seId: string) => {
     if (!confirm("Remove this exercise from today's session?")) return;
     setRemovingId(seId);
-    await flushSaves();
+    if (!(await flushSaves())) { setRemovingId(null); return; }
     const { error } = await supabase.from("session_exercises").delete().eq("id", seId);
     setRemovingId(null);
     if (error) return toast.error(error.message);
@@ -372,7 +388,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     const se = sessionExercises.find((r) => r.id === seId);
     if (!se) return;
     if (useAlternative && !se.alternative_exercise_id) return;
-    await flushSaves();
+    if (!(await flushSaves())) return;
 
     // Runs through a database helper so both the client and the trainer can pick,
     // regardless of who started the session.
@@ -419,6 +435,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     setDeleting(false);
     if (error || count === 0) return toast.error("Couldn't remove this session.");
     setConfirmDeleteOpen(false);
+    localDraftStore(user?.id ?? "anon", sessionId).set({});
     toast.success(session?.status === "completed" ? "Session deleted" : "Session closed without saving");
     if (isTrainer && session?.client_id) nav({ to: "/trainer/clients/$clientId", params: { clientId: session.client_id } });
     else nav({ to: "/client" });
@@ -427,19 +444,23 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const doFinish = async () => {
     if (finishing) return;
     setFinishing(true);
-    await flushSaves();
-    const { error } = await supabase
-      .from("training_sessions")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", sessionId);
-    if (error) { setFinishing(false); return toast.error(error.message); }
-    toast.success("Session completed 🎉");
-    if (onFinished) onFinished();
-    else nav({ to: "/client" });
+    try {
+      if (!(await flushSaves())) return;
+      const { error } = await supabase
+        .from("training_sessions")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", sessionId);
+      if (error) return toast.error(error.message);
+      toast.success("Session completed 🎉");
+      if (onFinished) onFinished();
+      else nav({ to: "/client" });
+    } finally {
+      setFinishing(false);
+    }
   };
 
   const finish = async () => {
-    await flushSaves();
+    if (!(await flushSaves())) return;
     const totalSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.length, 0);
     const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter(isSetDone).length, 0);
     if (totalSets > 0 && doneSets < totalSets) {
@@ -474,7 +495,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
               <p className="text-sm text-muted-foreground mt-1">{errorMsg ?? "Session not found."}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={async () => { await flushSaves(); load(); }}>Retry</Button>
+          <Button variant="outline" size="sm" onClick={async () => { if (await flushSaves()) load(); }}>Retry</Button>
         </CardContent>
       </Card>
     );
@@ -534,6 +555,12 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           )}
         </div>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
+        {saveErrors > 0 && (
+          <div role="status" className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <span>{saveErrors === 1 ? "1 set isn't saved yet." : `${saveErrors} sets aren't saved yet.`} It's kept on this device.</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => void flushSaves()}>Retry</Button>
+          </div>
+        )}
         {session.status === "completed" && (
           <p className="text-xs text-primary mt-1 font-medium">
             Completed{session.completed_at ? ` on ${new Date(session.completed_at).toLocaleDateString()}` : ""} · history only
