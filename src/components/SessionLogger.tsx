@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { SetSaveQueue, localDraftStore, draftIsNewer } from "@/lib/setSaveQueue";
+import { defaultLoad, latestPerformed, performedRegular, regularOrdinal, type HistSet, type LoadKind, type LastTime, fetchLastTimeByExercise } from "@/lib/lastLoads";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
@@ -16,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted, workingSetNumber, hidesLoad, resolveCompleted } from "@/lib/progress";
 import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw, ArrowUp, ArrowDown, X } from "lucide-react";
 
+const loadKind = (ex: any): LoadKind => (usesBand(ex) ? "band" : hidesLoad(ex) ? "none" : "kg");
 type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean; completedExplicit?: boolean };
 
 const isSetDone = (s: { completed: boolean; reps: string | number | null; completedExplicit?: boolean }) =>
@@ -62,6 +64,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const [pickerOpen, setPickerOpen] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [pickerEquipment, setPickerEquipment] = useState("all");
+  const prevRegRef = useRef<Record<string, HistSet[]>>({});
   const [exerciseResults, setExerciseResults] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -92,6 +95,25 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       if (seErr) throw seErr;
       setSessionExercises(se ?? []);
 
+      // "Last time" — history follows the EXERCISE actually performed, not the routine it was in,
+      // so custom and plan sessions feed each other. Per exercise: newest completed sessions first,
+      // a small bounded window, then the latest one with real performed sets.
+      const last: Record<string, { sets: SetLog[]; date: string } | null> = {};
+      const exIds = Array.from(new Set((se ?? []).map((r: any) => r.exercise_id)));
+      let byEx: Record<string, LastTime | null> = {};
+      try {
+        byEx = await fetchLastTimeByExercise(supabase, s.client_id, exIds as string[], sessionId);
+      } catch {
+        // History is a convenience: without it, sets start from the plan target as before.
+      }
+      const prevReg: Record<string, HistSet[]> = {};
+      for (const row of se ?? []) {
+        last[row.id] = (byEx[row.exercise_id] as any) ?? null;
+        prevReg[row.id] = performedRegular(last[row.id]?.sets ?? []);
+      }
+      prevRegRef.current = prevReg;
+      setLastTimeByEx(last);
+
       const meta: Record<string, any> = {};
       const draftStore = localDraftStore(user?.id ?? "anon", sessionId);
       const drafts = s.status === "completed" ? {} : draftStore.get();
@@ -110,7 +132,13 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         // Never reuse an index that already exists in the DB — a deleted set can
         // leave gaps, and duplicate indices would make the upsert overwrite logs.
         let nextIndex = existing.reduce((m: number, l: SetLog) => Math.max(m, l.set_index), -1) + 1;
-        while (existing.length < target) existing.push({ set_index: nextIndex++, reps: null, weight: row.target_weight ?? null, rpe: null, completed: false, band_level: row.target_band_level ?? null });
+        // Unsaved placeholder sets start from last time's load (same working-set number), else the plan target.
+        // Saved sets — including ones saved blank — and drafts are never touched.
+        const kind = loadKind(row.exercise);
+        while (existing.length < target) {
+          const d = defaultLoad(prevReg[row.id] ?? [], regularOrdinal(existing, nextIndex), { weight: row.target_weight ?? null, band_level: row.target_band_level ?? null }, kind);
+          existing.push({ set_index: nextIndex++, reps: null, weight: d.weight, rpe: null, completed: false, band_level: d.band_level });
+        }
         // Restore unsaved edits from this device (e.g. after an immediate refresh),
         // but only when they're newer than what the server has.
         for (const [k, d] of Object.entries(drafts)) {
@@ -147,43 +175,6 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       if (firstChoice) setExpandedId((cur) => cur ?? firstChoice.id);
 
 
-      // "Last time" — history follows the EXERCISE, not the routine it was in.
-      // So an improvised session sees the client's real previous numbers, and a
-      // plan workout sees numbers logged during an improvised session.
-      const exIds = (se ?? []).map((r: any) => r.exercise_id);
-      const last: Record<string, { sets: SetLog[]; date: string } | null> = {};
-      if (exIds.length) {
-        const { data: prevSessions } = await supabase
-          .from("training_sessions")
-          .select("id, completed_at")
-          .eq("client_id", s.client_id)
-          .eq("status", "completed")
-          .neq("id", sessionId)
-          .order("completed_at", { ascending: false })
-          .limit(50);
-        const sessIds = (prevSessions ?? []).map((x) => x.id);
-        if (sessIds.length) {
-          const { data: prevSEs } = await supabase
-            .from("session_exercises")
-            .select("id, session_id, exercise_id, set_logs(set_index, reps, weight, rpe, completed, band_level, is_dropset)")
-            .in("session_id", sessIds)
-            .in("exercise_id", exIds);
-          for (const cur of se ?? []) {
-            for (const ps of prevSessions ?? []) {
-              const match = (prevSEs ?? []).find((x: any) => x.session_id === ps.id && x.exercise_id === cur.exercise_id);
-              if (match && (match.set_logs?.length ?? 0) > 0) {
-                last[cur.id] = {
-                  date: ps.completed_at ?? "",
-                  sets: match.set_logs.map((l: any) => ({ set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level, is_dropset: !!l.is_dropset })).sort((a: any, b: any) => a.set_index - b.set_index),
-                };
-                break;
-              }
-            }
-            if (!last[cur.id]) last[cur.id] = null;
-          }
-        }
-      }
-      setLastTimeByEx(last);
 
 
       const firstUndone = (se ?? []).find((r: any) => !(logs[r.id] ?? []).every((sl) => sl.completed));
@@ -310,7 +301,12 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const addSet = async (seId: string) => {
     const arr = [...(setsRef.current[seId] ?? [])];
     const nextIdx = arr.reduce((m, s) => Math.max(m, s.set_index), -1) + 1;
-    arr.push({ set_index: nextIdx, reps: null, weight: null, rpe: null, completed: false });
+    const prev = prevRegRef.current[seId] ?? [];
+    const row = sessionExercises.find((r) => r.id === seId);
+    const d = prev.length && row
+      ? defaultLoad(prev, regularOrdinal(arr, nextIdx), { weight: null, band_level: null }, loadKind(exerciseMeta[seId] ?? row.exercise))
+      : { weight: null, band_level: null };
+    arr.push({ set_index: nextIdx, reps: null, weight: d.weight, rpe: null, completed: false, ...(d.band_level != null ? { band_level: d.band_level } : {}) });
     commitSets({ ...setsRef.current, [seId]: arr });
     await persistSetCount(seId, arr.length);
   };
@@ -708,7 +704,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       {needsChoice ? (
                         <span className="text-amber-600 font-medium">Choose one to start</span>
                       ) : (
-                        <>{primaryLine}</>
+                        <>Plan target: {primaryLine}</>
                       )}
                     </div>
                   </div>
@@ -761,6 +757,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                     {last && (
                       <div className="rounded-md bg-muted/50 p-3 text-xs">
                         <div className="font-semibold text-muted-foreground mb-1.5">Last time ({new Date(last.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })})</div>
+                        {canEdit && !hidesLoad(ex) && performedRegular(last.sets).length > 0 && (
+                          <div className="text-muted-foreground mb-1.5">New sets start from these loads — change them any time.</div>
+                        )}
                         <div className="space-y-0.5">
                           {last.sets.map((s, li) => (
                             <div key={s.set_index} className="tabular-nums">
