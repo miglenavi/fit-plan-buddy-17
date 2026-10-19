@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice } from "@/components/LoadStatus";
 import { CheckCircle2, Clock, Search, UserRoundSearch, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/client/trainer")({
@@ -95,7 +98,8 @@ function ClientTrainer() {
     load();
   };
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (L.view === "loading") return <LoadingText what="your trainer" />;
+  if (L.view === "error") return <LoadError what="your trainer connection" onRetry={load} />;
 
   if (linkedTrainerId) {
     return (
@@ -118,6 +122,7 @@ function ClientTrainer() {
 
   return (
     <div className="space-y-5">
+      {L.view === "content-stale" && <StaleNotice what="your trainer connection" onRetry={load} />}
       {pending ? (
         <Card className="border-primary/60 bg-primary/5">
           <CardContent className="p-5 space-y-3">
