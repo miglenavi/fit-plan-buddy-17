@@ -79,8 +79,7 @@ describe("one active program per client", () => {
 
   it("the database refuses a second active row even outside the function", async () => {
     const { error } = await admin.from("client_programs").update({ status: "active" }).eq("client_id", c.id).eq("plan_id", planA);
-    // The trigger completes the other row instead of creating two actives.
-    expect(error).toBeNull();
+    expect(error?.message).toMatch(/client_programs_one_active_per_client/);
     expect((await rows(c.id)).filter((x) => x.status === "active")).toHaveLength(1);
   });
 
