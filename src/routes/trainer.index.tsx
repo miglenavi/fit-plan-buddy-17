@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Dumbbell, ClipboardList, ArrowRight, Plus, UserPlus, Activity, CheckCircle2, Clock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { loadRecentSessions, type RecentSession } from "@/lib/recentSessions";
 
 export const Route = createFileRoute("/trainer/")({
   ssr: false,
@@ -20,27 +21,37 @@ export const Route = createFileRoute("/trainer/")({
 });
 
 function Dashboard() {
-  const { fullName } = useAuth();
+  const { fullName, user } = useAuth();
   const [stats, setStats] = useState({ clients: 0, exercises: 0, plans: 0, weekSessions: 0 });
-  const [recent, setRecent] = useState<any[]>([]);
+  const [recent, setRecent] = useState<RecentSession[]>([]);
+  const [recentState, setRecentState] = useState<"loading" | "ok" | "error">("loading");
+  const uid = user?.id;
+
+  const loadRecent = async () => {
+    if (!uid) return;
+    setRecentState("loading");
+    try {
+      setRecent(await loadRecentSessions(supabase, uid));
+      setRecentState("ok");
+    } catch {
+      setRecentState("error");
+    }
+  };
 
   useEffect(() => {
     (async () => {
       const weekAgo = new Date(Date.now() - 6 * 86400000).toISOString();
-      const [c, e, p, w, r] = await Promise.all([
+      const [c, e, p, w] = await Promise.all([
         supabase.from("trainer_clients").select("id", { count: "exact", head: true }),
         supabase.from("exercises").select("id", { count: "exact", head: true }),
         supabase.from("plans").select("id", { count: "exact", head: true }),
         supabase.from("training_sessions").select("id", { count: "exact", head: true }).gte("started_at", weekAgo),
-        supabase.from("training_sessions")
-          .select("id, started_at, status, logged_by, client_id, custom_name, trainings(name), profiles!training_sessions_client_id_fkey(full_name)")
-          .order("started_at", { ascending: false })
-          .limit(8),
       ]);
       setStats({ clients: c.count ?? 0, exercises: e.count ?? 0, plans: p.count ?? 0, weekSessions: w.count ?? 0 });
-      setRecent(r.data ?? []);
     })();
   }, []);
+
+  useEffect(() => { loadRecent(); }, [uid]);
 
   const cards = [
     { label: "Clients", value: stats.clients, icon: Users, to: "/trainer/clients" as const },
@@ -89,22 +100,33 @@ function Dashboard() {
       <Card>
         <CardHeader><CardTitle>Recent client sessions</CardTitle></CardHeader>
         <CardContent>
-          {recent.length === 0 ? (
+          {recentState === "loading" && recent.length === 0 ? (
+            <p className="text-muted-foreground text-sm" role="status">Loading sessions…</p>
+          ) : recentState === "error" ? (
+            <div role="alert" className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">Couldn't load recent sessions.</span>
+              <Button type="button" size="sm" variant="outline" onClick={loadRecent}>Retry</Button>
+            </div>
+          ) : recent.length === 0 ? (
             <p className="text-muted-foreground text-sm">No sessions yet.</p>
           ) : (
             <ul className="divide-y">
               {recent.map((s) => (
-                <li key={s.id} className="py-3 flex items-center gap-3">
+                <li key={s.id}>
+                  <Link
+                    to="/trainer/clients/$clientId/sessions/$sessionId"
+                    params={{ clientId: s.client_id, sessionId: s.id }}
+                    className="py-3 flex items-center gap-3 rounded-md hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
                   {s.status === "completed" ? <CheckCircle2 className="size-4 text-primary" /> : <Clock className="size-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{s.profiles?.full_name ?? "Client"} · {s.custom_name ?? s.trainings?.name ?? "Custom session"}</div>
+                    <div className="font-medium break-words">{s.client_name ?? "Client"} · {s.title}</div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(s.started_at).toLocaleDateString()} · {s.status.replace("_", " ")} · {s.logged_by === "trainer" ? "logged by you" : "logged by client"}
                     </div>
                   </div>
-                  <Button asChild size="sm" variant="ghost">
-                    <Link to="/trainer/clients/$clientId" params={{ clientId: s.client_id }}>Open</Link>
-                  </Button>
+                  <span className="text-sm font-medium text-primary shrink-0 px-2">Open</span>
+                  </Link>
                 </li>
               ))}
             </ul>
