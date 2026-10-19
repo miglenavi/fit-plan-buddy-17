@@ -29,3 +29,17 @@ t2("dropset does not advance working set number", () => {
   const sets = [{ is_dropset: false }, { is_dropset: false }, { is_dropset: true }, { is_dropset: false }];
   e2(sets.map((_, i) => workingSetNumber(sets, i))).toEqual([1, 2, 2, 3]);
 });
+
+import { hidesLoad, resolveCompleted } from "../src/lib/progress";
+t2("weight input hidden only for unassisted bodyweight", () => {
+  e2(hidesLoad({ equipment: "bodyweight", is_assisted: false })).toBe(true);
+  e2(hidesLoad({ equipment: "bodyweight", is_assisted: true })).toBe(false);
+  e2(hidesLoad({ equipment: "dumbbell" })).toBe(false);
+  e2(hidesLoad({ equipment: "resistance_band" })).toBe(false);
+});
+t2("positive reps auto-complete, but an explicit untick wins", () => {
+  e2(resolveCompleted({ completed: false, reps: 8 })).toBe(true);
+  e2(resolveCompleted({ completed: false, reps: "" })).toBe(false);
+  e2(resolveCompleted({ completed: false, reps: 8, completedExplicit: true })).toBe(false);
+  e2(resolveCompleted({ completed: true, reps: null, completedExplicit: true })).toBe(true);
+});

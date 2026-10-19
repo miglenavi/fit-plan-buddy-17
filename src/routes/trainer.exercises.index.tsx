@@ -346,7 +346,7 @@ function ExercisesList() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <div className="font-semibold truncate">{ex.name}</div>
+                          <div className="font-semibold break-words min-w-0">{ex.name}</div>
                           {ex.equipment && (
                             <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border">
                               {prettyEquipment(ex.equipment)}

@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
@@ -12,13 +12,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted, workingSetNumber } from "@/lib/progress";
+import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, weightHeader, isAssisted, workingSetNumber, hidesLoad, resolveCompleted } from "@/lib/progress";
 import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw, ArrowUp, ArrowDown, X } from "lucide-react";
 
-type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean };
+type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean; completedExplicit?: boolean };
 
-const isSetDone = (s: { completed: boolean; reps: string | number | null }) =>
-  s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0);
+const isSetDone = (s: { completed: boolean; reps: string | number | null; completedExplicit?: boolean }) =>
+  resolveCompleted(s);
 
 /** Delta vs target: returns null when either side missing. */
 function repsDelta(actual: number | null, min: number | null, max: number | null): number | null {
@@ -98,6 +98,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         meta[row.id] = row.exercise;
         const existing: SetLog[] = (row.set_logs ?? []).map((l: any) => ({
           id: l.id, set_index: l.set_index, reps: l.reps, weight: l.weight, rpe: l.rpe, completed: l.completed, band_level: l.band_level, is_dropset: !!l.is_dropset,
+          // Saved as not done despite reps > 0 means the user unticked it on purpose.
+          completedExplicit: !l.completed && l.reps != null && Number(l.reps) > 0,
         })).sort((a: SetLog, b: SetLog) => a.set_index - b.set_index);
         const target = row.target_sets ?? 3;
         // Never reuse an index that already exists in the DB — a deleted set can
@@ -109,7 +111,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         const hasAnyLogged = (row.set_logs ?? []).some((l: any) => l.completed || l.reps != null || l.weight != null || l.rpe != null || l.band_level != null);
         picked[row.id] = !row.alternative_exercise_id || hasAnyLogged;
       }
-      setSetLogsByEx(logs);
+      commitSets(logs);
       setExerciseMeta(meta);
       // Keep choices already made in this session view — reloading must not
       // reset the card back to "Choose one to start".
@@ -175,19 +177,32 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   };
   useEffect(() => { load(); }, [sessionId]);
 
+  // Latest set values, readable synchronously by saves (avoids stale closures).
+  const setsRef = useRef<Record<string, SetLog[]>>({});
+  const commitSets = (next: Record<string, SetLog[]>) => { setsRef.current = next; setSetLogsByEx(next); };
   const updateSet = (seId: string, idx: number, field: keyof SetLog, value: any) => {
-    setSetLogsByEx((p) => {
-      const arr = [...(p[seId] ?? [])];
-      arr[idx] = { ...arr[idx], [field]: value };
-      return { ...p, [seId]: arr };
-    });
+    const arr = [...(setsRef.current[seId] ?? [])];
+    if (!arr[idx]) return;
+    arr[idx] = { ...arr[idx], [field]: value };
+    commitSets({ ...setsRef.current, [seId]: arr });
+  };
+  const patchByIndex = (seId: string, setIndex: number, patch: Partial<SetLog>) => {
+    const arr = [...(setsRef.current[seId] ?? [])];
+    const i = arr.findIndex((x) => x.set_index === setIndex);
+    if (i < 0) return;
+    arr[i] = { ...arr[i], ...patch };
+    commitSets({ ...setsRef.current, [seId]: arr });
   };
 
-  const saveSet = async (seId: string, idx: number, override?: Partial<SetLog>) => {
-    const base = setLogsByEx[seId]?.[idx];
-    const s = base && override ? { ...base, ...override } : base;
-    if (!s) return;
+  // Saves for one set run strictly one after another, and each reads the latest
+  // values when it runs, so an older save can never overwrite a newer edit.
+  const chains = useRef<Record<string, Promise<void>>>({});
+  const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const keyOf = (seId: string, setIndex: number) => `${seId}:${setIndex}`;
 
+  const writeSet = async (seId: string, setIndex: number) => {
+    const s = (setsRef.current[seId] ?? []).find((x) => x.set_index === setIndex);
+    if (!s) return;
     let weightVal: number | null = null;
     if (s.weight !== "" && s.weight != null) {
       const raw = String(s.weight).trim().replace(",", ".");
@@ -202,7 +217,6 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       }
       weightVal = n;
     }
-
     const payload: any = {
       session_exercise_id: seId,
       set_index: s.set_index,
@@ -211,7 +225,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       rpe: s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
       band_level: s.band_level == null ? null : Number(s.band_level),
       is_dropset: !!s.is_dropset,
-      completed: !!s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0),
+      completed: resolveCompleted(s),
     };
     const { data, error } = await supabase
       .from("set_logs")
@@ -219,11 +233,54 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       .select("id")
       .single();
     if (error) toast.error(error.message);
-    else if (data?.id) {
-      updateSet(seId, idx, "id", data.id);
-      updateSet(seId, idx, "completed", payload.completed);
-    }
+    else if (data?.id) patchByIndex(seId, setIndex, { id: data.id, completed: payload.completed });
   };
+
+  const queueSave = (seId: string, setIndex: number) => {
+    const k = keyOf(seId, setIndex);
+    if (timers.current[k]) { clearTimeout(timers.current[k]); delete timers.current[k]; }
+    const run = (chains.current[k] ?? Promise.resolve()).then(() => writeSet(seId, setIndex)).catch(() => {});
+    chains.current[k] = run;
+    return run;
+  };
+
+  /** Save now (blur, checkbox, menus). */
+  const saveSet = (seId: string, idx: number, override?: Partial<SetLog>) => {
+    if (override) updateSet(seId, idx, Object.keys(override)[0] as keyof SetLog, Object.values(override)[0]);
+    const s = setsRef.current[seId]?.[idx];
+    if (!s) return Promise.resolve();
+    return queueSave(seId, s.set_index);
+  };
+  /** Save shortly after typing stops, so values survive a refresh without blur. */
+  const scheduleSave = (seId: string, idx: number) => {
+    const s = setsRef.current[seId]?.[idx];
+    if (!s) return;
+    const k = keyOf(seId, s.set_index);
+    if (timers.current[k]) clearTimeout(timers.current[k]);
+    const setIndex = s.set_index;
+    timers.current[k] = setTimeout(() => { delete timers.current[k]; queueSave(seId, setIndex); }, 600);
+  };
+  /** Write every pending edit and wait for all saves to finish. */
+  const flushSaves = async () => {
+    for (const k of Object.keys(timers.current)) {
+      clearTimeout(timers.current[k]);
+      delete timers.current[k];
+      const cut = k.lastIndexOf(":");
+      queueSave(k.slice(0, cut), Number(k.slice(cut + 1)));
+    }
+    await Promise.all(Object.values(chains.current));
+  };
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === "hidden") void flushSaves(); };
+    const onPageHide = () => { void flushSaves(); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onPageHide);
+      void flushSaves();
+    };
+  }, []);
 
   // Persist how many sets this exercise has, so add/remove survives a refresh.
   const persistSetCount = async (seId: string, count: number) => {
@@ -235,23 +292,29 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   };
 
   const addSet = async (seId: string) => {
-    const arr = [...(setLogsByEx[seId] ?? [])];
+    const arr = [...(setsRef.current[seId] ?? [])];
     const nextIdx = arr.reduce((m, s) => Math.max(m, s.set_index), -1) + 1;
     arr.push({ set_index: nextIdx, reps: null, weight: null, rpe: null, completed: false });
-    setSetLogsByEx((p) => ({ ...p, [seId]: arr }));
+    commitSets({ ...setsRef.current, [seId]: arr });
     await persistSetCount(seId, arr.length);
   };
 
   const removeSet = async (seId: string, idx: number) => {
-    const s = setLogsByEx[seId]?.[idx];
+    const first = setsRef.current[seId]?.[idx];
+    if (!first) return;
+    // Let any pending save for this set land first, so its id is known and it
+    // can't recreate the row after we delete it.
+    const k = keyOf(seId, first.set_index);
+    if (timers.current[k]) { clearTimeout(timers.current[k]); delete timers.current[k]; }
+    await chains.current[k];
+    const s = (setsRef.current[seId] ?? []).find((x) => x.set_index === first.set_index);
     if (!s) return;
     if (s.id) {
       const { error } = await supabase.from("set_logs").delete().eq("id", s.id);
       if (error) return toast.error(error.message);
     }
-    const arr = [...(setLogsByEx[seId] ?? [])];
-    arr.splice(idx, 1);
-    setSetLogsByEx((p) => ({ ...p, [seId]: arr }));
+    const arr = (setsRef.current[seId] ?? []).filter((x) => x.set_index !== s.set_index);
+    commitSets({ ...setsRef.current, [seId]: arr });
     await persistSetCount(seId, arr.length);
   };
 
@@ -272,6 +335,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const addExercise = async (exerciseId: string) => {
     if (adding) return;
     setAdding(true);
+    await flushSaves();
     const nextOrder = sessionExercises.reduce((m, r) => Math.max(m, r.order_index ?? 0), -1) + 1;
     const { error } = await supabase.from("session_exercises").insert({
       session_id: sessionId,
@@ -293,6 +357,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const removeExercise = async (seId: string) => {
     if (!confirm("Remove this exercise from today's session?")) return;
     setRemovingId(seId);
+    await flushSaves();
     const { error } = await supabase.from("session_exercises").delete().eq("id", seId);
     setRemovingId(null);
     if (error) return toast.error(error.message);
@@ -307,6 +372,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     const se = sessionExercises.find((r) => r.id === seId);
     if (!se) return;
     if (useAlternative && !se.alternative_exercise_id) return;
+    await flushSaves();
 
     // Runs through a database helper so both the client and the trainer can pick,
     // regardless of who started the session.
@@ -361,6 +427,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const doFinish = async () => {
     if (finishing) return;
     setFinishing(true);
+    await flushSaves();
     const { error } = await supabase
       .from("training_sessions")
       .update({ status: "completed", completed_at: new Date().toISOString() })
@@ -371,7 +438,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     else nav({ to: "/client" });
   };
 
-  const finish = () => {
+  const finish = async () => {
+    await flushSaves();
     const totalSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.length, 0);
     const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter(isSetDone).length, 0);
     if (totalSets > 0 && doneSets < totalSets) {
@@ -406,7 +474,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
               <p className="text-sm text-muted-foreground mt-1">{errorMsg ?? "Session not found."}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={load}>Retry</Button>
+          <Button variant="outline" size="sm" onClick={async () => { await flushSaves(); load(); }}>Retry</Button>
         </CardContent>
       </Card>
     );
@@ -563,6 +631,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           const primaryLine = `${se.target_sets} × ${targetReps}${formatLoad({ weight: se.target_weight, band_level: se.target_band_level }, ex)}`;
           const altLine = `${altSetsV} × ${altTargetReps}${formatLoad({ weight: altWV, band_level: se.alt_target_band_level ?? se.target_band_level }, altEx)}`;
           const band = usesBand(ex);
+          const noLoad = !band && hidesLoad(ex);
           const assisted = isAssisted(ex);
 
           return (
@@ -587,7 +656,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                     {allDone ? <CheckCircle2 className="size-4" /> : i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">
+                    <div className="font-semibold text-sm break-words">
                       {ex.name}
                       {hasAlt && !picked && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {se.alternative.name}</span>}
                     </div>
@@ -674,8 +743,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                     <div className="space-y-2">
 
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Today's sets</Label>
-                      <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_minmax(2.5rem,1fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] sm:gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
-                        <span></span><span>Reps</span><span>{weightHeader(ex)}</span><span>RPE</span><span></span><span></span>
+                      <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_2.5rem_2rem] sm:gap-2 items-end text-xs font-semibold text-muted-foreground px-1">
+                        <span></span><span>Reps</span><span>{noLoad ? "" : weightHeader(ex)}</span><span></span><span></span>
                       </div>
                       {sets.map((s, idx) => {
                         const usingAlt = hasAlt && picked && pickedByEx[se.id] && !!se.alternative_exercise_id && !(pickedByEx[se.id] ?? !se.alternative_exercise_id);
@@ -691,7 +760,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                           : (isSetDone(s) && actualW != null && tW != null ? actualW - Number(tW) : null);
                         return (
                         <div key={idx} className="space-y-1">
-                        <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_minmax(2.5rem,1fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_1fr_2.5rem_2rem] sm:gap-2 items-center">
+                        <div className="grid grid-cols-[1.75rem_minmax(2.5rem,1fr)_minmax(4rem,1.25fr)_2.25rem_1.75rem] gap-1 sm:grid-cols-[2rem_1fr_1fr_2.5rem_2rem] sm:gap-2 items-center">
                           {canEdit ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -707,23 +776,24 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                           ) : (
                             <span className={`text-xs tabular-nums ${s.is_dropset ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-muted-foreground"}`}>{s.is_dropset ? "D" : `#${workingSetNumber(sets, idx)}`}</span>
                           )}
-                          <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => updateSet(se.id, idx, "reps", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
+                          <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="numeric" readOnly={!canEdit} disabled={!canEdit} value={s.reps ?? ""} onChange={(e) => { updateSet(se.id, idx, "reps", e.target.value); scheduleSave(se.id, idx); }} onBlur={() => saveSet(se.id, idx)} />
                           {band ? (
                             <select
                               aria-label="Band level"
                               className="min-w-0 h-9 rounded-md border border-input bg-background px-1 text-xs"
                               disabled={!canEdit}
                               value={s.band_level ?? ""}
-                              onChange={(e) => { updateSet(se.id, idx, "band_level", e.target.value === "" ? null : Number(e.target.value)); setTimeout(() => saveSet(se.id, idx), 0); }}
+                              onChange={(e) => { updateSet(se.id, idx, "band_level", e.target.value === "" ? null : Number(e.target.value)); saveSet(se.id, idx); }}
                             >
                               <option value="">–</option>
                               {BAND_LEVELS.map((b) => <option key={b.level} value={b.level}>{b.name} ({b.color})</option>)}
                             </select>
+                          ) : noLoad ? (
+                            <span aria-label="Bodyweight" className="text-center text-xs text-muted-foreground">BW</span>
                           ) : (
-                            <Input aria-label={assisted ? "Assistance (kg)" : "Weight (kg)"} className="min-w-0 px-2 text-center tabular-nums" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, ""))} onBlur={() => saveSet(se.id, idx)} />
+                            <Input aria-label={assisted ? "Assistance (kg)" : "Weight (kg)"} className="min-w-0 px-2 text-center tabular-nums" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" readOnly={!canEdit} disabled={!canEdit} value={s.weight ?? ""} onChange={(e) => { updateSet(se.id, idx, "weight", e.target.value.replace(/[^0-9.,]/g, "")); scheduleSave(se.id, idx); }} onBlur={() => saveSet(se.id, idx)} />
                           )}
-                          <Input className="min-w-0 px-2 text-center tabular-nums" type="number" inputMode="decimal" step="0.5" readOnly={!canEdit} disabled={!canEdit} value={s.rpe ?? ""} onChange={(e) => updateSet(se.id, idx, "rpe", e.target.value)} onBlur={() => saveSet(se.id, idx)} />
-                          <Checkbox checked={s.completed} disabled={!canEdit} onCheckedChange={(v) => { if (!canEdit) return; updateSet(se.id, idx, "completed", !!v); setTimeout(() => saveSet(se.id, idx), 0); }} />
+                          <Checkbox checked={isSetDone(s)} disabled={!canEdit} onCheckedChange={(v) => { if (!canEdit) return; updateSet(se.id, idx, "completedExplicit", true); updateSet(se.id, idx, "completed", !!v); saveSet(se.id, idx); }} />
                           {canEdit ? (
                             <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => removeSet(se.id, idx)} aria-label="Remove set">
                               <Trash2 className="size-3.5" />

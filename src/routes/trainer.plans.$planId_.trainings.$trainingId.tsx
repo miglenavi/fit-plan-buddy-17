@@ -14,12 +14,13 @@ import { DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor, 
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { BAND_LEVELS, formatLoad, usesBand, weightLabel } from "@/lib/progress";
+import { BAND_LEVELS, formatLoad, hidesLoad, usesBand, weightLabel } from "@/lib/progress";
 
 /** Target load field: kg input normally, "Assistance (kg)" for assisted, band dropdown for band exercises. */
 function LoadField({ ex, weight, setWeight, band, setBand, placeholder, className }: {
   ex: any; weight: string; setWeight: (v: string) => void; band: string; setBand: (v: string) => void; placeholder?: string; className?: string;
 }) {
+  if (hidesLoad(ex)) return null;
   return (
     <div className={`space-y-2 ${className ?? ""}`}>
       <Label>{weightLabel(ex)}</Label>
@@ -364,7 +365,7 @@ function SortableExerciseRow({
         </button>
         <div className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</div>
         <div className="min-w-0">
-          <div className="font-medium truncate">
+          <div className="font-medium break-words">
             {it.exercises?.name}
             {altName && <span className="text-muted-foreground font-normal"> <span className="italic">or</span> {altName}</span>}
           </div>

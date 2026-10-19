@@ -79,3 +79,15 @@ export function workingSetNumber(sets: { is_dropset?: boolean | null }[], idx: n
   for (let i = 0; i <= idx && i < sets.length; i++) if (!sets[i]?.is_dropset) n++;
   return Math.max(n, 1);
 }
+
+/** Unassisted bodyweight exercises have no load to log, so the weight input is hidden. */
+export const hidesLoad = (ex: ExLike) => ex?.equipment === "bodyweight" && !isAssisted(ex);
+
+/**
+ * Whether a set counts as completed when saved. Typing positive reps auto-completes,
+ * unless the user explicitly set the checkbox (then their choice wins, incl. uncheck).
+ */
+export function resolveCompleted(s: { completed?: boolean | null; completedExplicit?: boolean; reps?: string | number | null }): boolean {
+  if (s.completedExplicit) return !!s.completed;
+  return !!s.completed || (s.reps != null && s.reps !== "" && Number(s.reps) > 0);
+}
