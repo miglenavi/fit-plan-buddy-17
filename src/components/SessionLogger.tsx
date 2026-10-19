@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { SetSaveQueue, localDraftStore, draftIsNewer } from "@/lib/setSaveQueue";
-import { defaultLoad, latestPerformed, performedRegular, regularOrdinal, type HistSet, type LoadKind, type LastTime, fetchLastTimeByExercise } from "@/lib/lastLoads";
+import { defaultLoad, latestPerformed, performedRegular, regularOrdinal, type HistSet, type LoadKind, type LastTime, fetchLastTimeByExercise, applyHistoryDefaults } from "@/lib/lastLoads";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
@@ -18,7 +18,7 @@ import { BAND_LEVELS, betterDirection, formatLoad, progressionHint, usesBand, we
 import { CheckCircle2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, AlertCircle, Plus, Trash2, Clock, RotateCcw, ArrowUp, ArrowDown, X } from "lucide-react";
 
 const loadKind = (ex: any): LoadKind => (usesBand(ex) ? "band" : hidesLoad(ex) ? "none" : "kg");
-type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean; completedExplicit?: boolean };
+type SetLog = { id?: string; set_index: number; reps: string | number | null; weight: string | number | null; rpe: string | number | null; completed: boolean; band_level?: number | null; is_dropset?: boolean; completedExplicit?: boolean; prefill?: boolean };
 
 const isSetDone = (s: { completed: boolean; reps: string | number | null; completedExplicit?: boolean }) =>
   resolveCompleted(s);
@@ -65,6 +65,8 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [pickerEquipment, setPickerEquipment] = useState("all");
   const prevRegRef = useRef<Record<string, HistSet[]>>({});
+  const [historyFailed, setHistoryFailed] = useState(false);
+  const [historyRetrying, setHistoryRetrying] = useState(false);
   const [exerciseResults, setExerciseResults] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -103,8 +105,10 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       let byEx: Record<string, LastTime | null> = {};
       try {
         byEx = await fetchLastTimeByExercise(supabase, s.client_id, exIds as string[], sessionId);
+        setHistoryFailed(false);
       } catch {
-        // History is a convenience: without it, sets start from the plan target as before.
+        // Logging still works; sets start from the plan target and the user is told, with Retry.
+        setHistoryFailed(true);
       }
       const prevReg: Record<string, HistSet[]> = {};
       for (const row of se ?? []) {
@@ -137,7 +141,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         const kind = loadKind(row.exercise);
         while (existing.length < target) {
           const d = defaultLoad(prevReg[row.id] ?? [], regularOrdinal(existing, nextIndex), { weight: row.target_weight ?? null, band_level: row.target_band_level ?? null }, kind);
-          existing.push({ set_index: nextIndex++, reps: null, weight: d.weight, rpe: null, completed: false, band_level: d.band_level });
+          existing.push({ set_index: nextIndex++, reps: null, weight: d.weight, rpe: null, completed: false, band_level: d.band_level, prefill: true });
         }
         // Restore unsaved edits from this device (e.g. after an immediate refresh),
         // but only when they're newer than what the server has.
@@ -259,7 +263,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const updateSet = (seId: string, idx: number, field: keyof SetLog, value: any) => {
     const arr = [...(setsRef.current[seId] ?? [])];
     if (!arr[idx]) return;
-    arr[idx] = { ...arr[idx], [field]: value };
+    arr[idx] = { ...arr[idx], [field]: value, prefill: false };
     commitSets({ ...setsRef.current, [seId]: arr });
     queue.edited(keyOf(seId, arr[idx].set_index));
   };
@@ -424,6 +428,30 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     setSessionExercises(next.map((r, k) => ({ ...r, order_index: k })));
   };
 
+  /** Refresh previous results only — never reloads the session or touches edited/saved sets. */
+  const retryHistory = async () => {
+    if (!session || historyRetrying) return;
+    setHistoryRetrying(true);
+    try {
+      const rows = sessionExercises;
+      const exIds = Array.from(new Set(rows.map((r: any) => r.exercise_id))) as string[];
+      const byEx = await fetchLastTimeByExercise(supabase, session.client_id, exIds, sessionId);
+      const last: Record<string, any> = {};
+      const prevReg: Record<string, HistSet[]> = {};
+      for (const r of rows) { last[r.id] = byEx[r.exercise_id] ?? null; prevReg[r.id] = performedRegular(last[r.id]?.sets ?? []); }
+      prevRegRef.current = prevReg;
+      setLastTimeByEx(last);
+      commitSets(applyHistoryDefaults(setsRef.current, rows.map((r: any) => ({
+        id: r.id, target_weight: r.target_weight, target_band_level: r.target_band_level, kind: loadKind(exerciseMeta[r.id] ?? r.exercise),
+      })), prevReg));
+      setHistoryFailed(false);
+    } catch {
+      toast.error("Previous results still couldn't be loaded.");
+    } finally {
+      setHistoryRetrying(false);
+    }
+  };
+
   const deleteSession = async () => {
     if (deleting) return;
     setDeleting(true);
@@ -565,6 +593,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           )}
         </div>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
+        {historyFailed && session.status !== "completed" && (
+          <div role="status" className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <span>Previous results couldn't be loaded — showing plan weights.</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => void retryHistory()} disabled={historyRetrying}>
+              {historyRetrying ? "Retrying…" : "Retry"}
+            </Button>
+          </div>
+        )}
         {!canDelete && !forceReadOnly && isClient && !isTrainer && session.status !== "completed" && (
           <p className="text-xs text-muted-foreground mt-1">Your trainer started this workout — ask them if it should be discarded.</p>
         )}

@@ -81,3 +81,25 @@ export async function fetchLastTimeByExercise(
   }));
   return out;
 }
+
+/**
+ * After history arrives late (e.g. Retry), refresh defaults on untouched placeholder sets only:
+ * never saved (no id) and never edited (prefill still true). Everything else is returned as-is.
+ */
+export function applyHistoryDefaults<S extends { id?: string; set_index: number; is_dropset?: boolean | null; weight: any; band_level?: number | null; prefill?: boolean }>(
+  setsByEx: Record<string, S[]>,
+  rows: { id: string; target_weight?: number | null; target_band_level?: number | null; kind: LoadKind }[],
+  prevReg: Record<string, HistSet[]>,
+): Record<string, S[]> {
+  const out: Record<string, S[]> = { ...setsByEx };
+  for (const r of rows) {
+    const arr = setsByEx[r.id];
+    if (!arr) continue;
+    out[r.id] = arr.map((s) => {
+      if (s.id || !s.prefill) return s;
+      const d = defaultLoad(prevReg[r.id] ?? [], regularOrdinal(arr, s.set_index), { weight: r.target_weight ?? null, band_level: r.target_band_level ?? null }, r.kind);
+      return { ...s, weight: d.weight, band_level: d.band_level };
+    });
+  }
+  return out;
+}
