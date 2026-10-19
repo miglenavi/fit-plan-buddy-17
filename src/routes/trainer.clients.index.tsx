@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { resendClientInvite, listPendingClients } from "@/lib/clients.functions";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
 import { loadPendingRequests, type PendingRequest } from "@/lib/accessRequests";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadGate } from "@/components/LoadStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -264,6 +267,7 @@ function Clients() {
 
 
 
+      <LoadGate view={CL.view} what="your clients" onRetry={load}>
       <div className="grid sm:grid-cols-2 gap-3">
         {clients.map((c) => (
           <Card key={c.client_id} className="hover:border-primary transition-colors">
@@ -315,6 +319,7 @@ function Clients() {
         ))}
         {clients.length === 0 && <p className="text-muted-foreground text-sm">No clients yet.</p>}
       </div>
+      </LoadGate>
     </div>
   );
 }
