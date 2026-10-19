@@ -27,8 +27,9 @@ function PlanDetail() {
   const loaded = useRef(false);
   const lastSaved = useRef("");
 
-  const load = async () => {
-    const [{ data: p }, { data: t }, { data: a }] = await Promise.all([
+  const L = useLoader();
+  const load = (opts?: { reset?: boolean }) => L.run(async (cur) => {
+    const [pR, tR, aR] = await Promise.all([
       supabase.from("plans").select("*").eq("id", planId).maybeSingle(),
       supabase.from("trainings").select("id, name, description, order_index, training_exercises(id)").eq("plan_id", planId).order("order_index"),
       supabase.from("client_programs")
@@ -36,6 +37,14 @@ function PlanDetail() {
         .eq("plan_id", planId)
         .order("start_date", { ascending: false }),
     ]);
+    const p = must(pR), t = must(tR) ?? [], a = must(aR) ?? [];
+    const ids = Array.from(new Set(a.map((r: any) => r.client_id)));
+    let names: Record<string, string> = {};
+    if (ids.length > 0) {
+      const profs = must(await supabase.from("profiles").select("id, full_name").in("id", ids));
+      names = Object.fromEntries((profs ?? []).map((x: any) => [x.id, x.full_name ?? "Unnamed"]));
+    }
+    if (!cur()) return;
     setPlan(p);
     if (p) {
       setName(p.name ?? "");
@@ -43,17 +52,10 @@ function PlanDetail() {
       lastSaved.current = JSON.stringify({ name: p.name ?? "", description: p.description ?? "" });
       loaded.current = true;
     }
-    setTrainings(t ?? []);
-
-    const ids = Array.from(new Set((a ?? []).map((r: any) => r.client_id)));
-    let names: Record<string, string> = {};
-    if (ids.length > 0) {
-      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
-      names = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name ?? "Unnamed"]));
-    }
-    setAssignments((a ?? []).map((r: any) => ({ ...r, full_name: names[r.client_id] ?? "Unnamed" })));
-  };
-  useEffect(() => { load(); }, [planId]);
+    setTrainings(t);
+    setAssignments(a.map((r: any) => ({ ...r, full_name: names[r.client_id] ?? "Unnamed" })));
+  }, opts);
+  useEffect(() => { loaded.current = false; load({ reset: true }); }, [planId]);
 
   useEffect(() => {
     if (!loaded.current) return;
