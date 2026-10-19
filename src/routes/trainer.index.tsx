@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Users, Dumbbell, ClipboardList, ArrowRight, Plus, UserPlus, Activity, CheckCircle2, Clock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { loadRecentSessions, type RecentSession } from "@/lib/recentSessions";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, StaleNotice } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/")({
   ssr: false,
@@ -38,18 +41,19 @@ function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      const weekAgo = new Date(Date.now() - 6 * 86400000).toISOString();
-      const [c, e, p, w] = await Promise.all([
-        supabase.from("trainer_clients").select("id", { count: "exact", head: true }),
-        supabase.from("exercises").select("id", { count: "exact", head: true }),
-        supabase.from("plans").select("id", { count: "exact", head: true }),
-        supabase.from("training_sessions").select("id", { count: "exact", head: true }).gte("started_at", weekAgo),
-      ]);
-      setStats({ clients: c.count ?? 0, exercises: e.count ?? 0, plans: p.count ?? 0, weekSessions: w.count ?? 0 });
-    })();
-  }, []);
+  const SL = useLoader();
+  const loadStats = () => SL.run(async (cur) => {
+    const weekAgo = new Date(Date.now() - 6 * 86400000).toISOString();
+    const [c, e, p, w] = await Promise.all([
+      supabase.from("trainer_clients").select("id", { count: "exact", head: true }),
+      supabase.from("exercises").select("id", { count: "exact", head: true }),
+      supabase.from("plans").select("id", { count: "exact", head: true }),
+      supabase.from("training_sessions").select("id", { count: "exact", head: true }).gte("started_at", weekAgo),
+    ]);
+    [c, e, p, w].forEach((r) => must(r));
+    if (cur()) setStats({ clients: c.count ?? 0, exercises: e.count ?? 0, plans: p.count ?? 0, weekSessions: w.count ?? 0 });
+  });
+  useEffect(() => { loadStats(); }, []);
 
   useEffect(() => { loadRecent(); }, [uid]);
 
@@ -85,7 +89,7 @@ function Dashboard() {
                   <c.icon className="size-5 text-primary" />
                 </div>
                 <div className="mt-4">
-                  <div className="text-3xl font-bold tracking-tight">{c.value}</div>
+                  <div className="text-3xl font-bold tracking-tight" aria-busy={!SL.loaded}>{SL.loaded ? c.value : "—"}</div>
                   <div className="text-sm text-muted-foreground mt-0.5">{c.label}</div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-border/60 text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors flex items-center">
