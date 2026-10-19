@@ -196,7 +196,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       setLoading(false);
     }
   };
-  useEffect(() => { load(); }, [sessionId]);
+  useEffect(() => { load(); }, [sessionId, user?.id]);
 
   // Latest set values, readable synchronously by saves (avoids stale closures).
   const setsRef = useRef<Record<string, SetLog[]>>({});
