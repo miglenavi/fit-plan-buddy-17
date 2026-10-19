@@ -331,7 +331,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const addExercise = async (exerciseId: string) => {
     if (adding) return;
     setAdding(true);
-    await flushSaves();
+    if (!(await flushSaves())) { setAdding(false); return; }
     const nextOrder = sessionExercises.reduce((m, r) => Math.max(m, r.order_index ?? 0), -1) + 1;
     const { error } = await supabase.from("session_exercises").insert({
       session_id: sessionId,
@@ -353,7 +353,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const removeExercise = async (seId: string) => {
     if (!confirm("Remove this exercise from today's session?")) return;
     setRemovingId(seId);
-    await flushSaves();
+    if (!(await flushSaves())) { setRemovingId(null); return; }
     const { error } = await supabase.from("session_exercises").delete().eq("id", seId);
     setRemovingId(null);
     if (error) return toast.error(error.message);
@@ -368,7 +368,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
     const se = sessionExercises.find((r) => r.id === seId);
     if (!se) return;
     if (useAlternative && !se.alternative_exercise_id) return;
-    await flushSaves();
+    if (!(await flushSaves())) return;
 
     // Runs through a database helper so both the client and the trainer can pick,
     // regardless of who started the session.
@@ -423,19 +423,23 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const doFinish = async () => {
     if (finishing) return;
     setFinishing(true);
-    await flushSaves();
-    const { error } = await supabase
-      .from("training_sessions")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", sessionId);
-    if (error) { setFinishing(false); return toast.error(error.message); }
-    toast.success("Session completed 🎉");
-    if (onFinished) onFinished();
-    else nav({ to: "/client" });
+    try {
+      if (!(await flushSaves())) return;
+      const { error } = await supabase
+        .from("training_sessions")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", sessionId);
+      if (error) return toast.error(error.message);
+      toast.success("Session completed 🎉");
+      if (onFinished) onFinished();
+      else nav({ to: "/client" });
+    } finally {
+      setFinishing(false);
+    }
   };
 
   const finish = async () => {
-    await flushSaves();
+    if (!(await flushSaves())) return;
     const totalSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.length, 0);
     const doneSets = Object.values(setLogsByEx).reduce((n, arr) => n + arr.filter(isSetDone).length, 0);
     if (totalSets > 0 && doneSets < totalSets) {
@@ -470,7 +474,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
               <p className="text-sm text-muted-foreground mt-1">{errorMsg ?? "Session not found."}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={async () => { await flushSaves(); load(); }}>Retry</Button>
+          <Button variant="outline" size="sm" onClick={async () => { if (await flushSaves()) load(); }}>Retry</Button>
         </CardContent>
       </Card>
     );
