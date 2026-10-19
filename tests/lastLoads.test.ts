@@ -56,7 +56,7 @@ describe("default load rules", () => {
 
 describe("latest result lookup (real database)", () => {
   let t: TestUser, c: TestUser, c2: TestUser;
-  let exA: string, exB: string, training: string;
+  let exA: string, exB: string, exC: string, training: string;
   const ids: string[] = [];
   const sess = async (client: string, daysAgo: number, opts: { training?: string | null; status?: string } = {}) =>
     ( admin.from("training_sessions").insert({
@@ -73,14 +73,15 @@ describe("latest result lookup (real database)", () => {
     [t, c, c2] = await Promise.all([createTestUser("llT", "trainer"), createTestUser("llC", "client"), createTestUser("llC2", "client")]);
     ids.push(t.id, c.id, c2.id);
     await linkTrainerClient(t.id, c.id);
-    const exs = (await admin.from("exercises").select("id").is("trainer_id", null).limit(2)).data!;
-    [exA, exB] = [exs[0].id, exs[1].id];
+    const exs = (await admin.from("exercises").select("id").is("trainer_id", null).limit(3)).data!;
+    [exA, exB, exC] = [exs[0].id, exs[1].id, exs[2].id];
     const plan = (await admin.from("plans").insert({ trainer_id: t.id, name: "LL" }).select("id").single()).data!.id;
     training = (await admin.from("trainings").insert({ plan_id: plan, name: "LL1", order_index: 0 }).select("id").single()).data!.id;
 
     // 60 older sessions without exA (would push it out of the old 50-session window)…
     const old = await sess(c.id, 30, { training });
     await log(old, exA, [{ set_index: 0, reps: 10, weight: 8, completed: true }]);
+    await log(old, exC, [{ set_index: 0, reps: 10, weight: 42, completed: true }]);
     const filler = Array.from({ length: 60 }, (_, i) => ({
       client_id: c.id, training_id: training, status: "completed", logged_by: "client",
       completed_at: new Date(Date.now() - (20 - i * 0.1) * 864e5).toISOString(),
@@ -105,6 +106,11 @@ describe("latest result lookup (real database)", () => {
     const r = await fetchLastTimeByExercise(c.client, c.id, [exA, exB], "00000000-0000-0000-0000-000000000000");
     expect(performedRegular(r[exA]!.sets).map((s) => Number(s.weight))).toEqual([14, 14]);
     expect(performedRegular(r[exB]!.sets).map((s) => Number(s.weight))).toEqual([30]);
+  });
+
+  it("an exercise last done before 60+ newer sessions is still found (no 50-session cutoff)", async () => {
+    const r = await fetchLastTimeByExercise(c.client, c.id, [exC], "00000000-0000-0000-0000-000000000000");
+    expect(Number(r[exC]!.sets[0].weight)).toBe(42);
   });
 
   it("the trainer sees the same latest result for their client", async () => {
