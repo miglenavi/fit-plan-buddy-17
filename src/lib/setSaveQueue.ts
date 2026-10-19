@@ -21,6 +21,8 @@ export class SetSaveQueue<Row> {
   private timers: Record<string, ReturnType<typeof setTimeout>> = {};
   private dirty = new Set<string>();
   private errors = new Map<string, string>();
+  private paused = false;
+  private disposed = false;
 
   constructor(
     private opts: {
@@ -35,6 +37,7 @@ export class SetSaveQueue<Row> {
 
   /** Record an edit: bumps revision and stores a local draft right away. */
   edited(key: string) {
+    if (this.disposed) return;
     this.rev[key] = (this.rev[key] ?? 0) + 1;
     this.dirty.add(key);
     const row = this.opts.getRow(key);
@@ -49,7 +52,7 @@ export class SetSaveQueue<Row> {
   save(key: string): Promise<void> {
     if (this.timers[key]) { clearTimeout(this.timers[key]); delete this.timers[key]; }
     const run = (this.chains[key] ?? Promise.resolve()).then(async () => {
-      if (!this.dirty.has(key)) return;
+      if (this.paused || this.disposed || !this.dirty.has(key)) return;
       const row = this.opts.getRow(key);
       if (!row) { this.forget(key); return; }
       const sentRev = this.rev[key] ?? 0;
@@ -72,6 +75,7 @@ export class SetSaveQueue<Row> {
   }
 
   schedule(key: string) {
+    if (this.paused || this.disposed) return;
     if (this.timers[key]) clearTimeout(this.timers[key]);
     this.timers[key] = setTimeout(() => { delete this.timers[key]; void this.save(key); }, this.opts.debounceMs ?? 600);
   }
@@ -95,6 +99,31 @@ export class SetSaveQueue<Row> {
     this.dirty.delete(key);
     this.errors.delete(key);
     this.clearDraft(key);
+    this.opts.onChange?.();
+  }
+
+  /** Stop starting new writes and wait for in-flight ones (e.g. before deleting the session). Edits stay dirty. */
+  async pause() {
+    this.paused = true;
+    for (const k of Object.keys(this.timers)) { clearTimeout(this.timers[k]); delete this.timers[k]; }
+    await Promise.all(Object.values(this.chains));
+  }
+
+  /** Undo pause (the delete failed): pending edits are saved again. */
+  resume() {
+    if (this.disposed) return;
+    this.paused = false;
+    for (const k of Array.from(this.dirty)) this.schedule(k);
+  }
+
+  /** The whole session was discarded: drop every pending edit and draft; never write again. */
+  dispose() {
+    this.disposed = true;
+    this.paused = true;
+    for (const k of Object.keys(this.timers)) { clearTimeout(this.timers[k]); delete this.timers[k]; }
+    this.dirty.clear();
+    this.errors.clear();
+    this.opts.drafts?.set({});
     this.opts.onChange?.();
   }
 

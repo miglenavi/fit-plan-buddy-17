@@ -431,12 +431,20 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
   const deleteSession = async () => {
     if (deleting) return;
     setDeleting(true);
+    // Hold all pending set saves so nothing is written while (or after) the session is removed.
+    await queue.pause();
     const { error, count } = await supabase.from("training_sessions").delete({ count: "exact" }).eq("id", sessionId);
     setDeleting(false);
-    if (error || count === 0) return toast.error("Couldn't remove this session.");
-    setConfirmDeleteOpen(false);
+    if (error || count === 0) {
+      queue.resume();
+      return toast.error(
+        error ? `Couldn't remove this workout: ${error.message}` : "Couldn't remove this workout — you may not have permission to delete it.",
+      );
+    }
+    queue.dispose();
     localDraftStore(user?.id ?? "anon", sessionId).set({});
-    toast.success(session?.status === "completed" ? "Session deleted" : "Session closed without saving");
+    setConfirmDeleteOpen(false);
+    toast.success(session?.status === "completed" ? "Session deleted" : "Workout discarded");
     if (isTrainer && session?.client_id) nav({ to: "/trainer/clients/$clientId", params: { clientId: session.client_id } });
     else nav({ to: "/client" });
   };
@@ -549,12 +557,21 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-xl font-bold tracking-tight">{session.custom_name ?? session.trainings?.name ?? "Custom session"}</h2>
           {canDelete && (
-            <Button type="button" variant="ghost" size="sm" className="shrink-0 text-muted-foreground" onClick={() => setConfirmDeleteOpen(true)}>
-              {session.status === "completed" ? <><Trash2 className="size-4 mr-1" /> Delete</> : <><X className="size-4 mr-1" /> Close without saving</>}
+            <Button
+              type="button"
+              variant={session.status === "completed" ? "ghost" : "outline"}
+              size="sm"
+              className="shrink-0 text-muted-foreground"
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              {session.status === "completed" ? <><Trash2 className="size-4 mr-1" /> Delete</> : <><X className="size-4 mr-1" /> Discard workout</>}
             </Button>
           )}
         </div>
         {session.logged_by === "trainer" && <p className="text-xs text-muted-foreground mt-1">Logged by trainer</p>}
+        {!canDelete && !forceReadOnly && isClient && !isTrainer && session.status !== "completed" && (
+          <p className="text-xs text-muted-foreground mt-1">Your trainer started this workout — ask them if it should be discarded.</p>
+        )}
         {saveErrors > 0 && (
           <div role="status" className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
             <span>{saveErrors === 1 ? "1 set isn't saved yet." : `${saveErrors} sets aren't saved yet.`} It's kept on this device.</span>
@@ -949,12 +966,12 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
       <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{session.status === "completed" ? "Delete this session?" : "Close without saving?"}</DialogTitle>
+            <DialogTitle>{session.status === "completed" ? "Delete this session?" : "Discard this workout?"}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {session.status === "completed"
               ? "This session and all its logged sets will be permanently removed from history."
-              : "This workout and any sets logged in it will be discarded."}
+              : "Only this unfinished workout and the sets logged in it will be deleted. Your program, other workouts and history stay as they are, and any booking stays booked."}
           </p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Cancel</Button>
