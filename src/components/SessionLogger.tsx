@@ -704,7 +704,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                       {needsChoice ? (
                         <span className="text-amber-600 font-medium">Choose one to start</span>
                       ) : (
-                        <>{primaryLine}</>
+                        <>Plan target: {primaryLine}</>
                       )}
                     </div>
                   </div>
@@ -757,6 +757,9 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                     {last && (
                       <div className="rounded-md bg-muted/50 p-3 text-xs">
                         <div className="font-semibold text-muted-foreground mb-1.5">Last time ({new Date(last.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })})</div>
+                        {canEdit && !hidesLoad(ex) && performedRegular(last.sets).length > 0 && (
+                          <div className="text-muted-foreground mb-1.5">New sets start from these loads — change them any time.</div>
+                        )}
                         <div className="space-y-0.5">
                           {last.sets.map((s, li) => (
                             <div key={s.set_index} className="tabular-nums">
