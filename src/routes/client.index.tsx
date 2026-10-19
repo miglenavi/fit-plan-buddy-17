@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarClock, Play, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { startSession } from "@/lib/sessions.functions";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadGate } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/client/")({
   ssr: false,
@@ -121,6 +124,7 @@ function ClientToday() {
         {program?.plans?.name && <p className="text-sm text-muted-foreground mt-0.5">Current plan: {program.plans.name}</p>}
       </div>
 
+      <LoadGate view={L.view} what="your plan" onRetry={load}>
       {todayBooking && (
         <Card className="border-primary/60 bg-primary/5">
           <CardContent className="p-4 flex items-center gap-3">
@@ -217,6 +221,8 @@ function ClientToday() {
           </div>
         </section>
       )}
+      </LoadGate>
+
 
       <Card>
         <CardContent className="p-4">
