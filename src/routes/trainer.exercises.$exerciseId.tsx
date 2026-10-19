@@ -48,10 +48,9 @@ function ExerciseDetail() {
   const load = (opts?: { reset?: boolean }) => L.run(async (cur) => {
     const data = must(await supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle());
     if (!cur()) return;
-    // Before the first load, a missing/inaccessible record ends in the "unavailable" state.
-    // On a later refresh we keep what's on screen (and any unsaved edits).
+    // A missing/inaccessible record ends in the "unavailable" state (only before the first load;
+    // later refreshes keep what's on screen).
     if (!data) { if (!hasLoaded.current) setEx(null); return; }
-    if (hasLoaded.current && opts?.reset !== true) return;
     const d = data as any;
     setEx(data);
     setName(data.name);
@@ -157,7 +156,9 @@ function ExerciseDetail() {
     else { toast.success("Deleted"); navigate({ to: "/trainer/exercises" }); }
   };
 
-  if (!ex) return <p className="text-muted-foreground">Loading...</p>;
+  if (L.view === "loading") return <LoadingText what="exercise" />;
+  if (L.view === "error") return <LoadError what="this exercise" onRetry={() => load({ reset: true })} />;
+  if (!ex) return <Unavailable what="exercise" backTo="/trainer/exercises" backLabel="Back to exercises" onRetry={() => load({ reset: true })} />;
 
   const isYoutube = videoUrl && /(?:youtube\.com|youtu\.be)/.test(videoUrl);
   const ytId = isYoutube ? videoUrl.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/)?.[1] : null;
