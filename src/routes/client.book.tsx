@@ -206,6 +206,7 @@ function BookSession() {
 
   return (
     <div className="space-y-5">
+      {L.view === "content-stale" && <StaleNotice what="your bookings and open slots" onRetry={load} />}
       {mine.length > 0 && (
         <Card>
           <CardHeader>

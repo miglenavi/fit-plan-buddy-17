@@ -46,10 +46,10 @@ function ClientTrainer() {
   const [selected, setSelected] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const L = useLoader();
 
-  const load = async () => {
-    const [{ data: t }, { data: r }, { data: link }] = await Promise.all([
+  const load = () => L.run(async (cur) => {
+    const [tR, rR, linkR] = await Promise.all([
       supabase.rpc("list_trainers"),
       supabase
         .from("trainer_requests")
@@ -57,11 +57,12 @@ function ClientTrainer() {
         .order("created_at", { ascending: false }),
       supabase.from("trainer_clients").select("trainer_id").is("archived_at", null).limit(1),
     ]);
+    const t = must(tR), r = must(rR), link = must(linkR);
+    if (!cur()) return;
     setTrainers((t as Trainer[]) ?? []);
     setRequests((r as Request[]) ?? []);
     setLinkedTrainerId(link?.[0]?.trainer_id ?? null);
-    setLoading(false);
-  };
+  });
 
   useEffect(() => {
     load();
