@@ -92,3 +92,49 @@ describe("one active program per client", () => {
     expect(await rows(c.id)).toEqual(before);
   });
 });
+
+describe("current-program lookup in the assign window", () => {
+  it("a failed lookup throws instead of reporting 'no active program'", async () => {
+    const { fetchCurrentAssignment } = await import("../src/lib/currentAssignment");
+    const chain: any = { select: () => chain, eq: () => chain, limit: async () => ({ data: null, error: { message: "boom" } }) };
+    await expect(fetchCurrentAssignment({ from: () => chain }, "x")).rejects.toThrow();
+  });
+
+  it("while loading, or with a result for a previously selected client, it's not ready", async () => {
+    const { lookupFor } = await import("../src/lib/currentAssignment");
+    expect(lookupFor(null, "c1").status).toBe("loading");
+    expect(lookupFor({ clientId: "c0", status: "ready", current: null }, "c1").status).toBe("loading");
+    expect(lookupFor({ clientId: "c1", status: "error" }, "c1").status).toBe("error");
+    expect(lookupFor({ clientId: "c1", status: "ready", current: null }, "c1").status).toBe("ready");
+  });
+});
+
+describe("client linked to two trainers", () => {
+  let tA: TestUser, tB: TestUser, shared: TestUser, pA: string, pB: string;
+  beforeAll(async () => {
+    [tA, tB, shared] = await Promise.all([createTestUser("oap2A", "trainer"), createTestUser("oap2B", "trainer"), createTestUser("oap2C", "client")]);
+    ids.push(tA.id, tB.id, shared.id);
+    await linkTrainerClient(tA.id, shared.id);
+    await linkTrainerClient(tB.id, shared.id);
+    pA = (await admin.from("plans").insert({ trainer_id: tA.id, name: "PA" }).select("id").single()).data!.id;
+    pB = (await admin.from("plans").insert({ trainer_id: tB.id, name: "PB" }).select("id").single()).data!.id;
+  }, 60_000);
+
+  it("second trainer can't end the first trainer's active program, and learns nothing about it", async () => {
+    expect((await assign(tA, shared.id, pA)).error).toBeNull();
+    const { error } = await assign(tB, shared.id, pB);
+    expect(error?.message).toMatch(/another trainer/);
+    expect(error?.message).not.toMatch(/PA/);
+    expect((await rows(shared.id)).map((r) => [r.plan_id, r.status])).toEqual([[pA, "active"]]);
+  });
+
+  it("racing trainers: exactly one active program, never a foreign replacement", async () => {
+    await admin.from("client_programs").update({ status: "completed" }).eq("client_id", shared.id);
+    const res = await Promise.all([assign(tA, shared.id, pA), assign(tB, shared.id, pB)]);
+    expect(res.filter((r) => r.error === null)).toHaveLength(1);
+    const active = (await rows(shared.id)).filter((r) => r.status === "active");
+    expect(active).toHaveLength(1);
+    // The loser's call must not have completed the winner's row.
+    expect(active[0].plan_id).toBe(res[0].error === null ? pA : pB);
+  });
+});

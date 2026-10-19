@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { fetchCurrentAssignment, lookupFor, type LookupState } from "@/lib/currentAssignment";
 
 type Props = {
   trigger: React.ReactNode;
@@ -26,7 +27,8 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
   const [busy, setBusy] = useState(false);
-  const [current, setCurrent] = useState<{ plan_id: string; name: string } | null>(null);
+  const [lookupRaw, setLookup] = useState<LookupState | null>(null);
+  const [lookupTry, setLookupTry] = useState(0);
   const { isImpersonating } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
   const dateError =
@@ -58,17 +60,18 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
 
   const cidSel = clientId ?? pickClient;
   useEffect(() => {
-    setCurrent(null);
     if (!open || !cidSel) return;
     let live = true;
-    supabase.from("client_programs").select("plan_id, plans(name)")
-      .eq("client_id", cidSel).eq("status", "active").limit(1)
-      .then(({ data }) => {
-        const r: any = data?.[0];
-        if (live) setCurrent(r ? { plan_id: r.plan_id, name: r.plans?.name ?? "Current program" } : null);
-      });
+    setLookup({ clientId: cidSel, status: "loading" });
+    fetchCurrentAssignment(supabase, cidSel).then(
+      (current) => { if (live) setLookup({ clientId: cidSel, status: "ready", current }); },
+      () => { if (live) setLookup({ clientId: cidSel, status: "error" }); },
+    );
     return () => { live = false; };
-  }, [open, cidSel]);
+  }, [open, cidSel, lookupTry]);
+  const lookup = cidSel ? lookupFor(lookupRaw, cidSel) : null;
+  const current = lookup?.status === "ready" ? lookup.current : null;
+  const lookupReady = lookup?.status === "ready";
   const pidSel = planId ?? pickPlan;
   const sameAsCurrent = !!current && current.plan_id === pidSel;
 
@@ -81,6 +84,7 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
     if (isImpersonating) {
       return toast.error("You're viewing as another user. Exit view-as mode to assign plans.");
     }
+    if (!lookupReady) return toast.error("Still checking the client's current program");
     setBusy(true);
     try {
       if (dateError) throw new Error(dateError);
@@ -134,7 +138,16 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
               </Select>
             </div>
           )}
-          {cidSel && (
+          {cidSel && lookup?.status === "loading" && (
+            <p className="text-sm text-muted-foreground" data-testid="current-program">Checking current program…</p>
+          )}
+          {cidSel && lookup?.status === "error" && (
+            <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground" data-testid="current-program">
+              <span>Couldn't check this client's current program.</span>
+              <Button type="button" size="sm" variant="outline" onClick={() => setLookupTry((n) => n + 1)}>Retry</Button>
+            </div>
+          )}
+          {cidSel && lookupReady && (
             <p className="text-sm text-muted-foreground" data-testid="current-program">
               {current
                 ? sameAsCurrent
@@ -154,7 +167,7 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
             </div>
           </div>
           {dateError && <p className="text-sm text-destructive" role="alert">{dateError}</p>}
-          <Button type="submit" className="w-full" disabled={busy || !!dateError}>
+          <Button type="submit" className="w-full" disabled={busy || !!dateError || (!!cidSel && !lookupReady)}>
             {busy ? "Saving…" : current && !sameAsCurrent ? "Replace program" : "Assign program"}
           </Button>
         </form>
