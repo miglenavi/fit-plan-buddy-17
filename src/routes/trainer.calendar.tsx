@@ -19,6 +19,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadGate, LoadingText } from "@/components/LoadStatus";
 import { addDays, fmtWeekRange, weekStart } from "@/lib/week";
 import { useAuth } from "@/lib/auth";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Plus, Repeat, Trash2, X } from "lucide-react";
@@ -99,7 +102,6 @@ function TrainerCalendar() {
   const [avail, setAvail] = useState<Availability[]>([]);
   const [series, setSeries] = useState<Series[]>([]);
   const [clients, setClients] = useState<ClientRow[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [dow, setDow] = useState("1");
   const [start, setStart] = useState("09:00");
@@ -371,6 +373,7 @@ function TrainerCalendar() {
         </Dialog>
       </div>
 
+      <LoadGate view={L.view} what="your calendar" onRetry={load}>
       <Tabs defaultValue="week">
         <TabsList>
           <TabsTrigger value="week">Week</TabsTrigger>
@@ -390,8 +393,10 @@ function TrainerCalendar() {
             <Button variant="ghost" size="sm" onClick={() => setMonday(weekStart(new Date()))}>Today</Button>
           </div>
 
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+          {loadedWeek !== monday ? (
+            L.status === "error"
+              ? <LoadError what="this week's bookings" onRetry={load} />
+              : <LoadingText what="this week" />
           ) : (
             <div className="grid gap-3 md:grid-cols-7">
               {days.map((d) => {
@@ -535,6 +540,7 @@ function TrainerCalendar() {
           </Card>
         </TabsContent>
       </Tabs>
+      </LoadGate>
 
       <Dialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
         <DialogContent>
