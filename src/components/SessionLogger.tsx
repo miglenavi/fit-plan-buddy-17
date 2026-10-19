@@ -631,6 +631,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
           const primaryLine = `${se.target_sets} × ${targetReps}${formatLoad({ weight: se.target_weight, band_level: se.target_band_level }, ex)}`;
           const altLine = `${altSetsV} × ${altTargetReps}${formatLoad({ weight: altWV, band_level: se.alt_target_band_level ?? se.target_band_level }, altEx)}`;
           const band = usesBand(ex);
+          const noLoad = !band && hidesLoad(ex);
           const assisted = isAssisted(ex);
 
           return (
