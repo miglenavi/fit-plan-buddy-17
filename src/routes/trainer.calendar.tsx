@@ -119,10 +119,14 @@ function TrainerCalendar() {
 
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
 
-  const load = useCallback(async () => {
+  const L = useLoader();
+  // Which week the shown bookings belong to, so a new week never shows the old week's rows.
+  const [loadedWeek, setLoadedWeek] = useState<string | null>(null);
+
+  const load = useCallback(() => L.run(async (cur) => {
     const from = new Date(`${monday}T00:00:00`);
     const to = addDays(from, 7);
-    const [{ data: b, error: be }, { data: a }, { data: s }, { data: c }] = await Promise.all([
+    const [bR, aR, sR, cR] = await Promise.all([
       supabase
         .from("bookings")
         .select("id, client_id, start_at, end_at, status, client_note, series_id")
@@ -142,15 +146,16 @@ function TrainerCalendar() {
         .select("client_id, profiles!trainer_clients_client_profile_fk(full_name)")
         .is("archived_at", null),
     ]);
-    if (be) toast.error(be.message);
+    const b = must(bR), a = must(aR), s = must(sR), c = must(cR);
+    if (!cur()) return;
     setBookings((b as unknown as Booking[]) ?? []);
     setAvail((a as Availability[]) ?? []);
     setSeries((s as Series[]) ?? []);
     setClients(
       ((c as any[]) ?? []).map((r) => ({ client_id: r.client_id, full_name: r.profiles?.full_name ?? null })),
     );
-    setLoading(false);
-  }, [monday]);
+    setLoadedWeek(monday);
+  }), [monday]);
 
   useEffect(() => {
     load();
