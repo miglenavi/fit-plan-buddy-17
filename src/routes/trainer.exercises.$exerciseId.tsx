@@ -44,10 +44,14 @@ function ExerciseDetail() {
   const hasLoaded = useRef(false);
   const lastSaved = useRef<string>("");
 
-  const load = async () => {
-    const { data, error } = await supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle();
-    if (error) { toast.error(error.message); return; }
-    if (!data) return;
+  const L = useLoader();
+  const load = (opts?: { reset?: boolean }) => L.run(async (cur) => {
+    const data = must(await supabase.from("exercises").select("*").eq("id", exerciseId).maybeSingle());
+    if (!cur()) return;
+    // Before the first load, a missing/inaccessible record ends in the "unavailable" state.
+    // On a later refresh we keep what's on screen (and any unsaved edits).
+    if (!data) { if (!hasLoaded.current) setEx(null); return; }
+    if (hasLoaded.current && opts?.reset !== true) return;
     const d = data as any;
     setEx(data);
     setName(data.name);
@@ -67,8 +71,8 @@ function ExerciseDetail() {
       is_assisted: !!d.is_assisted,
     });
     hasLoaded.current = true;
-  };
-  useEffect(() => { load(); }, [exerciseId]);
+  }, opts);
+  useEffect(() => { hasLoaded.current = false; load({ reset: true }); }, [exerciseId]);
 
   const doSave = async () => {
     const { error } = await supabase.from("exercises").update({

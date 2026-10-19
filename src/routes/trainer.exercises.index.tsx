@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, Video, ImageIcon, Search, X, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadGate } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/exercises/")({
   ssr: false,
@@ -328,6 +331,7 @@ function ExercisesList() {
         ))}
       </div>
 
+      <LoadGate view={L.view} what="exercises" onRetry={load}>
       {grouped.length === 0 && <p className="text-muted-foreground text-sm">No exercises yet.</p>}
 
       {grouped.map((g) => (
@@ -392,6 +396,7 @@ function ExercisesList() {
           </div>
         </section>
       ))}
+      </LoadGate>
     </div>
   );
 }
