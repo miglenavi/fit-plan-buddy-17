@@ -90,34 +90,36 @@ function BookSession() {
   const [picked, setPicked] = useState<Slot | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const L = useLoader();
   const { isImpersonating } = useAuth();
 
-  const load = useCallback(async () => {
-    const { data: au } = await supabase.auth.getUser();
+  const load = useCallback(() => L.run(async (cur) => {
+    const { data: au, error: auErr } = await supabase.auth.getUser();
+    if (auErr) throw auErr;
     const authUserId = au.user?.id ?? null;
 
-    const { data: link } = await supabase
-      .from("trainer_clients")
-      .select("trainer_id")
-      .eq("client_id", authUserId ?? "")
-      .is("archived_at", null)
-      .limit(1);
+    const [linkR, myR] = await Promise.all([
+      supabase
+        .from("trainer_clients")
+        .select("trainer_id")
+        .eq("client_id", authUserId ?? "")
+        .is("archived_at", null)
+        .limit(1),
+      supabase
+        .from("bookings")
+        .select("id, start_at, end_at, status, series_id")
+        .gte("start_at", new Date().toISOString())
+        .order("start_at"),
+    ]);
+    const tid = (must(linkR)?.[0] as any)?.trainer_id ?? null;
+    const myBookings = must(myR);
 
-    const tid = (link?.[0] as any)?.trainer_id ?? null;
-    setTrainerId(tid);
-
-    const { data: myBookings } = await supabase
-      .from("bookings")
-      .select("id, start_at, end_at, status, series_id")
-      .gte("start_at", new Date().toISOString())
-      .order("start_at");
-    setMine(((myBookings as Booking[]) ?? []).filter((b) => b.status !== "cancelled"));
-
+    let name: string | null = null;
+    let built: Slot[] = [];
     if (tid) {
       const from = new Date();
       const to = addDays(from, DAYS_AHEAD);
-      const [{ data: avail }, { data: trainer }, { data: busySlots }] = await Promise.all([
+      const [availR, trainerR, busyR] = await Promise.all([
         supabase
           .from("trainer_availability")
           .select("id, is_recurring, day_of_week, specific_date, start_time, end_time")
@@ -129,11 +131,15 @@ function BookSession() {
           _to: to.toISOString(),
         }),
       ]);
-      setTrainerName(trainer?.full_name ?? null);
-      setSlots(buildSlots((avail as Availability[]) ?? [], (busySlots as any[]) ?? []));
+      name = must(trainerR)?.full_name ?? null;
+      built = buildSlots((must(availR) as Availability[]) ?? [], (must(busyR) as any[]) ?? []);
     }
-    setLoading(false);
-  }, []);
+    if (!cur()) return;
+    setTrainerId(tid);
+    setMine(((myBookings as Booking[]) ?? []).filter((b) => b.status !== "cancelled"));
+    setTrainerName(name);
+    setSlots(built);
+  }), []);
 
   useEffect(() => {
     load();
