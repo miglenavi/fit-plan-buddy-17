@@ -118,3 +118,32 @@ describe("latest result lookup (real database)", () => {
     expect(Number(performedRegular(r[exA]!.sets)[0].weight)).toBe(14);
   });
 });
+
+describe("history failed, then Retry", () => {
+  it("Retry fills only untouched placeholders; edited, saved and cleared sets stay exactly as they are", async () => {
+    const { applyHistoryDefaults } = await import("../src/lib/lastLoads");
+    // Plan target 10 was used because history failed.
+    const sets = {
+      se1: [
+        { id: "saved-cleared", set_index: 0, reps: null, weight: null, completed: false },        // saved blank on purpose
+        { set_index: 1, reps: "8", weight: "12", completed: false, prefill: false },              // edited, unsaved draft
+        { set_index: 2, reps: null, weight: 10, completed: false, prefill: true },                // untouched placeholder
+        { set_index: 3, reps: null, weight: 10, completed: false, prefill: true },                // untouched placeholder
+      ],
+    };
+    const prev = { se1: performedRegular([set(0, 12, 14), set(1, 12, 14), set(2, 10, 16)]) };
+    const out = applyHistoryDefaults(sets as any, [{ id: "se1", target_weight: 10, target_band_level: null, kind: "kg" }], prev);
+    expect(out.se1.map((s: any) => s.weight)).toEqual([null, "12", 16, 16]);
+    expect(out.se1[1]).toBe(sets.se1[1]);
+    expect(out.se1.map((s: any) => s.reps)).toEqual([null, "8", null, null]);
+    expect(out.se1.some((s: any) => s.completed)).toBe(false);
+  });
+
+  it("a failed lookup is an error, not 'no history'", async () => {
+    const chain: any = { select: () => chain, eq: () => chain, neq: () => chain, order: () => chain, limit: async () => ({ data: null, error: { message: "boom" } }) };
+    await expect(fetchLastTimeByExercise({ from: () => chain }, "c", ["e"], "s")).rejects.toBeTruthy();
+    const empty: any = { ...chain, limit: async () => ({ data: [], error: null }) };
+    empty.select = empty.eq = empty.neq = empty.order = () => empty;
+    expect(await fetchLastTimeByExercise({ from: () => empty }, "c", ["e"], "s")).toEqual({ e: null });
+  });
+});
