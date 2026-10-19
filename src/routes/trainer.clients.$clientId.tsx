@@ -12,6 +12,9 @@ import { Plus, Play, CheckCircle2, Clock, Archive, StickyNote, Sparkles, Trash2 
 import { toast } from "sonner";
 import { startSession } from "@/lib/sessions.functions";
 import { useAuth } from "@/lib/auth";
+import { useLoader } from "@/lib/useLoader";
+import { must } from "@/lib/loadState";
+import { LoadError, LoadingText, StaleNotice, Unavailable } from "@/components/LoadStatus";
 
 export const Route = createFileRoute("/trainer/clients/$clientId")({
   ssr: false,
@@ -146,8 +149,13 @@ function ClientDetail() {
     navigate({ to: "/trainer/clients" });
   };
 
+  if (L.view === "loading") return <LoadingText what="this client" />;
+  if (L.view === "error") return <LoadError what="this client" onRetry={() => load()} />;
+  if (!profile) return <Unavailable what="client" backTo="/trainer/clients" backLabel="Back to clients" onRetry={() => load()} />;
+
   return (
     <div className="space-y-6">
+      {L.view === "content-stale" && <StaleNotice what="this client" onRetry={() => load()} />}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{profile?.full_name ?? "Client"}</h1>
