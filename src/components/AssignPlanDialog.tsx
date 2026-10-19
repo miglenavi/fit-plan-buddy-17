@@ -26,7 +26,15 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
   const [busy, setBusy] = useState(false);
+  const [current, setCurrent] = useState<{ plan_id: string; name: string } | null>(null);
   const { isImpersonating } = useAuth();
+  const today = new Date().toISOString().slice(0, 10);
+  const dateError =
+    !startDate ? "Pick a start date."
+    : startDate > today ? "Start date can't be in the future — the new program replaces the current one right away."
+    : endDate && endDate < startDate ? "End date must be on or after the start date."
+    : endDate && endDate < today ? "End date can't be in the past."
+    : null;
 
   useEffect(() => {
     if (!open) return;
@@ -48,6 +56,22 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
     }
   }, [open, planId, clientId]);
 
+  const cidSel = clientId ?? pickClient;
+  useEffect(() => {
+    setCurrent(null);
+    if (!open || !cidSel) return;
+    let live = true;
+    supabase.from("client_programs").select("plan_id, plans(name)")
+      .eq("client_id", cidSel).eq("status", "active").limit(1)
+      .then(({ data }) => {
+        const r: any = data?.[0];
+        if (live) setCurrent(r ? { plan_id: r.plan_id, name: r.plans?.name ?? "Current program" } : null);
+      });
+    return () => { live = false; };
+  }, [open, cidSel]);
+  const pidSel = planId ?? pickPlan;
+  const sameAsCurrent = !!current && current.plan_id === pidSel;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const pid = planId ?? pickPlan;
@@ -59,18 +83,15 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
     }
     setBusy(true);
     try {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Your session expired — please sign in again.");
-      const { error } = await supabase.from("client_programs").insert({
-        trainer_id: u.user.id,
-        client_id: cid,
-        plan_id: pid,
-        start_date: startDate,
-        end_date: endDate || null,
-        status: "active",
+      if (dateError) throw new Error(dateError);
+      const { error } = await supabase.rpc("assign_client_program", {
+        _client_id: cid,
+        _plan_id: pid,
+        _start_date: startDate,
+        _end_date: endDate || undefined,
       });
       if (error) throw error;
-      toast.success("Plan assigned");
+      toast.success(sameAsCurrent ? "That program is already active" : current ? "Program replaced" : "Program assigned");
       setOpen(false);
       setPickPlan(planId ?? "");
       setPickClient(clientId ?? "");
@@ -113,18 +134,28 @@ export function AssignPlanDialog({ trigger, planId, clientId, onAssigned }: Prop
               </Select>
             </div>
           )}
+          {cidSel && (
+            <p className="text-sm text-muted-foreground" data-testid="current-program">
+              {current
+                ? sameAsCurrent
+                  ? <>This client is already on <span className="font-medium text-foreground">{current.name}</span>. Nothing will change.</>
+                  : <>Current program: <span className="font-medium text-foreground">{current.name}</span>. Assigning a new program replaces it — it'll be marked completed today and kept in history.</>
+                : "No active program yet."}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Start date</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+              <Input type="date" value={startDate} max={today} onChange={(e) => setStartDate(e.target.value)} required aria-invalid={!!dateError} />
             </div>
             <div className="space-y-2">
               <Label>End date (optional)</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <Input type="date" value={endDate} min={startDate > today ? startDate : today} onChange={(e) => setEndDate(e.target.value)} aria-invalid={!!dateError} />
             </div>
           </div>
-          <Button type="submit" className="w-full" disabled={busy}>
-            {busy ? "Assigning…" : "Assign"}
+          {dateError && <p className="text-sm text-destructive" role="alert">{dateError}</p>}
+          <Button type="submit" className="w-full" disabled={busy || !!dateError}>
+            {busy ? "Saving…" : current && !sameAsCurrent ? "Replace program" : "Assign program"}
           </Button>
         </form>
       </DialogContent>
