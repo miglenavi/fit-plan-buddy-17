@@ -1,4 +1,4 @@
-import { must } from "@/lib/loadState";
+import { must } from "./loadState";
 
 export type CurrentAssignment = { plan_id: string; name: string } | null;
 
