@@ -59,11 +59,11 @@ describe("latest result lookup (real database)", () => {
   let exA: string, exB: string, training: string;
   const ids: string[] = [];
   const sess = async (client: string, daysAgo: number, opts: { training?: string | null; status?: string } = {}) =>
-    (await admin.from("training_sessions").insert({
+    ( admin.from("training_sessions").insert({
       client_id: client, training_id: opts.training ?? null, custom_name: opts.training ? null : "Custom",
       status: opts.status ?? "completed", completed_at: opts.status === "in_progress" ? null : new Date(Date.now() - daysAgo * 864e5).toISOString(),
       started_at: new Date(Date.now() - daysAgo * 864e5 - 36e5).toISOString(), logged_by: "client",
-    }).select("id").single()).data!.id as string;
+    }).select("id").single().then((r) => { if (r.error) throw r.error; return r.data!.id as string; }));
   const log = async (sessionId: string, exId: string, sets: any[]) => {
     const se = (await admin.from("session_exercises").insert({ session_id: sessionId, exercise_id: exId, order_index: 0 }).select("id").single()).data!.id;
     if (sets.length) await admin.from("set_logs").insert(sets.map((s) => ({ session_exercise_id: se, ...s })));
