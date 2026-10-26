@@ -941,6 +941,8 @@ export type Database = {
         | "machine"
         | "bodyweight"
         | "resistance_band"
+        | "weight_plate"
+        | "bodyweight_plus_weight"
       muscle_group:
         | "chest"
         | "upper_back"
@@ -1091,6 +1093,8 @@ export const Constants = {
         "machine",
         "bodyweight",
         "resistance_band",
+        "weight_plate",
+        "bodyweight_plus_weight",
       ],
       muscle_group: [
         "chest",

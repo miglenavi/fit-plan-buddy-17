@@ -43,6 +43,13 @@
       "when": 1792434369304,
       "tag": "0005_assign_program_refuse_foreign_active",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793033818791,
+      "tag": "0006_equipment_weight_plate_bodyweight_plus",
+      "breakpoints": true
     }
   ]
 }
