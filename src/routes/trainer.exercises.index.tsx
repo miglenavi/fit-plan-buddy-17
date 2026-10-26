@@ -27,9 +27,9 @@ const MUSCLE_GROUPS = [
 type MuscleGroup = typeof MUSCLE_GROUPS[number];
 const prettyMuscle = (m: string) => m.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-const EQUIPMENT_OPTIONS = ["barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "resistance_band"] as const;
+const EQUIPMENT_OPTIONS = ["barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "bodyweight_plus_weight", "weight_plate", "resistance_band"] as const;
 type EquipmentOption = typeof EQUIPMENT_OPTIONS[number];
-const prettyEquipment = (e: string) => e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const prettyEquipment = (e: string) => e === "bodyweight_plus_weight" ? "Bodyweight + Weight" : e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 const toTitleCase = (s: string) => s.trim().replace(/\S+/g, (w) => (w.charAt(0).toUpperCase() + w.slice(1)));
 
 function ExercisesList() {

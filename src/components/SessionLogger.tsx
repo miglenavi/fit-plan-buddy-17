@@ -932,14 +932,14 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
             onChange={(e) => setExerciseSearch(e.target.value)}
           />
           <div className="flex flex-wrap gap-1.5">
-            {["all", "barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "resistance_band"].map((e) => (
+            {["all", "barbell", "dumbbell", "kettlebell", "cable", "machine", "bodyweight", "bodyweight_plus_weight", "weight_plate", "resistance_band"].map((e) => (
               <button
                 key={e}
                 type="button"
                 onClick={() => setPickerEquipment(e)}
                 className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${pickerEquipment === e ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
               >
-                {e === "all" ? "All" : e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                {e === "all" ? "All" : e === "bodyweight_plus_weight" ? "Bodyweight + Weight" : e.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
               </button>
             ))}
           </div>
@@ -960,7 +960,7 @@ export function SessionLogger({ sessionId, onFinished, forceReadOnly }: { sessio
                   <div className="font-medium text-sm">{ex.name}</div>
                   {ex.equipment && (
                     <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border">
-                      {String(ex.equipment).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                      {ex.equipment === "bodyweight_plus_weight" ? "Bodyweight + Weight" : String(ex.equipment).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                     </span>
                   )}
                 </div>
